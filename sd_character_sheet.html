@@ -24,6 +24,11 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .app-wrap{display:flex;flex:1;min-height:0;}
 .sheet-wrap{flex:1;overflow-y:auto;padding:16px;}
 .roll-log{width:250px;flex-shrink:0;background:var(--log-bg);display:flex;flex-direction:column;border-left:3px solid var(--black);position:sticky;top:0;height:100vh;overflow:hidden;}
+/* collapse */
+.roll-log{transition:width .2s ease;}
+.roll-log.collapsed{width:0!important;overflow:hidden;border:none;}
+#log-collapse-btn{position:fixed;right:260px;top:50%;transform:translateY(-50%);z-index:201;background:var(--red);color:white;border:none;cursor:pointer;width:20px;height:56px;font-size:14px;font-weight:900;display:flex;align-items:center;justify-content:center;border-radius:4px 0 0 4px;box-shadow:-2px 0 6px rgba(0,0,0,.3);transition:right .2s ease;}
+
 .log-header{padding:10px 12px;background:var(--black);display:flex;justify-content:space-between;align-items:center;gap:6px;}
 .log-title{font-family:'Montserrat',sans-serif;font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:.18em;color:white;}
 .log-clear{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;cursor:pointer;}
@@ -295,7 +300,9 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
 </div><!-- end sheet-wrap -->
 
 <!-- ═══ ROLL LOG ═══ -->
+<!-- Toggle button -->
 <div class="roll-log" id="roll-log">
+  <button id="log-collapse-btn" onclick="toggleLogCollapse()" title="Toggle Roll Log">◀</button>
   <div class="log-header" id="log-header-bar">
     <span class="log-title">Roll Log</span>
     <div class="dm-toggle-wrap">
@@ -1013,8 +1020,10 @@ autoLoad();
 @media(max-width:768px){
   .app-wrap{flex-direction:column;}
   .sheet-wrap{padding:8px;}
-  .roll-log{width:100%;height:auto;position:fixed;bottom:0;left:0;right:0;border-left:none;border-top:3px solid var(--black);z-index:100;max-height:60vh;transform:translateY(calc(100% - 44px));transition:transform .3s;}
-  .roll-log.open{transform:translateY(0);}
+  .roll-log{width:100%!important;position:fixed;bottom:0;left:0;right:0;top:auto!important;border-left:none;border-top:3px solid var(--black);z-index:200;max-height:55vh;transition:transform .25s ease;overflow:visible!important;}
+  .roll-log.collapsed{transform:translateY(100%);width:100%!important;}
+  .roll-log:not(.collapsed) .log-entries{max-height:calc(55vh - 160px);}
+  #log-collapse-btn{position:absolute!important;bottom:100%!important;top:auto!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:80px!important;height:28px!important;border-radius:6px 6px 0 0!important;font-size:11px!important;}
   .log-header{cursor:pointer;}
   body{padding-bottom:48px;}
   .main-body{flex-direction:column;}
@@ -1033,10 +1042,36 @@ autoLoad();
 }
 </style>
 <script>
-document.getElementById('log-header-bar').addEventListener('click',function(e){
-  if(window.innerWidth<=768&&!e.target.closest('button,.dm-toggle-btn'))
-    document.getElementById('roll-log').classList.toggle('open');
+function toggleLogCollapse() {
+  const log = document.querySelector('.roll-log');
+  const btn = document.getElementById('log-collapse-btn');
+  const isMobile = window.innerWidth <= 768;
+  log.classList.toggle('collapsed');
+  const collapsed = log.classList.contains('collapsed');
+  if(isMobile) {
+    btn.textContent = collapsed ? '▼ Log' : '▲ Log';
+  } else {
+    btn.textContent = collapsed ? '▶' : '◀';
+    btn.style.right = collapsed ? '0' : '250px';
+  }
+}
+
+document.querySelector('.log-header').addEventListener('click', function(e) {
+  if(window.innerWidth <= 768 && !e.target.closest('button,.dm-toggle-btn')) {
+    toggleLogCollapse();
+  }
 });
+
+(function(){
+  const btn = document.getElementById('log-collapse-btn');
+  const isMobile = window.innerWidth <= 768;
+  if(isMobile) {
+    document.querySelector('.roll-log').classList.add('collapsed');
+    btn.textContent = '▼ Log';
+  } else {
+    btn.style.right = '250px';
+  }
+})();
 </script>
 </body>
 </html>
