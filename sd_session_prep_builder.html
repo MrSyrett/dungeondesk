@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Session Prep Builder — Shadowdark RPG</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,500;0,600;0,700;1,400&family=MedievalSharp&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
+// Mobile: start with sidebar collapsed
+if(window.innerWidth <= 768) {
+  const s = document.querySelector('.sidebar');
+  if(s) { s.classList.add('collapsed'); document.getElementById('collapse-btn').textContent = '▼'; }
+}
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -230,6 +236,65 @@
   /* Continuation pages added by pagination engine */
   .page-cont { margin-top: 20px; }
   .page-cont .page-inner { overflow: hidden; flex: 1; min-height: 0; padding: 20px 36px 16px; }
+
+  /* ═══ MOBILE RESPONSIVE ═══ */
+  @media (max-width: 768px) {
+    body { flex-direction: column; height: 100vh; overflow: hidden; }
+
+    /* Sidebar: full viewport height when open, slides over preview */
+    .sidebar {
+      width: 100% !important; min-width: 100% !important;
+      border-right: none; border-bottom: 1px solid var(--ui-border);
+      flex-shrink: 0;
+      height: 100vh; max-height: 100vh;
+      overflow-y: auto;
+      position: fixed; top: 0; left: 0; z-index: 100;
+      transition: transform 0.25s ease;
+    }
+    .sidebar.collapsed {
+      transform: translateY(calc(-100% + 52px));
+    }
+    .sidebar.collapsed .sidebar-content { overflow: hidden; }
+
+    /* Collapse button arrow */
+    #collapse-btn { font-size: 16px !important; }
+
+    /* Preview area: full width below sidebar header */
+    .preview-area {
+      width: 100%; flex: 1;
+      overflow-x: auto; overflow-y: auto;
+      padding: 16px 8px 16px;
+      margin-top: 52px; /* space for collapsed sidebar header */
+    }
+
+    /* Scale pages down to fit mobile viewport width */
+    /* 816px page scaled to fit ~360px screen = ~0.42 scale */
+    .page {
+      transform-origin: top center;
+      transform: scale(0.43);
+      margin-bottom: calc(-1056px * 0.57 + 8px) !important;
+      flex-shrink: 0;
+    }
+
+    /* Sidebar header: bigger tap targets */
+    .sidebar-header { padding: 10px 12px; }
+    .sidebar-title { font-size: 14px !important; }
+
+    /* Tab buttons */
+    .tab-btn { font-size: 9px !important; padding: 8px 4px !important; }
+
+    /* Input fields: larger on mobile */
+    .sidebar-content input[type="text"],
+    .sidebar-content textarea,
+    .sidebar-content select { font-size: 15px !important; }
+
+    .field-label { font-size: 10px !important; }
+    .section-divider { font-size: 10px !important; padding: 6px 10px !important; }
+
+    .sidebar-footer button, .sidebar-footer a { min-height: 40px; font-size: 12px !important; }
+    .entity-add-btn { min-height: 40px; font-size: 12px !important; padding: 8px 12px !important; }
+  }
+
 </style>
 </head>
 <body>
@@ -289,11 +354,6 @@
       <div class="section-divider" style="border-left-color:#c0392b;">Loot & Rewards</div>
       <div id="rewards-list" class="entity-list"></div>
       <button class="btn-add" onclick="addReward()">+ Add Reward</button>
-      <div class="section-divider" style="border-left-color:#555;">Notes</div>
-      <div class="field-group">
-        <textarea id="f-notes" rows="4" style="width:100%;background:var(--ui-panel);border:1px solid var(--ui-border);border-radius:3px;color:var(--ui-text);font-size:12px;padding:6px 8px;resize:vertical;outline:none;font-family:'Montserrat',sans-serif;" placeholder="Session notes, reminders, GM notes..." oninput="autosave()"></textarea>
-      </div>
-
       <div class="section-divider" style="border-left-color:#7a5a00;">Hooks &amp; Strong Open</div>
       <div class="field-group" style="margin-bottom:6px;">
         <label class="field-label gold">Hooks</label>
@@ -427,10 +487,64 @@
 </div>
 
 <script>
+
+// ── COOKIE PERSISTENCE (supplements localStorage) ──
+const CookieStore = {
+  CHUNK: 3800, // safe cookie value size in chars
+  set(key, value) {
+    // Split large values across multiple chunked cookies
+    const chunks = [];
+    for(let i = 0; i < value.length; i += this.CHUNK)
+      chunks.push(value.slice(i, i + this.CHUNK));
+    // Write chunks
+    chunks.forEach((chunk, i) => {
+      document.cookie = `${key}_${i}=${encodeURIComponent(chunk)};path=/;max-age=31536000;SameSite=Lax`;
+    });
+    // Write count
+    document.cookie = `${key}_n=${chunks.length};path=/;max-age=31536000;SameSite=Lax`;
+    // Clear any old extra chunks
+    for(let i = chunks.length; i < 20; i++) {
+      const old = this._getCookie(`${key}_${i}`);
+      if(old === null) break;
+      document.cookie = `${key}_${i}=;path=/;max-age=0`;
+    }
+  },
+  get(key) {
+    const n = parseInt(this._getCookie(`${key}_n`) || '0');
+    if(!n) return null;
+    let value = '';
+    for(let i = 0; i < n; i++) {
+      const chunk = this._getCookie(`${key}_${i}`);
+      if(chunk === null) return null;
+      value += decodeURIComponent(chunk);
+    }
+    return value;
+  },
+  _getCookie(name) {
+    const match = document.cookie.split('; ').find(r => r.startsWith(name + '='));
+    return match ? match.split('=').slice(1).join('=') : null;
+  }
+};
+
+// Patch localStorage to also write cookies
+const _lsSetItem = localStorage.setItem.bind(localStorage);
+const _lsGetItem = localStorage.getItem.bind(localStorage);
+localStorage.setItem = function(key, value) {
+  _lsSetItem(key, value);
+  try { CookieStore.set(key, value); } catch(e) {}
+};
+localStorage.getItem = function(key) {
+  let val = _lsGetItem(key);
+  if(val === null) {
+    try { val = CookieStore.get(key); if(val) _lsSetItem(key, val); } catch(e) {}
+  }
+  return val;
+};
+
 const DEFAULT_STATE = {
   title:'', subtitle:'', floor:'', session:'', players:'', duration:'',
   overview:'', mappath:'', maps:[],
-  clues:[], rewards:[], hooks:[], notes:'', strongopen:[], locations:[], statblocks:[]
+  clues:[], rewards:[], hooks:[], strongopen:[], locations:[], statblocks:[]
 };
 let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
 let saveTimer = null;
@@ -805,7 +919,6 @@ function readFields() {
     flavor:c.querySelector('.reward-flavor-input')?.value.trim()||'',
     stats:c.querySelector('.reward-stats-input')?.value.trim()||''
   })).filter(r=>r.name||r.flavor);
-  state.notes=document.getElementById('f-notes')?.value||'';
   state.hooks=[...document.querySelectorAll('#hooks-list .entity-card')].map(c=>({
     header:c.querySelector('.hook-hdr-input')?.value.trim()||'',
     text:c.querySelector('.hook-text-input')?.value.trim()||''
@@ -853,7 +966,6 @@ function buildSidebarFromState() {
   setVal('f-floor',state.floor); setVal('f-session',state.session);
   setVal('f-players',state.players); setVal('f-duration',state.duration);
   setVal('f-overview',state.overview);
-  setVal('f-notes',state.notes||'');
   // Rebuild maps list
   const _el_maps_list=document.getElementById('maps-list'); if(_el_maps_list) _el_maps_list.innerHTML='';
   (state.maps||[]).forEach(m=>addMap(m));
@@ -1247,11 +1359,6 @@ function renderPreview() {
       npcs.forEach(e=>{h+='<div class="npc-block" style="border-left-color:'+sbt.npc+';"><div class="entry-name">'+escH(e.name)+'</div>'+(e.type?'<div class="entry-meta">'+escH(e.type)+'</div>':'')+'</div>';});
       mobs.forEach(e=>{h+='<div class="mob-block" style="border-left-color:'+(sbt[e.sbtype]||sbt.mob)+';"><div class="entry-name">'+escH(e.name)+'</div>'+(e.type?'<div class="entry-meta">'+escH(e.type)+'</div>':'')+'</div>';});
       sections.push(h+'</div>');
-    }
-
-    // Notes
-    if(state.notes && state.notes.trim()){
-      sections.push('<div class="p-section"><div class="sl">Notes</div><p class="p-text">'+fmtText(state.notes)+'</p></div>');
     }
 
     // Hooks
