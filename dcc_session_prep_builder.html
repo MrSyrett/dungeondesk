@@ -279,9 +279,30 @@ if(window.innerWidth <= 768) {
     .field-label { font-size: 10px !important; }
     .section-divider { font-size: 10px !important; padding: 6px 10px !important; }
 
-    .sidebar-footer button, .sidebar-footer a { min-height: 40px; font-size: 12px !important; }
     .entity-add-btn { min-height: 40px; font-size: 12px !important; padding: 8px 12px !important; }
-  }
+  
+    /* Footer action buttons: fixed bottom bar on mobile */
+    .sidebar-footer {
+      position: fixed !important;
+      bottom: 0; left: 0; right: 0;
+      z-index: 200;
+      background: var(--ui-panel);
+      border-top: 2px solid var(--ui-border);
+      padding: 8px 10px !important;
+      flex-wrap: wrap !important;
+      gap: 6px !important;
+      display: flex !important;
+    }
+    .sidebar-footer button, .sidebar-footer a {
+      flex: 1; min-height: 44px;
+      font-size: 11px !important;
+      padding: 8px 4px !important;
+      min-width: 0;
+    }
+    /* Bump preview area up so it's not hidden behind the footer bar */
+    .preview-area { padding-bottom: 72px !important; }
+    body { padding-bottom: 0; }
+}
 
 </style>
 </head>
@@ -482,58 +503,6 @@ if(window.innerWidth <= 768) {
 
 <script>
 
-// ── COOKIE PERSISTENCE (supplements localStorage) ──
-const CookieStore = {
-  CHUNK: 3800, // safe cookie value size in chars
-  set(key, value) {
-    // Split large values across multiple chunked cookies
-    const chunks = [];
-    for(let i = 0; i < value.length; i += this.CHUNK)
-      chunks.push(value.slice(i, i + this.CHUNK));
-    // Write chunks
-    chunks.forEach((chunk, i) => {
-      document.cookie = `${key}_${i}=${encodeURIComponent(chunk)};path=/;max-age=31536000;SameSite=Lax`;
-    });
-    // Write count
-    document.cookie = `${key}_n=${chunks.length};path=/;max-age=31536000;SameSite=Lax`;
-    // Clear any old extra chunks
-    for(let i = chunks.length; i < 20; i++) {
-      const old = this._getCookie(`${key}_${i}`);
-      if(old === null) break;
-      document.cookie = `${key}_${i}=;path=/;max-age=0`;
-    }
-  },
-  get(key) {
-    const n = parseInt(this._getCookie(`${key}_n`) || '0');
-    if(!n) return null;
-    let value = '';
-    for(let i = 0; i < n; i++) {
-      const chunk = this._getCookie(`${key}_${i}`);
-      if(chunk === null) return null;
-      value += decodeURIComponent(chunk);
-    }
-    return value;
-  },
-  _getCookie(name) {
-    const match = document.cookie.split('; ').find(r => r.startsWith(name + '='));
-    return match ? match.split('=').slice(1).join('=') : null;
-  }
-};
-
-// Patch localStorage to also write cookies
-const _lsSetItem = localStorage.setItem.bind(localStorage);
-const _lsGetItem = localStorage.getItem.bind(localStorage);
-localStorage.setItem = function(key, value) {
-  _lsSetItem(key, value);
-  try { CookieStore.set(key, value); } catch(e) {}
-};
-localStorage.getItem = function(key) {
-  let val = _lsGetItem(key);
-  if(val === null) {
-    try { val = CookieStore.get(key); if(val) _lsSetItem(key, val); } catch(e) {}
-  }
-  return val;
-};
 
 const DEFAULT_STATE = {
   title:'', subtitle:'', floor:'', session:'', players:'', duration:'',
