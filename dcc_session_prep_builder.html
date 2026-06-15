@@ -503,7 +503,6 @@ if(window.innerWidth <= 768) {
 
 <script>
 
-
 const DEFAULT_STATE = {
   title:'', subtitle:'', floor:'', session:'', players:'', duration:'',
   overview:'', mappath:'', maps:[],
@@ -513,12 +512,11 @@ let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
 let saveTimer = null;
 
 function loadState() {
-  const saved = localStorage.getItem('dcw_builder_v5');
-  if (saved) try { state = {...DEFAULT_STATE,...JSON.parse(saved)}; } catch(e){}
+    if (saved) try { state = {...DEFAULT_STATE,...JSON.parse(saved)}; } catch(e){}
 }
 function saveState() {
   const toSave={...state, mappath:state.mappath?'__has_map__':'', maps:(state.maps||[]).map(m=>({...m,src:m.src?'__has_map__':''}))};
-  try { localStorage.setItem('dcw_builder_v5', JSON.stringify(toSave)); } catch(e) {}
+  try { ); } catch(e) {}
   const ind = document.getElementById('save-indicator');
   ind.textContent='Saved ✓'; ind.classList.add('saved');
   setTimeout(()=>{ ind.textContent='All changes saved'; ind.classList.remove('saved'); },1500);
@@ -592,7 +590,6 @@ function paginatePages() {
   const mapsEl=document.getElementById('p-maps-container');
   if(mapsEl) runPagination(mapsEl,USABLE_H,'p3M',isDark,null,document.getElementById('page-three'),false);
 }
-
 
 function measureAndPaginateColumn(containerId, maxH, key, isDark, preview, sourcePage) {
   const container = document.getElementById(containerId);
@@ -685,7 +682,6 @@ function measureAndPaginateColumn(containerId, maxH, key, isDark, preview, sourc
     after = cp;
   }
 }
-
 
 // For CSS column containers: measure with column:1 unconstrained, then paginate.
 // Called AFTER caller has already reset height/overflow/columnCount to unconstrained state.
@@ -1540,7 +1536,7 @@ function importHTML(input) {
       if(!Array.isArray(state.statblocks)) state.statblocks=[];
       try {
         const toSave={...state, mappath:"", maps:[]};
-        localStorage.setItem("dcw_builder_v5", JSON.stringify(toSave));
+        );
       } catch(e) {}
       buildSidebarFromState();
       renderPreview();

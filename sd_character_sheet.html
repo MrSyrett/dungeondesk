@@ -347,7 +347,6 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
 
 <script>
 
-
 // ── STAT MODIFIER (Shadowdark uses standard D&D mod: floor((stat-10)/2)) ──
 function statToMod(val) {
   const v = parseInt(val);
@@ -626,8 +625,7 @@ function clearDicePool(){dicePool=[];updateDicePoolDisplay();}
 function toggleDarkMode(){
   const on=document.body.classList.toggle('dark');
   document.getElementById('dm-toggle').classList.toggle('on',on);
-  localStorage.setItem('sd_dark',on?'1':'0');
-}
+  }
 
 // ── SAVE / EXPORT / IMPORT ──
 function collectSheet(){
@@ -798,7 +796,6 @@ function collectSheet(){
   };
 }
 
-
 function applySheet(data){
   // Route through importShadowdarklings logic directly (handles both formats)
   _applySDData(data);
@@ -940,7 +937,6 @@ function _applySDData(d){
   }
 }
 
-
 function importShadowdarklings(input) {
   const file = input.files[0];
   if(!file) return;
@@ -959,13 +955,11 @@ function importShadowdarklings(input) {
   reader.readAsText(file);
 }
 
-
 function saveSheet(){
   const data = collectSheet();
   // Don't store portrait in localStorage (too large)
   const toSave = {...data, _sheet: {...(data._sheet||{}), portrait: ''}};
-  localStorage.setItem('sd_sheet', JSON.stringify(toSave));
-  addLog('Sheet Saved','💾','Saved to browser storage','normal');
+    addLog('Sheet Saved','💾','Saved to browser storage','normal');
 }
 function exportSheet(){
   const data = collectSheet();
@@ -999,17 +993,15 @@ function newCharacter(){
   document.querySelectorAll('#gear-list .gear-name').forEach(el=>el.value='');
   document.querySelectorAll('#gear-list .gear-qty').forEach(el=>el.value='');
   const tbody=document.getElementById('attacks-body');tbody.innerHTML='';buildAttacks();
-  localStorage.removeItem('sd_sheet');
-  addLog('New Character','✦','Sheet cleared','normal');
+    addLog('New Character','✦','Sheet cleared','normal');
 }
 
 function autoLoad(){
-  const saved=localStorage.getItem('sd_sheet');
-  if(saved)try{applySheet(JSON.parse(saved));}catch(e){}
-}
+    }
 
 // INIT
-if(localStorage.getItem('sd_dark')==='1'){document.body.classList.add('dark');document.getElementById('dm-toggle').classList.add('on');}
+if(false;
+)==='1'){document.body.classList.add('dark');document.getElementById('dm-toggle').classList.add('on');}
 buildStats();
 buildAttacks();
 buildSpells();
