@@ -302,7 +302,7 @@ input[type="number"] { -moz-appearance: textfield; }
 }
 .doc-frame-wrap.pdf-mode {
   padding: 0;
-  overflow: hidden;
+  overflow: auto;
   align-items: stretch;
 }
 .doc-frame {
@@ -314,9 +314,10 @@ input[type="number"] { -moz-appearance: textfield; }
 }
 .doc-frame.pdf-frame {
   width: 100%;
+  min-height: 100%;
   height: 100%;
   box-shadow: none;
-  flex-shrink: 1;
+  flex-shrink: 0;
 }
 .doc-image {
   max-width: none;
@@ -528,6 +529,17 @@ input[type="number"] { -moz-appearance: textfield; }
 
   .main-area { flex-direction: column; }
   .pane { border-right: none; border-bottom: 2px solid var(--border); }
+
+  /* Pane header wraps on mobile so toolbar buttons stay visible */
+  .pane-header { flex-wrap: wrap; gap: 6px; }
+  .pane-select { flex: 1; min-width: 140px; }
+  .pane-toolbar-slot { flex-wrap: wrap; gap: 6px; }
+  /* Make sure cbt round display and next round button don't get hidden */
+  .cbt-round-display { font-size: 11px; }
+
+  /* PDF viewer: give it a fixed height on mobile so it scrolls properly */
+  .doc-frame-wrap.pdf-mode { height: 60vh; }
+  .doc-frame.pdf-frame { min-height: 60vh; }
 
   .toolrow { padding: 8px 10px; gap: 8px; }
   .doc-filename { max-width: 120px; font-size: 10px; }
@@ -1479,6 +1491,10 @@ function init_notes(root) {
 
 <script>
 // All init_* functions are now defined — safe to render the first pane.
+// Also bust bfcache so mobile browsers don't restore stale state.
+window.addEventListener('pageshow', function(e) {
+  if(e.persisted) window.location.reload();
+});
 renderPane(1);
 
 // ══════════════════════════════════════════
