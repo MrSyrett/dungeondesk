@@ -862,9 +862,9 @@ function syncToolbar(slot, toolNode) {
     ['.doc-zoom-out',  '.doc-zoom-out'],
     ['.doc-zoom-in',   '.doc-zoom-in'],
     ['.doc-clear',     '.doc-clear'],
-    // combat
-    ['.cbt-next-round', '.cbt-next-round'],
-    ['.cbt-reset',      '.cbt-reset'],
+    // combat — handled by document-level delegation in init_combat, no proxy needed
+    ['.cbt-next-round', null],
+    ['.cbt-reset',      null],
     // notes
     ['.nts-export', '.nts-export'],
     ['.nts-clear',  '.nts-clear'],
@@ -993,7 +993,9 @@ function initDocTool(root) {
   let zoom = 1;
   let mediaEl = null;
   let mediaType = null;
-  let naturalW = 0, naturalH = 0; // captured once per image load, never re-read from the (possibly resized) element
+  let naturalW = 0, naturalH = 0;
+  let savedFileName = '';
+  let savedDataUrl = ''; // base64 data URL stored for _getState
 
   function applyZoom() {
     zoomLabel.textContent = Math.round(zoom * 100) + '%';
@@ -1002,7 +1004,6 @@ function initDocTool(root) {
       mediaEl.style.width = (naturalW * zoom) + 'px';
       mediaEl.style.height = (naturalH * zoom) + 'px';
     }
-    // PDFs use the browser's native viewer and its own zoom — we don't touch size here.
   }
 
   zoomInBtn.addEventListener('click', () => {
@@ -1016,7 +1017,7 @@ function initDocTool(root) {
     applyZoom();
   });
 
-  clearBtn.addEventListener('click', () => {
+  function clearDoc() {
     frameWrap.innerHTML = '';
     frameWrap.style.display = 'none';
     frameWrap.classList.remove('pdf-mode');
@@ -1025,14 +1026,15 @@ function initDocTool(root) {
     filenameEl.textContent = isMaps ? 'No map loaded' : 'No document loaded';
     fileInput.value = '';
     mediaEl = null; mediaType = null; naturalW = 0; naturalH = 0;
-  });
+    savedFileName = ''; savedDataUrl = '';
+  }
 
-  fileInput.addEventListener('change', () => {
-    const file = fileInput.files[0];
-    if(!file) return;
+  clearBtn.addEventListener('click', clearDoc);
 
-    const ext = file.name.split('.').pop().toLowerCase();
-    filenameEl.textContent = file.name;
+  // Core loader — works from either a File object or a pre-existing data URL
+  function loadFromDataUrl(dataUrl, fileName) {
+    const ext = fileName.split('.').pop().toLowerCase();
+    filenameEl.textContent = fileName;
     emptyEl.style.display = 'none';
     frameWrap.style.display = 'flex';
     controls.style.display = 'flex';
@@ -1040,20 +1042,17 @@ function initDocTool(root) {
     frameWrap.classList.remove('pdf-mode');
     zoom = 1;
     naturalW = 0; naturalH = 0;
+    savedFileName = fileName;
+    savedDataUrl = dataUrl;
 
     if(ext === 'pdf') {
       mediaType = 'pdf';
-      // PDFs render in the browser's own native viewer, which has its own
-      // scroll and zoom. We just make the iframe fill the pane exactly so
-      // there's only ONE scrollbar (the PDF viewer's), not two.
       frameWrap.classList.add('pdf-mode');
-      const url = URL.createObjectURL(file);
       const iframe = document.createElement('iframe');
       iframe.className = 'doc-frame pdf-frame';
-      iframe.src = url;
+      iframe.src = dataUrl;
       frameWrap.appendChild(iframe);
       mediaEl = iframe;
-      // Hide our zoom controls for PDFs since the native viewer has its own.
       zoomInBtn.style.display = 'none';
       zoomOutBtn.style.display = 'none';
       zoomLabel.textContent = 'Native zoom';
@@ -1061,7 +1060,6 @@ function initDocTool(root) {
       mediaType = 'image';
       zoomInBtn.style.display = '';
       zoomOutBtn.style.display = '';
-      const url = URL.createObjectURL(file);
       const img = document.createElement('img');
       img.className = 'doc-image';
       img.style.width = 'auto';
@@ -1071,18 +1069,41 @@ function initDocTool(root) {
       img.onload = () => {
         naturalW = img.naturalWidth;
         naturalH = img.naturalHeight;
-        // Fit the image inside the visible frame area on load, accounting for
-        // real natural pixel dimensions (scans/photos are often 3000px+ wide).
-        const padding = 32; // doc-frame-wrap has 16px padding each side
+        const padding = 32;
         const availW = frameWrap.clientWidth - padding;
         const availH = frameWrap.clientHeight - padding;
         const fitScale = Math.min(availW / naturalW, availH / naturalH, 1);
         zoom = Math.max(0.05, fitScale);
         applyZoom();
       };
-      img.src = url;
+      img.src = dataUrl;
     }
+  }
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if(!file) return;
+    // Convert to base64 data URL so we can store it in state
+    const reader = new FileReader();
+    reader.onload = e => loadFromDataUrl(e.target.result, file.name);
+    reader.readAsDataURL(file);
   });
+
+  // State hooks — include the file data so it survives reload
+  root._getState = () => ({
+    fileName: savedFileName,
+    fileData: savedDataUrl, // base64 data URL — may be large for PDFs
+    zoom,
+  });
+  root._setState = (s) => {
+    if(s && s.fileData && s.fileName) {
+      loadFromDataUrl(s.fileData, s.fileName);
+      // Restore zoom after a tick so the element exists
+      if(s.zoom && s.zoom !== 1) {
+        setTimeout(() => { zoom = s.zoom; applyZoom(); }, 100);
+      }
+    }
+  };
 }
 
 function init_adventure(root) { initDocTool(root); }
@@ -1102,6 +1123,7 @@ function init_combat(root) {
 
   const roundNumEl = root.querySelector('.cbt-round-num');
 
+  // Update both the live element and any clones in pane headers
   function updateRoundDisplay() {
     document.querySelectorAll('.cbt-round-num').forEach(el => {
       el.textContent = round;
@@ -1414,29 +1436,38 @@ function init_combat(root) {
     });
   }
 
-  root.querySelector('.cbt-add-tracker').addEventListener('click', () => {
-    trackers.push({ id: nextTrackerId++, name: '', kind: 'rounds', rounds: 1, totalSeconds: 60, remainingSeconds: 60, running: false });
-    renderTrackers();
-  });
-  root.querySelector('.cbt-add-npc').addEventListener('click', () => {
-    npcs.push({ id: nextNpcId++, name: '', tag: '', hpCurrent: 10, hpMax: 10 });
-    renderNpcs();
-  });
-  root.querySelector('.cbt-next-round').addEventListener('click', () => {
-    round += 1;
-    updateRoundDisplay();
-    trackers.forEach(t => { if(t.kind === 'rounds') t.rounds = Math.max(0, t.rounds - 1); });
-    renderTrackers();
-  });
-  root.querySelector('.cbt-reset').addEventListener('click', () => {
-    if(!confirm('Reset round counter and clear all trackers and NPCs?')) return;
-    round = 1;
-    trackers = [];
-    npcs = [];
-    updateRoundDisplay();
-    renderTrackers();
-    renderNpcs();
-  });
+  // Use document-level delegation so clicks on toolbar-tpl OR pane-header clones
+  // both trigger correctly — no proxy chain needed.
+  function onCbtClick(e) {
+    // Only handle clicks that belong to THIS combat instance (its pane or toolbar slot)
+    const btn = e.target.closest('.cbt-next-round, .cbt-reset, .cbt-add-tracker, .cbt-add-npc');
+    if(!btn) return;
+    // Confirm the click is visually associated with this instance by checking
+    // whether the pane containing this root is currently active (or the toolbar slot)
+    const paneContent = root.closest('.pane-content');
+    const paneNum = paneContent ? paneContent.id.replace('pane-','').replace('-content','') : null;
+    const toolbarSlot = paneNum ? document.getElementById('pane-' + paneNum + '-toolbar') : null;
+    const inRoot = root.contains(btn) || (toolbarSlot && toolbarSlot.contains(btn));
+    if(!inRoot) return;
+
+    if(btn.classList.contains('cbt-next-round')) {
+      round += 1;
+      updateRoundDisplay();
+      trackers.forEach(t => { if(t.kind === 'rounds') t.rounds = Math.max(0, t.rounds - 1); });
+      renderTrackers();
+    } else if(btn.classList.contains('cbt-reset')) {
+      if(!confirm('Reset round counter and clear all trackers and NPCs?')) return;
+      round = 1; trackers = []; npcs = [];
+      updateRoundDisplay(); renderTrackers(); renderNpcs();
+    } else if(btn.classList.contains('cbt-add-tracker')) {
+      trackers.push({ id: nextTrackerId++, name: '', kind: 'rounds', rounds: 1, totalSeconds: 60, remainingSeconds: 60, running: false });
+      renderTrackers();
+    } else if(btn.classList.contains('cbt-add-npc')) {
+      npcs.push({ id: nextNpcId++, name: '', tag: '', hpCurrent: 10, hpMax: 10 });
+      renderNpcs();
+    }
+  }
+  document.addEventListener('click', onCbtClick);
 
   renderTrackers();
   renderNpcs();
@@ -1723,6 +1754,46 @@ function loadSession(input) {
   };
   reader.readAsText(file);
 }
+
+// ── Server persistence hooks (used by the injected shim when running on Dungeon Desk) ──
+// __gmScreenGetState: returns the full session state as a plain object
+window.__gmScreenGetState = function() {
+  const data = { version: 1, paneTools, splitMode, tools: {} };
+  Object.entries(instances).forEach(([type, node]) => {
+    if(node._getState) try { data.tools[type] = node._getState(); } catch(e) {}
+  });
+  return data;
+};
+
+// __gmScreenSetState: restores a previously saved state object
+window.__gmScreenSetState = function(data) {
+  if(!data || !data.version) return;
+  if(data.splitMode) setSplit(data.splitMode);
+  if(data.paneTools) {
+    setPaneTool(1, data.paneTools[1] || 'adventure');
+    setPaneTool(2, data.paneTools[2] || 'combat');
+  }
+  if(data.tools) {
+    Object.entries(data.tools).forEach(([type, state]) => {
+      const node = getOrCreateInstance(type);
+      if(node._setState) try { node._setState(state); } catch(e) {}
+    });
+  }
+  renderPane(1);
+  if(data.splitMode === 2) renderPane(2);
+};
+
+// Trigger auto-save whenever Next Round is clicked or notes are edited
+document.addEventListener('click', function(e) {
+  if(e.target.closest('.cbt-next-round, .cbt-reset, .cbt-add-tracker, .cbt-add-npc, .nts-clear')) {
+    if(window.__ddScheduleSave) setTimeout(window.__ddScheduleSave, 300);
+  }
+});
+document.addEventListener('input', function(e) {
+  if(e.target.closest('.nts-editor, .tracker-name-input, .npc-name-input, .npc-hp-input, .npc-seg-count-input')) {
+    if(window.__ddScheduleSave) setTimeout(window.__ddScheduleSave, 1000);
+  }
+});
 </script>
 </body>
 </html>
