@@ -1083,25 +1083,34 @@ function initDocTool(root) {
   fileInput.addEventListener('change', () => {
     const file = fileInput.files[0];
     if(!file) return;
-    // Convert to base64 data URL so we can store it in state
+    // Warn immediately if the file is too large to persist across reloads
+    const MAX_SAVE_MB = 3.75; // ~5MB as base64 after encoding
+    if(file.size > MAX_SAVE_MB * 1024 * 1024) {
+      filenameEl.textContent = file.name + ' ⚠ too large to auto-save (will need reloading)';
+    }
     const reader = new FileReader();
     reader.onload = e => loadFromDataUrl(e.target.result, file.name);
     reader.readAsDataURL(file);
   });
 
-  // State hooks — include the file data so it survives reload
+  // State hooks — save file data as base64 for files under 5MB (encoded).
+  // Larger files (like big PDFs) must be reloaded each session.
+  const MAX_FILE_BYTES = 5 * 1024 * 1024; // 5MB base64 limit
+
   root._getState = () => ({
     fileName: savedFileName,
-    fileData: savedDataUrl, // base64 data URL — may be large for PDFs
+    fileData: savedDataUrl && savedDataUrl.length < MAX_FILE_BYTES ? savedDataUrl : null,
+    fileTooLarge: savedDataUrl && savedDataUrl.length >= MAX_FILE_BYTES ? savedFileName : null,
     zoom,
   });
   root._setState = (s) => {
     if(s && s.fileData && s.fileName) {
       loadFromDataUrl(s.fileData, s.fileName);
-      // Restore zoom after a tick so the element exists
       if(s.zoom && s.zoom !== 1) {
         setTimeout(() => { zoom = s.zoom; applyZoom(); }, 100);
       }
+    } else if(s && s.fileTooLarge) {
+      filenameEl.textContent = s.fileTooLarge + ' (too large to auto-restore — reload manually)';
     }
   };
 }
