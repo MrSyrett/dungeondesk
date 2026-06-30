@@ -28,7 +28,8 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow-x: hidden;
+  padding: 40px 0;
 }
 
 /* subtle noise */
@@ -163,6 +164,9 @@ body::after {
 }
 .system.shadowdark .tool-btn:hover { border-color: var(--gold); box-shadow: 0 0 16px rgba(200,160,32,0.08); }
 .system.dcc        .tool-btn:hover { border-color: var(--red);  box-shadow: 0 0 16px rgba(184,32,24,0.1); }
+.system.gm .system-name { color: var(--mid); }
+.system.gm .system-name::after { background: linear-gradient(90deg, var(--mid), transparent); }
+.system.gm .tool-btn:hover { border-color: var(--mid); box-shadow: 0 0 16px rgba(120,120,120,0.1); }
 
 .tool-btn-arrow {
   font-size: 16px;
@@ -219,7 +223,7 @@ body::after {
     <!-- SHADOWDARK -->
     <div class="system shadowdark">
       <div class="system-name">Shadowdark RPG</div>
-      <a class="tool-btn" href="sd_character_sheet.html">
+      <a class="tool-btn" href="Shadowdark_Character_Sheet.html">
         Character Sheet
         <span class="tool-btn-arrow">→</span>
       </a>
@@ -238,12 +242,23 @@ body::after {
         Character Sheet
         <span class="tool-btn-arrow">→</span>
       </a>
-      <a class="tool-btn" href="dcc_Session_Prep_Builder.html">
+      <a class="tool-btn" href="Session_Prep_Builder.html">
         Session Prep
         <span class="tool-btn-arrow">→</span>
       </a>
     </div>
 
+  </div>
+
+  <div class="divider" style="margin-top:40px;margin-bottom:28px;"></div>
+
+  <!-- GM SCREEN — shared tool, sits below both systems -->
+  <div class="system gm" style="width:100%;text-align:center;">
+    <div class="system-name" style="justify-content:center;">GM Tools</div>
+    <a class="tool-btn" href="gm_screen.html" style="max-width:360px;margin:0 auto;">
+      GM Screen
+      <span class="tool-btn-arrow">→</span>
+    </a>
   </div>
 
   <p class="footer">All tools run locally · No data leaves your browser</p>
