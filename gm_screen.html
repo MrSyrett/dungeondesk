@@ -515,35 +515,7 @@ input[type="number"] { -moz-appearance: textfield; }
 .nts-editor:empty::before { content: attr(data-placeholder); color: var(--muted); }
 .nts-editor p { margin: 0 0 8px; min-height: 1em; }
 
-/* ═══ BROWSER TOOL ═══ */
-.brw-url-input { flex: 1; min-width: 160px; max-width: 420px; }
-.brw-quicklinks {
-  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
-  padding: 6px 14px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
-}
-.brw-quicklinks-label {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 700;
-  letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-right: 2px;
-}
-.brw-quicklink {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
-  padding: 4px 9px; background: var(--panel-2); border: 1px solid var(--border); color: var(--mid); cursor: pointer;
-}
-.brw-quicklink:hover { color: var(--white); border-color: var(--mid); }
 
-.brw-body { flex: 1; min-height: 0; display: flex; background: #2a2a2a; position: relative; overflow: hidden; }
-.brw-empty, .brw-blocked {
-  flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; padding: 30px; text-align: center;
-}
-.brw-empty-icon, .brw-blocked-icon { font-size: 40px; opacity: 0.4; }
-.brw-empty-title, .brw-blocked-title {
-  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px;
-  letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid);
-}
-.brw-empty-sub, .brw-blocked-sub { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; color: var(--muted); max-width: 360px; line-height: 1.5; }
-.brw-blocked-url { color: var(--gold); }
-.brw-frame-wrap { flex: 1; display: flex; }
-.brw-frame { flex: 1; border: none; background: white; width: 100%; height: 100%; }
 
 /* ═══ MOBILE ═══ */
 @media (max-width: 760px) {
@@ -559,9 +531,6 @@ input[type="number"] { -moz-appearance: textfield; }
 
   .toolrow { padding: 8px 10px; gap: 8px; }
   .doc-filename { max-width: 120px; font-size: 10px; }
-  .brw-url-input { min-width: 0; max-width: none; width: 100%; order: 10; }
-  .brw-quicklinks { padding: 6px 10px; }
-  .brw-quicklink { font-size: 9px; padding: 4px 7px; }
   .btn { font-size: 10px; padding: 7px 10px; min-height: 36px; }
   .btn.small { padding: 6px 8px; min-height: 32px; }
 
@@ -607,7 +576,6 @@ input[type="number"] { -moz-appearance: textfield; }
         <option value="maps">🗺 Maps</option>
         <option value="combat">⚔ Combat &amp; Trackers</option>
         <option value="notes">✎ Notes</option>
-        <option value="browser">🌐 Browser</option>
       </select>
       <div class="pane-toolbar-slot" id="pane-1-toolbar"></div>
     </div>
@@ -621,7 +589,6 @@ input[type="number"] { -moz-appearance: textfield; }
         <option value="maps">🗺 Maps</option>
         <option value="combat" selected>⚔ Combat &amp; Trackers</option>
         <option value="notes">✎ Notes</option>
-        <option value="browser">🌐 Browser</option>
       </select>
       <div class="pane-toolbar-slot" id="pane-2-toolbar"></div>
     </div>
@@ -742,39 +709,6 @@ Things players did, decisions made, NPCs met, loot found, plot threads to follow
   </div>
 </template>
 
-<template id="tpl-browser">
-  <div class="tool-instance brw-tool" data-tool="browser">
-    <div class="toolbar-tpl" style="display:none">
-      <input type="text" class="brw-url-input" placeholder="Enter a URL, e.g. tabletopaudio.com">
-      <button class="btn primary small brw-go">Go</button>
-      <button class="btn small ghost brw-open-tab" style="display:none;">Open in New Tab ↗</button>
-      <div class="toolbar-spacer"></div>
-      <button class="btn small ghost brw-clear" style="display:none;">Clear</button>
-    </div>
-    <div class="brw-quicklinks">
-      <span class="brw-quicklinks-label">Quick links:</span>
-      <button class="brw-quicklink" data-url="https://tabletopaudio.com">Tabletop Audio</button>
-      <button class="brw-quicklink" data-url="https://www.dndbeyond.com">D&amp;D Beyond</button>
-      <button class="brw-quicklink" data-url="https://shadowdarklings.net/#!">Shadowdarklings</button>
-    </div>
-    <div class="brw-body">
-      <div class="brw-empty">
-        <div class="brw-empty-icon">🌐</div>
-        <div class="brw-empty-title">No Page Loaded</div>
-        <div class="brw-empty-sub">Enter a URL above or pick a quick link to try loading a page here</div>
-      </div>
-      <div class="brw-frame-wrap" style="display:none;">
-        <iframe class="brw-frame"></iframe>
-      </div>
-      <div class="brw-blocked" style="display:none;">
-        <div class="brw-blocked-icon">🚫</div>
-        <div class="brw-blocked-title">This Site Can't Be Embedded Here</div>
-        <div class="brw-blocked-sub">Many sites block being shown inside another page for security reasons. Open it in a new tab instead — it'll sit right alongside this screen.</div>
-        <button class="btn primary brw-blocked-open">Open <span class="brw-blocked-url"></span> in New Tab ↗</button>
-      </div>
-    </div>
-  </div>
-</template>
 
 <script>
 // ══════════════════════════════════════════
@@ -784,7 +718,7 @@ Things players did, decisions made, NPCs met, loot found, plot threads to follow
 // This is what makes loaded files / typed content persist.
 // ══════════════════════════════════════════
 
-const TOOL_TYPES = ['adventure', 'maps', 'combat', 'notes', 'browser'];
+const TOOL_TYPES = ['adventure', 'maps', 'combat', 'notes'];
 const instancePool = document.createElement('div');
 instancePool.style.cssText = 'position:fixed; top:0; left:-9999px; width:1px; height:1px; overflow:hidden;';
 document.body.appendChild(instancePool);
@@ -869,10 +803,6 @@ function syncToolbar(slot, toolNode) {
     ['.nts-export', '.nts-export'],
     ['.nts-clear',  '.nts-clear'],
     ['.fmt-btn',    '.fmt-btn'],       // handled in bulk below
-    // browser
-    ['.brw-go',       '.brw-go'],
-    ['.brw-open-tab', '.brw-open-tab'],
-    ['.brw-clear',    '.brw-clear'],
   ];
 
   pairs.forEach(([cloneSelector, liveSelector]) => {
@@ -938,27 +868,6 @@ function syncToolbar(slot, toolNode) {
         });
       });
     }
-  }
-
-  // Browser URL input: two-way sync
-  const cloneUrlInput = slot.querySelector('.brw-url-input');
-  const liveUrlInput = toolNode.querySelector('.brw-url-input');
-  if(cloneUrlInput && liveUrlInput) {
-    cloneUrlInput.value = liveUrlInput.value;
-    const liveGo = toolNode.querySelector('.brw-go');
-    cloneUrlInput.addEventListener('input', () => { liveUrlInput.value = cloneUrlInput.value; });
-    cloneUrlInput.addEventListener('keydown', e => {
-      if(e.key === 'Enter') { liveUrlInput.value = cloneUrlInput.value; if(liveGo) liveGo.click(); }
-    });
-    // Mirror open-tab and clear visibility changes
-    const cloneOpenTab = slot.querySelector('.brw-open-tab');
-    const cloneClear = slot.querySelector('.brw-clear');
-    const liveOpenTab = toolNode.querySelector('.brw-open-tab');
-    const liveClearBtn = toolNode.querySelector('.brw-clear');
-    if(liveGo) liveGo.addEventListener('click', () => setTimeout(() => {
-      if(cloneOpenTab && liveOpenTab) cloneOpenTab.style.display = liveOpenTab.style.display;
-      if(cloneClear && liveClearBtn) cloneClear.style.display = liveClearBtn.style.display;
-    }, 100));
   }
 
   // Notes saved indicator: mirror via MutationObserver
@@ -1567,128 +1476,6 @@ function init_notes(root) {
 }
 </script>
 
-<script>
-// ══════════════════════════════════════════
-// BROWSER TOOL
-// Most sites block iframe embedding via X-Frame-Options / CSP — that's
-// enforced by the target site's own server and can't be bypassed from here.
-// We attempt the embed, detect the common blocked-blank-frame case, and
-// always offer a one-click "open in a real tab" fallback either way.
-// ══════════════════════════════════════════
-function init_browser(root) {
-  const urlInput = root.querySelector('.brw-url-input');
-  const goBtn = root.querySelector('.brw-go');
-  const openTabBtn = root.querySelector('.brw-open-tab');
-  const clearBtn = root.querySelector('.brw-clear');
-  const quicklinks = root.querySelectorAll('.brw-quicklink');
-  const emptyEl = root.querySelector('.brw-empty');
-  const frameWrap = root.querySelector('.brw-frame-wrap');
-  const frame = root.querySelector('.brw-frame');
-  const blockedEl = root.querySelector('.brw-blocked');
-  const blockedUrlEl = root.querySelector('.brw-blocked-url');
-  const blockedOpenBtn = root.querySelector('.brw-blocked-open');
-
-  let currentUrl = '';
-
-  function normalizeUrl(raw) {
-    let u = raw.trim();
-    if(!u) return '';
-    if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
-    return u;
-  }
-
-  function showBlocked(url) {
-    frameWrap.style.display = 'none';
-    blockedEl.style.display = 'flex';
-    emptyEl.style.display = 'none';
-    blockedUrlEl.textContent = new URL(url).hostname;
-  }
-
-  function showFrame() {
-    frameWrap.style.display = 'flex';
-    blockedEl.style.display = 'none';
-    emptyEl.style.display = 'none';
-  }
-
-  function loadUrl(rawUrl) {
-    const url = normalizeUrl(rawUrl);
-    if(!url) return;
-    currentUrl = url;
-    urlInput.value = url;
-    openTabBtn.style.display = 'inline-flex';
-    clearBtn.style.display = 'inline-flex';
-    showFrame();
-
-    // Detect the common "blocked, stayed blank" case: a same-origin check on
-    // the iframe right after load throws/returns nothing useful when the
-    // target refused to load due to X-Frame-Options — we can't read cross-
-    // origin content directly, so instead we give it a moment to load and
-    // watch for the frame staying effectively empty (about:blank navigation
-    // back, which browsers do when framing is refused).
-    let resolved = false;
-    const checkTimer = setTimeout(() => {
-      if(resolved) return;
-      try {
-        // If still on about:blank after the timeout, the load was refused.
-        if(frame.contentWindow && frame.contentWindow.location.href === 'about:blank') {
-          resolved = true;
-          showBlocked(url);
-        }
-      } catch(e) {
-        // Cross-origin access throwing here actually means a page DID load
-        // (just not one we can inspect) — that's the success case, leave as is.
-      }
-    }, 1800);
-
-    frame.onload = () => {
-      resolved = true;
-      clearTimeout(checkTimer);
-      try {
-        // Some browsers navigate a refused frame to about:blank synchronously.
-        if(frame.contentWindow && frame.contentWindow.location.href === 'about:blank' && url !== 'about:blank') {
-          showBlocked(url);
-        }
-      } catch(e) {
-        // Cross-origin — page loaded successfully, just can't be inspected. Fine.
-      }
-    };
-
-    frame.src = url;
-  }
-
-  goBtn.addEventListener('click', () => loadUrl(urlInput.value));
-  urlInput.addEventListener('keydown', e => { if(e.key === 'Enter') loadUrl(urlInput.value); });
-
-  quicklinks.forEach(btn => {
-    btn.addEventListener('click', () => {
-      if(btn.dataset.newtab) {
-        window.open(btn.dataset.url, '_blank', 'noopener');
-      } else {
-        loadUrl(btn.dataset.url);
-      }
-    });
-  });
-
-  openTabBtn.addEventListener('click', () => {
-    if(currentUrl) window.open(currentUrl, '_blank', 'noopener');
-  });
-  blockedOpenBtn.addEventListener('click', () => {
-    if(currentUrl) window.open(currentUrl, '_blank', 'noopener');
-  });
-
-  clearBtn.addEventListener('click', () => {
-    frame.src = 'about:blank';
-    frameWrap.style.display = 'none';
-    blockedEl.style.display = 'none';
-    emptyEl.style.display = 'flex';
-    openTabBtn.style.display = 'none';
-    clearBtn.style.display = 'none';
-    urlInput.value = '';
-    currentUrl = '';
-  });
-
-}
-</script>
 
 <script>
 // All init_* functions are now defined — safe to render the first pane.
