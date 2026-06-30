@@ -1619,7 +1619,8 @@ function savePDF() {
 
   const pages=[...document.querySelectorAll('.preview-area .page')];
   const filename=(state.title||'adventure').replace(/[^a-z0-9]/gi,'_').toLowerCase();
-  const opts={scale:1.5,useCORS:true,allowTaint:true,backgroundColor:null,logging:false};
+  const dpr=window.devicePixelRatio||1;
+  const opts={scale:1.5/dpr,useCORS:true,allowTaint:true,backgroundColor:null,logging:false,windowWidth:816,windowHeight:1056};
 
   Promise.all(pages.map(p=>html2canvas(p,opts))).then(canvases=>{
     const {jsPDF}=window.jspdf;
