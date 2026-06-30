@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Dungeon Desk — GM Screen</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Barlow+Condensed:wght@400;500;600;700;900&family=Barlow:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --black: #070707;
+  --dark: #111;
+  --panel: #161616;
+  --panel-2: #1c1c1c;
+  --border: #262626;
+  --muted: #4a4a4a;
+  --mid: #888;
+  --light: #ccc;
+  --white: #ede9e1;
+  --red: #b82018;
+  --red-light: #d63a30;
+  --gold: #c8a020;
+  --green: #2d7a2d;
+  --green-light: #4caf50;
+  --amber: #c08020;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: 'Barlow', sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='250' height='250' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+
+/* ═══ TOP BAR ═══ */
+.topbar {
+  position: relative; z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--dark);
+  border-bottom: 2px solid var(--border);
+  flex-shrink: 0;
+  padding: 0 16px;
+  height: 56px;
+}
+
+.brand {
+  font-family: 'Cinzel', serif;
+  font-weight: 900;
+  font-size: 17px;
+  letter-spacing: 0.04em;
+  color: var(--white);
+  white-space: nowrap;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.brand-tag {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 9px;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.session-controls { display: flex; align-items: center; gap: 4px; margin-left: 8px; padding-left: 12px; border-left: 1px solid var(--border); }
+
+/* Topbar spacer */
+.topbar-spacer { flex: 1; }
+
+/* Pane header — sits at top of each pane: dropdown left, action buttons right */
+.pane-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--panel-2);
+  border-bottom: 2px solid var(--red);
+  flex-shrink: 0;
+}
+.pane-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+.pane-select {
+  background: var(--panel-2);
+  border: none;
+  color: var(--white);
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  padding: 4px 6px;
+  outline: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.pane-select option { background: var(--panel-2); color: var(--white); }
+
+/* Split view toggle */
+.view-controls { display: flex; align-items: center; gap: 6px; }
+.split-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-right: 4px;
+}
+.split-btn {
+  width: 32px; height: 32px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--mid);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  transition: all 0.15s;
+}
+.split-btn:hover { color: var(--white); border-color: var(--muted); }
+.split-btn.active { background: var(--red); border-color: var(--red); color: white; }
+
+/* ═══ MAIN AREA ═══ */
+.main-area {
+  position: relative; z-index: 1;
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.pane {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-right: 2px solid var(--border);
+}
+.pane:last-child { border-right: none; }
+
+
+
+.pane-content {
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+  display: flex;
+  position: relative;
+}
+/* Each tool instance fills the pane-content when active */
+.tool-instance { display: none; flex: 1; min-width: 0; flex-direction: column; height: 100%; }
+.tool-instance.active { display: flex; }
+
+/* ═══ SHARED ═══ */
+.bar-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 900;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--white);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bar-title::before { content: ''; width: 18px; height: 2px; background: var(--red); }
+
+.btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 7px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--light);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.btn:hover { border-color: var(--mid); color: var(--white); }
+.btn.primary { background: var(--red); border-color: var(--red); color: white; }
+.btn.primary:hover { background: var(--red-light); border-color: var(--red-light); }
+.btn.ghost { background: transparent; }
+.btn.small { padding: 4px 9px; font-size: 9px; }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn:disabled:hover { border-color: var(--border); color: var(--light); }
+
+input[type="text"], input[type="number"], textarea, select {
+  font-family: 'Barlow', sans-serif;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--white);
+  outline: none;
+  padding: 7px 9px;
+  transition: border-color 0.15s;
+}
+input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus { border-color: var(--mid); }
+input::placeholder, textarea::placeholder { color: var(--muted); }
+
+/* Remove number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+input[type="number"] { -moz-appearance: textfield; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--black); }
+::-webkit-scrollbar-thumb { background: #2a2a2a; }
+::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
+
+.toolbar-spacer { flex: 1; }
+.toolrow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: var(--panel-2);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* ═══ ADVENTURE / MAPS (document viewer) ═══ */
+.doc-filename {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px;
+  color: var(--mid);
+  letter-spacing: 0.03em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 240px;
+}
+.doc-controls { display: flex; align-items: center; gap: 6px; }
+.doc-zoom-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px;
+  color: var(--light);
+  min-width: 38px;
+  text-align: center;
+}
+.doc-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  background: #2a2a2a;
+  position: relative;
+  overflow: hidden;
+}
+.doc-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+}
+.doc-empty-icon { font-size: 40px; opacity: 0.3; }
+.doc-empty-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--mid);
+}
+.doc-empty-sub { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; color: var(--muted); }
+.doc-frame-wrap {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 16px;
+}
+.doc-frame-wrap.pdf-mode {
+  padding: 0;
+  overflow: hidden;
+  align-items: stretch;
+}
+.doc-frame {
+  border: none;
+  background: white;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  transform-origin: top center;
+  flex-shrink: 0;
+}
+.doc-frame.pdf-frame {
+  width: 100%;
+  height: 100%;
+  box-shadow: none;
+  flex-shrink: 1;
+}
+.doc-image {
+  max-width: none;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  transform-origin: top center;
+  flex-shrink: 0;
+}
+
+/* ═══ COMBAT TOOL ═══ */
+.cbt-round-display {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--light);
+}
+.cbt-round-num { font-family: 'Share Tech Mono', monospace; color: var(--gold); font-size: 14px; }
+
+.cbt-body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+.cbt-col { flex: 1; display: flex; flex-direction: column; min-width: 0; border-right: 1px solid var(--border); overflow: hidden; }
+.cbt-col:last-child { border-right: none; }
+.cbt-col-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.cbt-col-title {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--mid);
+}
+.cbt-tracker-list, .cbt-npc-list { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+.cbt-empty { display: none; flex: 1; align-items: center; justify-content: center; flex-direction: column; gap: 4px; padding: 30px; }
+.cbt-empty.show { display: flex; }
+.cbt-empty-text { font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.cbt-empty-sub { font-size: 11px; color: var(--muted); text-align: center; max-width: 220px; }
+
+/* Tracker card */
+.tracker-card { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--gold); padding: 10px 12px; }
+.tracker-card.timer-type { border-left-color: #6a9fc8; }
+.tracker-card.expired { border-left-color: var(--red); opacity: 0.6; }
+.tracker-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.tracker-name-input {
+  flex: 1; background: transparent; border: none; color: var(--white);
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; padding: 2px 0;
+}
+.tracker-name-input:focus { border-bottom: 1px solid var(--mid); }
+.tracker-type-toggle {
+  display: flex; gap: 0; flex-shrink: 0; border: 1px solid var(--border);
+}
+.tracker-type-btn {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; padding: 4px 7px; background: var(--panel-2); border: none; color: var(--muted); cursor: pointer;
+}
+.tracker-type-btn.active.rounds-active { background: var(--gold); color: black; }
+.tracker-type-btn.active.timer-active { background: #6a9fc8; color: black; }
+.tracker-del { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 2px 4px; flex-shrink: 0; }
+.tracker-del:hover { color: var(--red-light); }
+
+.tracker-bottom { display: flex; align-items: center; gap: 8px; }
+.tracker-adjust-btn {
+  width: 26px; height: 26px; background: var(--panel-2); border: 1px solid var(--border); color: var(--light);
+  cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.tracker-adjust-btn:hover { border-color: var(--mid); color: white; }
+.tracker-rounds-display { display: flex; flex-direction: column; align-items: center; min-width: 32px; }
+.tracker-rounds { font-family: 'Share Tech Mono', monospace; font-size: 22px; font-weight: 700; color: var(--gold); }
+.tracker-rounds.zero { color: var(--red-light); }
+.tracker-label { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.tracker-expired-tag {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--red-light); margin-left: auto;
+}
+
+/* Timer-specific */
+.timer-display { font-family: 'Share Tech Mono', monospace; font-size: 20px; font-weight: 700; color: #6a9fc8; min-width: 64px; text-align: center; }
+.timer-display.zero { color: var(--red-light); }
+.timer-set-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.timer-set-input {
+  width: 50px; text-align: center; font-family: 'Share Tech Mono', monospace; font-size: 12px; padding: 4px 2px;
+}
+.timer-set-label { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.timer-controls { display: flex; gap: 4px; margin-left: auto; }
+
+/* NPC card */
+.npc-card { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--red); padding: 10px 12px; }
+.npc-card.defeated { opacity: 0.5; border-left-color: var(--muted); }
+.npc-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.npc-name-input {
+  flex: 1; background: transparent; border: none; color: var(--white);
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; padding: 2px 0;
+}
+.npc-name-input:focus { border-bottom: 1px solid var(--mid); }
+.npc-tag-input { width: 70px; background: transparent; border: none; border-bottom: 1px dotted var(--border); color: var(--mid); font-size: 10px; text-align: right; padding: 2px 0; }
+.npc-del { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 2px 4px; flex-shrink: 0; }
+.npc-del:hover { color: var(--red-light); }
+
+.npc-hp-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.npc-hp-input { width: 48px; text-align: center; font-family: 'Share Tech Mono', monospace; font-size: 14px; padding: 5px 2px; }
+.npc-hp-slash { color: var(--muted); font-size: 13px; }
+.npc-hp-adjust { display: flex; gap: 3px; margin-left: auto; }
+.npc-hp-btn {
+  width: 26px; height: 26px; background: var(--panel-2); border: 1px solid var(--border); color: var(--light);
+  cursor: pointer; font-size: 11px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.npc-hp-btn:hover { border-color: var(--mid); color: white; }
+.npc-hp-btn.dmg:hover { border-color: var(--red); color: var(--red-light); }
+.npc-hp-btn.heal:hover { border-color: var(--green); color: var(--green-light); }
+
+.npc-hp-bar-track { width: 100%; height: 8px; background: var(--panel-2); border: 1px solid var(--border); overflow: hidden; }
+.npc-hp-bar-fill { height: 100%; transition: width 0.2s ease, background 0.2s ease; }
+.npc-defeated-tag { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+
+/* Status checklist — shared by tracker and NPC cards */
+.status-list { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+.status-row { display: flex; align-items: center; gap: 6px; }
+.status-check { width: 15px; height: 15px; accent-color: var(--gold); flex-shrink: 0; cursor: pointer; }
+.status-text {
+  flex: 1; background: transparent; border: none; border-bottom: 1px dotted var(--border);
+  color: var(--light); font-size: 11px; padding: 3px 2px;
+}
+.status-text:focus { border-bottom-color: var(--mid); }
+.status-row:has(.status-check:checked) .status-text { color: var(--muted); text-decoration: line-through; }
+.status-del { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 11px; padding: 2px 4px; flex-shrink: 0; }
+.status-del:hover { color: var(--red-light); }
+.status-add { margin-top: 6px; }
+
+/* NPC mode toggle */
+.npc-mode-toggle { display: flex; gap: 0; flex-shrink: 0; border: 1px solid var(--border); }
+.npc-mode-btn {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 8px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; padding: 4px 7px; background: var(--panel-2); border: none; color: var(--muted); cursor: pointer;
+}
+.npc-mode-btn.active.std-active { background: var(--green); color: white; }
+.npc-mode-btn.active.dcc-active { background: var(--amber); color: black; }
+
+/* DCC segment setup row */
+.npc-seg-setup { display: flex; align-items: center; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; }
+.npc-seg-setup-label { font-family: 'Barlow Condensed', sans-serif; font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.npc-seg-count-input, .npc-seg-hp-input { width: 44px; text-align: center; font-family: 'Share Tech Mono', monospace; font-size: 12px; padding: 4px 2px; }
+
+/* DCC segments — click to toggle alive/dead */
+.npc-seg-row { display: flex; gap: 4px; flex-wrap: wrap; }
+.npc-seg {
+  flex: 1; min-width: 36px; height: 32px;
+  background: var(--seg-color, #4caf50);
+  border: 1px solid rgba(0,0,0,0.3);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 0.15s, filter 0.15s;
+}
+.npc-seg:hover { filter: brightness(1.15); }
+.npc-seg.dead { background: #2a2a2a !important; border-color: var(--border); }
+.npc-seg-num {
+  font-family: 'Share Tech Mono', monospace; font-size: 12px; font-weight: 700;
+  color: rgba(0,0,0,0.55);
+}
+.npc-seg.dead .npc-seg-num { color: var(--muted); }
+
+@media (max-width: 900px) {
+  .cbt-body { flex-direction: column; overflow-y: auto; }
+  .cbt-col { border-right: none; border-bottom: 1px solid var(--border); flex: none; }
+}
+
+/* ═══ NOTES TOOL ═══ */
+.nts-saved-indicator { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); opacity: 0; transition: opacity 0.3s; }
+.nts-saved-indicator.show { opacity: 1; color: var(--green-light); }
+
+.nts-format-row { display: flex; align-items: center; gap: 4px; }
+.fmt-btn {
+  width: 30px; height: 30px; background: var(--panel); border: 1px solid var(--border); color: var(--light);
+  cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center;
+}
+.fmt-btn:hover { border-color: var(--mid); color: white; }
+.fmt-btn.h1 { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 13px; }
+.fmt-btn.h2 { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; }
+.fmt-btn.bold { font-weight: 900; }
+.fmt-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+
+.nts-body { flex: 1; display: flex; padding: 16px; background: var(--black); min-height: 0; }
+.nts-editor {
+  flex: 1;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--white);
+  font-family: 'Barlow', sans-serif;
+  font-size: 14px;
+  line-height: 1.7;
+  padding: 16px;
+  overflow-y: auto;
+  outline: none;
+}
+.nts-editor h1 { font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700; margin: 14px 0 8px; color: var(--gold); }
+.nts-editor h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 12px 0 6px; color: var(--light); border-bottom: 1px solid var(--border); padding-bottom: 3px; }
+.nts-editor b, .nts-editor strong { color: var(--white); }
+.nts-editor:empty::before { content: attr(data-placeholder); color: var(--muted); }
+.nts-editor p { margin: 0 0 8px; min-height: 1em; }
+
+/* ═══ BROWSER TOOL ═══ */
+.brw-url-input { flex: 1; min-width: 160px; max-width: 420px; }
+.brw-quicklinks {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 6px 14px; background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.brw-quicklinks-label {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 9px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-right: 2px;
+}
+.brw-quicklink {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.04em;
+  padding: 4px 9px; background: var(--panel-2); border: 1px solid var(--border); color: var(--mid); cursor: pointer;
+}
+.brw-quicklink:hover { color: var(--white); border-color: var(--mid); }
+
+.brw-body { flex: 1; min-height: 0; display: flex; background: #2a2a2a; position: relative; overflow: hidden; }
+.brw-empty, .brw-blocked {
+  flex: 1; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 10px; padding: 30px; text-align: center;
+}
+.brw-empty-icon, .brw-blocked-icon { font-size: 40px; opacity: 0.4; }
+.brw-empty-title, .brw-blocked-title {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid);
+}
+.brw-empty-sub, .brw-blocked-sub { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; color: var(--muted); max-width: 360px; line-height: 1.5; }
+.brw-blocked-url { color: var(--gold); }
+.brw-frame-wrap { flex: 1; display: flex; }
+.brw-frame { flex: 1; border: none; background: white; width: 100%; height: 100%; }
+
+/* ═══ MOBILE ═══ */
+@media (max-width: 760px) {
+  .topbar { flex-wrap: wrap; height: auto; padding: 10px 12px; gap: 8px; }
+  .brand { font-size: 15px; width: 100%; }
+  .pane-picker { flex: 1; min-width: 0; }
+  .pane-picker-label { display: none; }
+  .pane-select { width: 100%; }
+  .view-controls { margin-left: auto; }
+
+  .main-area { flex-direction: column; }
+  .pane { border-right: none; border-bottom: 2px solid var(--border); }
+
+  .toolrow { padding: 8px 10px; gap: 8px; }
+  .doc-filename { max-width: 120px; font-size: 10px; }
+  .brw-url-input { min-width: 0; max-width: none; width: 100%; order: 10; }
+  .brw-quicklinks { padding: 6px 10px; }
+  .brw-quicklink { font-size: 9px; padding: 4px 7px; }
+  .btn { font-size: 10px; padding: 7px 10px; min-height: 36px; }
+  .btn.small { padding: 6px 8px; min-height: 32px; }
+
+  .cbt-body { flex-direction: column; }
+  .npc-hp-btn, .tracker-adjust-btn { width: 32px; height: 32px; }
+  .npc-hp-input { min-height: 32px; font-size: 14px; }
+  .tracker-name-input, .npc-name-input { font-size: 14px; }
+
+  .nts-body { padding: 10px; }
+  .nts-editor { font-size: 16px; padding: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ TOP BAR ═══ -->
+<div class="topbar">
+  <div class="brand">The Dungeon Desk <span class="brand-tag">GM Screen</span></div>
+
+  <div class="topbar-spacer"></div>
+
+  <div class="session-controls">
+    <button class="btn small ghost" id="save-btn" onclick="saveSession()" title="Save session to file">💾 Save</button>
+    <label class="btn small ghost" title="Load a saved session" style="cursor:pointer;">
+      📂 Load
+      <input type="file" id="load-input" accept=".json" style="display:none;" onchange="loadSession(this)">
+    </label>
+  </div>
+
+  <div class="view-controls">
+    <span class="split-label">View</span>
+    <button class="split-btn active" id="split-1" onclick="setSplit(1)" title="Single view">▮</button>
+    <button class="split-btn" id="split-2" onclick="setSplit(2)" title="Split view">▮▮</button>
+  </div>
+</div>
+
+<!-- ═══ MAIN AREA ═══ -->
+<div class="main-area" id="main-area">
+  <div class="pane" id="pane-1">
+    <div class="pane-header" id="pane-1-header">
+      <select class="pane-select" id="pane-1-select" onchange="setPaneTool(1, this.value)">
+        <option value="adventure">📜 Adventure</option>
+        <option value="maps">🗺 Maps</option>
+        <option value="combat">⚔ Combat &amp; Trackers</option>
+        <option value="notes">✎ Notes</option>
+        <option value="browser">🌐 Browser</option>
+      </select>
+    </div>
+    <div class="pane-content" id="pane-1-content"></div>
+  </div>
+
+  <div class="pane" id="pane-2" style="display:none;">
+    <div class="pane-header" id="pane-2-header">
+      <select class="pane-select pane-2-select" id="pane-2-select" onchange="setPaneTool(2, this.value)">
+        <option value="adventure">📜 Adventure</option>
+        <option value="maps">🗺 Maps</option>
+        <option value="combat" selected>⚔ Combat &amp; Trackers</option>
+        <option value="notes">✎ Notes</option>
+        <option value="browser">🌐 Browser</option>
+      </select>
+    </div>
+    <div class="pane-content" id="pane-2-content"></div>
+  </div>
+</div>
+
+<!-- ═══ TOOL TEMPLATES ═══ -->
+<template id="tpl-adventure">
+  <div class="tool-instance doc-tool" data-tool="adventure">
+    <div class="toolrow">
+      <label class="btn primary small" style="cursor:pointer;">
+        Load File
+        <input type="file" class="doc-file-input" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif" style="display:none;">
+      </label>
+      <span class="doc-filename">No document loaded</span>
+      <div class="toolbar-spacer"></div>
+      <div class="doc-controls" style="display:none;">
+        <button class="btn small doc-zoom-out">−</button>
+        <span class="doc-zoom-label">100%</span>
+        <button class="btn small doc-zoom-in">+</button>
+        <button class="btn small ghost doc-clear">Clear</button>
+      </div>
+    </div>
+    <div class="doc-body">
+      <div class="doc-empty">
+        <div class="doc-empty-icon">📜</div>
+        <div class="doc-empty-title">No Adventure Loaded</div>
+        <div class="doc-empty-sub">Load a PDF or image of your adventure or session prep export</div>
+      </div>
+      <div class="doc-frame-wrap" style="display:none;"></div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-maps">
+  <div class="tool-instance doc-tool" data-tool="maps">
+    <div class="toolrow">
+      <label class="btn primary small" style="cursor:pointer;">
+        Load File
+        <input type="file" class="doc-file-input" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif" style="display:none;">
+      </label>
+      <span class="doc-filename">No map loaded</span>
+      <div class="toolbar-spacer"></div>
+      <div class="doc-controls" style="display:none;">
+        <button class="btn small doc-zoom-out">−</button>
+        <span class="doc-zoom-label">100%</span>
+        <button class="btn small doc-zoom-in">+</button>
+        <button class="btn small ghost doc-clear">Clear</button>
+      </div>
+    </div>
+    <div class="doc-body">
+      <div class="doc-empty">
+        <div class="doc-empty-icon">🗺</div>
+        <div class="doc-empty-title">No Map Loaded</div>
+        <div class="doc-empty-sub">Load a PDF or image of a dungeon map</div>
+      </div>
+      <div class="doc-frame-wrap" style="display:none;"></div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-combat">
+  <div class="tool-instance cbt-tool" data-tool="combat">
+    <div class="toolrow">
+      <button class="btn primary small cbt-next-round">Next Round →</button>
+      <span class="cbt-round-display">Round <span class="cbt-round-num">1</span></span>
+      <div class="toolbar-spacer"></div>
+      <button class="btn small ghost cbt-reset">Reset All</button>
+    </div>
+    <div class="cbt-body">
+      <div class="cbt-col cbt-trackers-col">
+        <div class="cbt-col-header">
+          <span class="cbt-col-title">Round Trackers</span>
+          <button class="btn small primary cbt-add-tracker">+ Tracker</button>
+        </div>
+        <div class="cbt-tracker-list"></div>
+        <div class="cbt-empty cbt-trackers-empty">
+          <div class="cbt-empty-text">No trackers yet</div>
+          <div class="cbt-empty-sub">Add round-based effects or real-time countdown timers</div>
+        </div>
+      </div>
+      <div class="cbt-col cbt-npcs-col">
+        <div class="cbt-col-header">
+          <span class="cbt-col-title">NPCs &amp; Monsters</span>
+          <button class="btn small primary cbt-add-npc">+ NPC</button>
+        </div>
+        <div class="cbt-npc-list"></div>
+        <div class="cbt-empty cbt-npcs-empty">
+          <div class="cbt-empty-text">No combatants yet</div>
+          <div class="cbt-empty-sub">Add monsters and NPCs to track their health</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-notes">
+  <div class="tool-instance nts-tool" data-tool="notes">
+    <div class="toolrow">
+      <div class="nts-format-row">
+        <button class="fmt-btn h1" data-cmd="h1" title="Heading">H1</button>
+        <button class="fmt-btn h2" data-cmd="h2" title="Subheading">H2</button>
+        <button class="fmt-btn bold" data-cmd="bold" title="Bold"><b>B</b></button>
+        <div class="fmt-divider"></div>
+        <button class="fmt-btn" data-cmd="p" title="Normal text">¶</button>
+      </div>
+      <span class="nts-saved-indicator"></span>
+      <div class="toolbar-spacer"></div>
+      <button class="btn small ghost nts-export">Export .txt</button>
+      <button class="btn small ghost nts-clear">Clear</button>
+    </div>
+    <div class="nts-body">
+      <div class="nts-editor" contenteditable="true" data-placeholder="Session notes...
+
+Things players did, decisions made, NPCs met, loot found, plot threads to follow up on next time."></div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-browser">
+  <div class="tool-instance brw-tool" data-tool="browser">
+    <div class="toolrow">
+      <input type="text" class="brw-url-input" placeholder="Enter a URL, e.g. tabletopaudio.com">
+      <button class="btn primary small brw-go">Go</button>
+      <button class="btn small ghost brw-open-tab" style="display:none;">Open in New Tab ↗</button>
+      <div class="toolbar-spacer"></div>
+      <button class="btn small ghost brw-clear" style="display:none;">Clear</button>
+    </div>
+    <div class="brw-quicklinks">
+      <span class="brw-quicklinks-label">Quick links:</span>
+      <button class="brw-quicklink" data-url="https://tabletopaudio.com">Tabletop Audio</button>
+      <button class="brw-quicklink" data-url="https://www.dndbeyond.com">D&amp;D Beyond</button>
+      <button class="brw-quicklink" data-url="https://shadowdarklings.net/#!">Shadowdarklings</button>
+    </div>
+    <div class="brw-body">
+      <div class="brw-empty">
+        <div class="brw-empty-icon">🌐</div>
+        <div class="brw-empty-title">No Page Loaded</div>
+        <div class="brw-empty-sub">Enter a URL above or pick a quick link to try loading a page here</div>
+      </div>
+      <div class="brw-frame-wrap" style="display:none;">
+        <iframe class="brw-frame"></iframe>
+      </div>
+      <div class="brw-blocked" style="display:none;">
+        <div class="brw-blocked-icon">🚫</div>
+        <div class="brw-blocked-title">This Site Can't Be Embedded Here</div>
+        <div class="brw-blocked-sub">Many sites block being shown inside another page for security reasons. Open it in a new tab instead — it'll sit right alongside this screen.</div>
+        <button class="btn primary brw-blocked-open">Open <span class="brw-blocked-url"></span> in New Tab ↗</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+// ══════════════════════════════════════════
+// PANE / TOOL INSTANCE MANAGEMENT
+// Tool instances are created ONCE and kept alive in a hidden pool.
+// Switching panes/views MOVES the existing DOM node — never recreates it.
+// This is what makes loaded files / typed content persist.
+// ══════════════════════════════════════════
+
+const TOOL_TYPES = ['adventure', 'maps', 'combat', 'notes', 'browser'];
+const instancePool = document.createElement('div');
+instancePool.style.cssText = 'position:fixed; top:0; left:-9999px; width:1px; height:1px; overflow:hidden;';
+document.body.appendChild(instancePool);
+
+const instances = {}; // toolType -> DOM node (singleton per tool type)
+let splitMode = 1;
+let paneTools = { 1: 'adventure', 2: 'combat' };
+
+function getOrCreateInstance(toolType) {
+  if(instances[toolType]) return instances[toolType];
+  const tpl = document.getElementById('tpl-' + toolType);
+  const node = tpl.content.firstElementChild.cloneNode(true);
+  instancePool.appendChild(node);
+  instances[toolType] = node;
+  const initFn = window['init_' + toolType];
+  if(initFn) {
+    initFn(node);
+  } else {
+    console.error('No init function found for tool: ' + toolType + ' (expected window.init_' + toolType + ')');
+  }
+  return node;
+}
+
+function setSplit(n) {
+  splitMode = n;
+  document.getElementById('split-1').classList.toggle('active', n === 1);
+  document.getElementById('split-2').classList.toggle('active', n === 2);
+  document.getElementById('pane-2').style.display = n === 2 ? 'flex' : 'none';
+  renderPane(1);
+  if(n === 2) renderPane(2);
+}
+
+function setPaneTool(paneNum, tool) {
+  paneTools[paneNum] = tool;
+  document.getElementById('pane-' + paneNum + '-select').value = tool;
+  renderPane(paneNum);
+}
+
+function renderPane(paneNum) {
+  const content = document.getElementById('pane-' + paneNum + '-content');
+  const tool = paneTools[paneNum];
+  const node = getOrCreateInstance(tool);
+
+  if(node.parentElement !== content) {
+    content.appendChild(node);
+  }
+
+  Array.from(content.children).forEach(child => {
+    child.classList.toggle('active', child === node);
+  });
+  node.classList.add('active');
+
+
+}
+</script>
+
+<script>
+// ══════════════════════════════════════════
+// DOCUMENT VIEWER (Adventure + Maps share this)
+// ══════════════════════════════════════════
+function initDocTool(root) {
+  const fileInput = root.querySelector('.doc-file-input');
+  const filenameEl = root.querySelector('.doc-filename');
+  const emptyEl = root.querySelector('.doc-empty');
+  const frameWrap = root.querySelector('.doc-frame-wrap');
+  const controls = root.querySelector('.doc-controls');
+  const zoomLabel = root.querySelector('.doc-zoom-label');
+  const zoomInBtn = root.querySelector('.doc-zoom-in');
+  const zoomOutBtn = root.querySelector('.doc-zoom-out');
+  const clearBtn = root.querySelector('.doc-clear');
+  const isMaps = root.dataset.tool === 'maps';
+
+  let zoom = 1;
+  let mediaEl = null;
+  let mediaType = null;
+  let naturalW = 0, naturalH = 0; // captured once per image load, never re-read from the (possibly resized) element
+
+  function applyZoom() {
+    zoomLabel.textContent = Math.round(zoom * 100) + '%';
+    if(!mediaEl) return;
+    if(mediaType === 'image' && naturalW) {
+      mediaEl.style.width = (naturalW * zoom) + 'px';
+      mediaEl.style.height = (naturalH * zoom) + 'px';
+    }
+    // PDFs use the browser's native viewer and its own zoom — we don't touch size here.
+  }
+
+  zoomInBtn.addEventListener('click', () => {
+    if(mediaType !== 'image') return;
+    zoom = Math.min(4, zoom + 0.1);
+    applyZoom();
+  });
+  zoomOutBtn.addEventListener('click', () => {
+    if(mediaType !== 'image') return;
+    zoom = Math.max(0.05, zoom - 0.1);
+    applyZoom();
+  });
+
+  clearBtn.addEventListener('click', () => {
+    frameWrap.innerHTML = '';
+    frameWrap.style.display = 'none';
+    frameWrap.classList.remove('pdf-mode');
+    emptyEl.style.display = 'flex';
+    controls.style.display = 'none';
+    filenameEl.textContent = isMaps ? 'No map loaded' : 'No document loaded';
+    fileInput.value = '';
+    mediaEl = null; mediaType = null; naturalW = 0; naturalH = 0;
+  });
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if(!file) return;
+
+    const ext = file.name.split('.').pop().toLowerCase();
+    filenameEl.textContent = file.name;
+    emptyEl.style.display = 'none';
+    frameWrap.style.display = 'flex';
+    controls.style.display = 'flex';
+    frameWrap.innerHTML = '';
+    frameWrap.classList.remove('pdf-mode');
+    zoom = 1;
+    naturalW = 0; naturalH = 0;
+
+    if(ext === 'pdf') {
+      mediaType = 'pdf';
+      // PDFs render in the browser's own native viewer, which has its own
+      // scroll and zoom. We just make the iframe fill the pane exactly so
+      // there's only ONE scrollbar (the PDF viewer's), not two.
+      frameWrap.classList.add('pdf-mode');
+      const url = URL.createObjectURL(file);
+      const iframe = document.createElement('iframe');
+      iframe.className = 'doc-frame pdf-frame';
+      iframe.src = url;
+      frameWrap.appendChild(iframe);
+      mediaEl = iframe;
+      // Hide our zoom controls for PDFs since the native viewer has its own.
+      zoomInBtn.style.display = 'none';
+      zoomOutBtn.style.display = 'none';
+      zoomLabel.textContent = 'Native zoom';
+    } else if(['png','jpg','jpeg','webp','gif'].includes(ext)) {
+      mediaType = 'image';
+      zoomInBtn.style.display = '';
+      zoomOutBtn.style.display = '';
+      const url = URL.createObjectURL(file);
+      const img = document.createElement('img');
+      img.className = 'doc-image';
+      img.style.width = 'auto';
+      img.style.height = 'auto';
+      frameWrap.appendChild(img);
+      mediaEl = img;
+      img.onload = () => {
+        naturalW = img.naturalWidth;
+        naturalH = img.naturalHeight;
+        // Fit the image inside the visible frame area on load, accounting for
+        // real natural pixel dimensions (scans/photos are often 3000px+ wide).
+        const padding = 32; // doc-frame-wrap has 16px padding each side
+        const availW = frameWrap.clientWidth - padding;
+        const availH = frameWrap.clientHeight - padding;
+        const fitScale = Math.min(availW / naturalW, availH / naturalH, 1);
+        zoom = Math.max(0.05, fitScale);
+        applyZoom();
+      };
+      img.src = url;
+    }
+  });
+}
+
+function init_adventure(root) { initDocTool(root); }
+function init_maps(root) { initDocTool(root); }
+</script>
+
+<script>
+// ══════════════════════════════════════════
+// COMBAT & TRACKERS TOOL
+// ══════════════════════════════════════════
+function init_combat(root) {
+  let round = 1;
+  let trackers = [];
+  let npcs = [];
+  let nextTrackerId = 1;
+  let nextNpcId = 1;
+
+  const roundNumEl = root.querySelector('.cbt-round-num');
+  const trackerList = root.querySelector('.cbt-tracker-list');
+  const npcList = root.querySelector('.cbt-npc-list');
+  const trackersEmpty = root.querySelector('.cbt-trackers-empty');
+  const npcsEmpty = root.querySelector('.cbt-npcs-empty');
+
+  function escAttr(s) { return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  function fmtTime(sec) {
+    sec = Math.max(0, sec);
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+  function npcHpColor(pct) {
+    if(pct <= 0) return '#3a3a3a';
+    if(pct <= 25) return '#b82018';
+    if(pct <= 50) return '#c08020';
+    if(pct <= 75) return '#c8a020';
+    return '#4caf50';
+  }
+
+  // Positional gradient red -> orange -> yellow -> green across segments, left to right,
+  // split into four contiguous quartile bands.
+  function dccSegColor(index, total) {
+    const colors = ['#b82018', '#c08020', '#c8a020', '#4caf50'];
+    const band = Math.min(3, Math.floor((index * 4) / total));
+    return colors[band];
+  }
+
+  // ── Shared status checklist (used by both tracker cards and NPC cards) ──
+  // Each entry: { id, checked, text }
+  function statusListHtml(statuses) {
+    const rows = (statuses || []).map(s => `
+      <div class="status-row" data-status-id="${s.id}">
+        <input type="checkbox" class="status-check" ${s.checked ? 'checked' : ''}>
+        <input type="text" class="status-text" value="${escAttr(s.text)}" placeholder="Status, condition, recharge...">
+        <button class="status-del" title="Remove">✕</button>
+      </div>
+    `).join('');
+    return `
+      <div class="status-list">${rows}</div>
+      <button class="btn small ghost status-add">+ Status</button>
+    `;
+  }
+
+  function wireStatusList(card, entity, rerenderFn) {
+    if(!entity.statuses) entity.statuses = [];
+    let nextStatusId = entity._nextStatusId || 1;
+    entity._nextStatusId = nextStatusId;
+
+    card.querySelectorAll('.status-row').forEach(row => {
+      const id = parseInt(row.dataset.statusId);
+      const s = entity.statuses.find(x => x.id === id);
+      if(!s) return;
+      row.querySelector('.status-check').addEventListener('change', e => { s.checked = e.target.checked; });
+      row.querySelector('.status-text').addEventListener('input', e => { s.text = e.target.value; });
+      row.querySelector('.status-del').addEventListener('click', () => {
+        entity.statuses = entity.statuses.filter(x => x.id !== id);
+        rerenderFn();
+      });
+    });
+    card.querySelector('.status-add')?.addEventListener('click', () => {
+      entity.statuses.push({ id: entity._nextStatusId++, checked: false, text: '' });
+      rerenderFn();
+    });
+  }
+
+  function renderTrackers() {
+    trackerList.innerHTML = '';
+    trackersEmpty.classList.toggle('show', trackers.length === 0);
+    trackers.forEach(t => {
+      const card = document.createElement('div');
+      card.dataset.id = t.id;
+      const isExpired = t.kind === 'rounds' ? t.rounds <= 0 : t.remainingSeconds <= 0;
+      card.className = 'tracker-card' + (t.kind === 'timer' ? ' timer-type' : '') + (isExpired ? ' expired' : '');
+
+      let bottomHtml = '';
+      if(t.kind === 'rounds') {
+        bottomHtml = `
+          <button class="tracker-adjust-btn tracker-dec">−</button>
+          <div class="tracker-rounds-display">
+            <span class="tracker-rounds ${t.rounds<=0?'zero':''}">${t.rounds}</span>
+            <span class="tracker-label">rounds</span>
+          </div>
+          <button class="tracker-adjust-btn tracker-inc">+</button>
+          ${t.rounds <= 0 ? '<span class="tracker-expired-tag">Expired</span>' : ''}
+        `;
+      } else {
+        bottomHtml = `
+          <div class="tracker-rounds-display">
+            <span class="timer-display ${t.remainingSeconds<=0?'zero':''}">${fmtTime(t.remainingSeconds)}</span>
+            <span class="tracker-label">${t.running ? 'running' : 'paused'}</span>
+          </div>
+          <div class="timer-controls">
+            <button class="tracker-adjust-btn timer-toggle">${t.running ? '⏸' : '▶'}</button>
+            <button class="tracker-adjust-btn timer-reset">↺</button>
+          </div>
+          ${t.remainingSeconds <= 0 ? '<span class="tracker-expired-tag">Time&#39;s Up</span>' : ''}
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="tracker-top">
+          <input type="text" class="tracker-name-input" value="${escAttr(t.name)}" placeholder="Tracker name...">
+          <div class="tracker-type-toggle">
+            <button class="tracker-type-btn rounds-active ${t.kind==='rounds'?'active':''}" data-kind="rounds">Rounds</button>
+            <button class="tracker-type-btn timer-active ${t.kind==='timer'?'active':''}" data-kind="timer">Timer</button>
+          </div>
+          <button class="tracker-del" title="Remove">✕</button>
+        </div>
+        <div class="tracker-bottom">${bottomHtml}</div>
+        ${t.kind === 'timer' ? `
+        <div class="timer-set-row">
+          <span class="timer-set-label">Set</span>
+          <input type="number" class="timer-set-input timer-min" min="0" value="${Math.floor(t.totalSeconds/60)}">
+          <span class="timer-set-label">m</span>
+          <input type="number" class="timer-set-input timer-sec" min="0" max="59" value="${t.totalSeconds%60}">
+          <span class="timer-set-label">s</span>
+          <button class="btn small ghost timer-apply" style="margin-left:6px;">Apply</button>
+        </div>` : ''}
+        ${statusListHtml(t.statuses)}
+      `;
+
+      card.querySelector('.tracker-name-input').addEventListener('input', e => { t.name = e.target.value; });
+      card.querySelector('.tracker-del').addEventListener('click', () => {
+        trackers = trackers.filter(x => x.id !== t.id);
+        renderTrackers();
+      });
+
+      card.querySelectorAll('.tracker-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const kind = btn.dataset.kind;
+          if(kind === t.kind) return;
+          t.running = false;
+          t.kind = kind;
+          if(kind === 'timer' && t.totalSeconds === undefined) { t.totalSeconds = 60; t.remainingSeconds = 60; }
+          renderTrackers();
+        });
+      });
+
+      if(t.kind === 'rounds') {
+        card.querySelector('.tracker-dec').addEventListener('click', () => { t.rounds = Math.max(0, t.rounds - 1); renderTrackers(); });
+        card.querySelector('.tracker-inc').addEventListener('click', () => { t.rounds += 1; renderTrackers(); });
+      } else {
+        card.querySelector('.timer-toggle').addEventListener('click', () => {
+          t.running = !t.running;
+          renderTrackers();
+        });
+        card.querySelector('.timer-reset').addEventListener('click', () => {
+          t.running = false;
+          t.remainingSeconds = t.totalSeconds;
+          renderTrackers();
+        });
+        card.querySelector('.timer-apply')?.addEventListener('click', () => {
+          const min = parseInt(card.querySelector('.timer-min').value) || 0;
+          const sec = parseInt(card.querySelector('.timer-sec').value) || 0;
+          t.totalSeconds = min * 60 + sec;
+          t.remainingSeconds = t.totalSeconds;
+          t.running = false;
+          renderTrackers();
+        });
+      }
+
+      wireStatusList(card, t, renderTrackers);
+      trackerList.appendChild(card);
+    });
+  }
+
+  // ── Single global tick loop, decoupled from rendering ──
+  // Runs every second; updates DOM directly for any running timer by looking
+  // up its live card via data-id, so it never holds a stale element reference.
+  setInterval(() => {
+    let needsFullRerender = false;
+    trackers.forEach(t => {
+      if(t.kind !== 'timer' || !t.running) return;
+      t.remainingSeconds = Math.max(0, t.remainingSeconds - 1);
+      const card = trackerList.querySelector('[data-id="' + t.id + '"]');
+      if(card) {
+        const display = card.querySelector('.timer-display');
+        if(display) {
+          display.textContent = fmtTime(t.remainingSeconds);
+          display.classList.toggle('zero', t.remainingSeconds <= 0);
+        }
+      }
+      if(t.remainingSeconds <= 0) {
+        t.running = false;
+        needsFullRerender = true;
+      }
+    });
+    if(needsFullRerender) renderTrackers();
+  }, 1000);
+
+  function renderNpcs() {
+    npcList.innerHTML = '';
+    npcsEmpty.classList.toggle('show', npcs.length === 0);
+    npcs.forEach(n => {
+      const card = document.createElement('div');
+      const mode = n.hpMode || 'standard';
+
+      let hpBlockHtml = '';
+      let defeated = false;
+
+      if(mode === 'standard') {
+        const pct = n.hpMax > 0 ? Math.max(0, Math.min(100, (n.hpCurrent / n.hpMax) * 100)) : 0;
+        defeated = n.hpCurrent <= 0;
+        hpBlockHtml = `
+          <div class="npc-hp-row">
+            <input type="number" class="npc-hp-input npc-hp-current" value="${n.hpCurrent}">
+            <span class="npc-hp-slash">/</span>
+            <input type="number" class="npc-hp-input npc-hp-max" value="${n.hpMax}">
+            <div class="npc-hp-adjust">
+              <button class="npc-hp-btn dmg npc-dmg5" title="-5 HP">−5</button>
+              <button class="npc-hp-btn dmg npc-dmg1" title="-1 HP">−1</button>
+              <button class="npc-hp-btn heal npc-heal1" title="+1 HP">+1</button>
+              <button class="npc-hp-btn heal npc-heal5" title="+5 HP">+5</button>
+            </div>
+          </div>
+          <div class="npc-hp-bar-track"><div class="npc-hp-bar-fill" style="width:${pct}%;background:${npcHpColor(pct)};"></div></div>
+        `;
+      } else {
+        // DCC segmented mode: N segments, each is alive/dead (click to toggle).
+        // All segments share one global HP value, set here and applied to every segment.
+        const segCount = n.segCount || 10;
+        const segHp = n.segHp !== undefined ? n.segHp : 10;
+        if(!n.segments || n.segments.length !== segCount) {
+          n.segments = Array.from({length: segCount}, () => true); // true = alive
+        }
+        const liveSegs = n.segments.filter(Boolean).length;
+        defeated = liveSegs === 0;
+        const segHtml = n.segments.map((alive, i) => {
+          const color = dccSegColor(i, segCount);
+          return `
+            <button class="npc-seg ${alive ? '' : 'dead'}" data-seg-idx="${i}" style="--seg-color:${color};" title="Segment ${i+1}${alive ? '' : ' (down)'}">
+              <span class="npc-seg-num">${segHp}</span>
+            </button>
+          `;
+        }).join('');
+        hpBlockHtml = `
+          <div class="npc-seg-setup">
+            <span class="npc-seg-setup-label">Segments</span>
+            <input type="number" class="npc-seg-count-input" min="1" max="20" value="${segCount}">
+            <span class="npc-seg-setup-label">HP Each</span>
+            <input type="number" class="npc-seg-hp-input" min="1" value="${segHp}">
+            <button class="btn small ghost npc-seg-apply">Apply</button>
+          </div>
+          <div class="npc-seg-row">${segHtml}</div>
+        `;
+      }
+
+
+      card.className = 'npc-card' + (defeated ? ' defeated' : '');
+      card.innerHTML = `
+        <div class="npc-top">
+          <input type="text" class="npc-name-input" value="${escAttr(n.name)}" placeholder="NPC / Monster name...">
+          <input type="text" class="npc-tag-input" value="${escAttr(n.tag)}" placeholder="tag">
+          <div class="npc-mode-toggle">
+            <button class="npc-mode-btn std-active ${mode==='standard'?'active':''}" data-mode="standard">Standard</button>
+            <button class="npc-mode-btn dcc-active ${mode==='dcc'?'active':''}" data-mode="dcc">DCC</button>
+          </div>
+          <button class="npc-del" title="Remove">✕</button>
+        </div>
+        ${hpBlockHtml}
+        ${defeated ? '<div class="npc-defeated-tag">Defeated</div>' : ''}
+        ${statusListHtml(n.statuses)}
+      `;
+      card.querySelector('.npc-name-input').addEventListener('input', e => { n.name = e.target.value; });
+      card.querySelector('.npc-tag-input').addEventListener('input', e => { n.tag = e.target.value; });
+      card.querySelector('.npc-del').addEventListener('click', () => { npcs = npcs.filter(x => x.id !== n.id); renderNpcs(); });
+
+      card.querySelectorAll('.npc-mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if(btn.dataset.mode === mode) return;
+          n.hpMode = btn.dataset.mode;
+          renderNpcs();
+        });
+      });
+
+      if(mode === 'standard') {
+        card.querySelector('.npc-hp-current').addEventListener('change', e => { n.hpCurrent = parseInt(e.target.value) || 0; renderNpcs(); });
+        card.querySelector('.npc-hp-max').addEventListener('change', e => { n.hpMax = parseInt(e.target.value) || 0; renderNpcs(); });
+        card.querySelector('.npc-hp-current').addEventListener('keydown', e => { if(e.key === 'Enter') e.target.blur(); });
+        card.querySelector('.npc-hp-max').addEventListener('keydown', e => { if(e.key === 'Enter') e.target.blur(); });
+        card.querySelector('.npc-dmg5').addEventListener('click', () => { n.hpCurrent = Math.max(0, n.hpCurrent - 5); renderNpcs(); });
+        card.querySelector('.npc-dmg1').addEventListener('click', () => { n.hpCurrent = Math.max(0, n.hpCurrent - 1); renderNpcs(); });
+        card.querySelector('.npc-heal1').addEventListener('click', () => { n.hpCurrent = Math.min(n.hpMax, n.hpCurrent + 1); renderNpcs(); });
+        card.querySelector('.npc-heal5').addEventListener('click', () => { n.hpCurrent = Math.min(n.hpMax, n.hpCurrent + 5); renderNpcs(); });
+      } else {
+        card.querySelector('.npc-seg-apply').addEventListener('click', () => {
+          const count = Math.max(1, Math.min(20, parseInt(card.querySelector('.npc-seg-count-input').value) || 1));
+          const hp = Math.max(1, parseInt(card.querySelector('.npc-seg-hp-input').value) || 1);
+          n.segCount = count;
+          n.segHp = hp;
+          n.segments = Array.from({length: count}, () => true);
+          renderNpcs();
+        });
+        card.querySelectorAll('.npc-seg').forEach(seg => {
+          seg.addEventListener('click', () => {
+            const idx = parseInt(seg.dataset.segIdx);
+            n.segments[idx] = !n.segments[idx];
+            renderNpcs();
+          });
+        });
+      }
+      wireStatusList(card, n, renderNpcs);
+      npcList.appendChild(card);
+    });
+  }
+
+  root.querySelector('.cbt-add-tracker').addEventListener('click', () => {
+    trackers.push({ id: nextTrackerId++, name: '', kind: 'rounds', rounds: 1, totalSeconds: 60, remainingSeconds: 60, running: false });
+    renderTrackers();
+  });
+  root.querySelector('.cbt-add-npc').addEventListener('click', () => {
+    npcs.push({ id: nextNpcId++, name: '', tag: '', hpCurrent: 10, hpMax: 10 });
+    renderNpcs();
+  });
+  root.querySelector('.cbt-next-round').addEventListener('click', () => {
+    round += 1;
+    roundNumEl.textContent = round;
+    trackers.forEach(t => { if(t.kind === 'rounds') t.rounds = Math.max(0, t.rounds - 1); });
+    renderTrackers();
+  });
+  root.querySelector('.cbt-reset').addEventListener('click', () => {
+    if(!confirm('Reset round counter and clear all trackers and NPCs?')) return;
+    round = 1;
+    trackers = [];
+    npcs = [];
+    roundNumEl.textContent = round;
+    renderTrackers();
+    renderNpcs();
+  });
+
+  renderTrackers();
+  renderNpcs();
+
+  // ── State hooks for session save/load ──
+  root._getState = () => ({ round, trackers, npcs });
+  root._setState = (s) => {
+    round = s.round || 1;
+    roundNumEl.textContent = round;
+    trackers = (s.trackers || []).map(t => ({...t, running: false, intervalId: null}));
+    npcs = s.npcs || [];
+    renderTrackers();
+    renderNpcs();
+  };
+
+}
+</script>
+
+<script>
+// ══════════════════════════════════════════
+// NOTES TOOL — rich text with H1 / H2 / Bold
+// ══════════════════════════════════════════
+function init_notes(root) {
+  const editor = root.querySelector('.nts-editor');
+  const exportBtn = root.querySelector('.nts-export');
+  const clearBtn = root.querySelector('.nts-clear');
+  const savedIndicator = root.querySelector('.nts-saved-indicator');
+  const fmtBtns = root.querySelectorAll('.fmt-btn');
+
+  if(!editor.innerHTML.trim()) editor.innerHTML = '<p><br></p>';
+
+  fmtBtns.forEach(btn => {
+    btn.addEventListener('mousedown', e => e.preventDefault());
+    btn.addEventListener('click', () => {
+      editor.focus();
+      const cmd = btn.dataset.cmd;
+      if(cmd === 'bold') document.execCommand('bold');
+      else if(cmd === 'h1') document.execCommand('formatBlock', false, 'H1');
+      else if(cmd === 'h2') document.execCommand('formatBlock', false, 'H2');
+      else if(cmd === 'p') document.execCommand('formatBlock', false, 'P');
+    });
+  });
+
+  let saveTimeout;
+  editor.addEventListener('input', () => {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+      savedIndicator.textContent = '✓ Up to date';
+      savedIndicator.classList.add('show');
+      setTimeout(() => savedIndicator.classList.remove('show'), 1500);
+    }, 600);
+  });
+
+  exportBtn.addEventListener('click', () => {
+    const clone = editor.cloneNode(true);
+    let text = '';
+    clone.childNodes.forEach(node => {
+      if(node.nodeType === 1) {
+        const tag = node.tagName;
+        const content = node.textContent;
+        if(tag === 'H1') text += '# ' + content + '\n\n';
+        else if(tag === 'H2') text += '## ' + content + '\n\n';
+        else text += content + '\n\n';
+      } else if(node.nodeType === 3 && node.textContent.trim()) {
+        text += node.textContent + '\n\n';
+      }
+    });
+    if(!text.trim()) { alert('No notes to export yet.'); return; }
+    const blob = new Blob([text], {type: 'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const stamp = new Date().toISOString().slice(0,10);
+    a.href = url; a.download = `session_notes_${stamp}.txt`; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  clearBtn.addEventListener('click', () => {
+    if(!editor.textContent.trim()) return;
+    if(confirm('Clear all session notes? This cannot be undone.')) {
+      editor.innerHTML = '<p><br></p>';
+    }
+  });
+
+  // ── State hooks for session save/load ──
+  root._getState = () => ({ html: editor.innerHTML });
+  root._setState = (s) => { if(s.html) editor.innerHTML = s.html; };
+
+}
+</script>
+
+<script>
+// ══════════════════════════════════════════
+// BROWSER TOOL
+// Most sites block iframe embedding via X-Frame-Options / CSP — that's
+// enforced by the target site's own server and can't be bypassed from here.
+// We attempt the embed, detect the common blocked-blank-frame case, and
+// always offer a one-click "open in a real tab" fallback either way.
+// ══════════════════════════════════════════
+function init_browser(root) {
+  const urlInput = root.querySelector('.brw-url-input');
+  const goBtn = root.querySelector('.brw-go');
+  const openTabBtn = root.querySelector('.brw-open-tab');
+  const clearBtn = root.querySelector('.brw-clear');
+  const quicklinks = root.querySelectorAll('.brw-quicklink');
+  const emptyEl = root.querySelector('.brw-empty');
+  const frameWrap = root.querySelector('.brw-frame-wrap');
+  const frame = root.querySelector('.brw-frame');
+  const blockedEl = root.querySelector('.brw-blocked');
+  const blockedUrlEl = root.querySelector('.brw-blocked-url');
+  const blockedOpenBtn = root.querySelector('.brw-blocked-open');
+
+  let currentUrl = '';
+
+  function normalizeUrl(raw) {
+    let u = raw.trim();
+    if(!u) return '';
+    if(!/^https?:\/\//i.test(u)) u = 'https://' + u;
+    return u;
+  }
+
+  function showBlocked(url) {
+    frameWrap.style.display = 'none';
+    blockedEl.style.display = 'flex';
+    emptyEl.style.display = 'none';
+    blockedUrlEl.textContent = new URL(url).hostname;
+  }
+
+  function showFrame() {
+    frameWrap.style.display = 'flex';
+    blockedEl.style.display = 'none';
+    emptyEl.style.display = 'none';
+  }
+
+  function loadUrl(rawUrl) {
+    const url = normalizeUrl(rawUrl);
+    if(!url) return;
+    currentUrl = url;
+    urlInput.value = url;
+    openTabBtn.style.display = 'inline-flex';
+    clearBtn.style.display = 'inline-flex';
+    showFrame();
+
+    // Detect the common "blocked, stayed blank" case: a same-origin check on
+    // the iframe right after load throws/returns nothing useful when the
+    // target refused to load due to X-Frame-Options — we can't read cross-
+    // origin content directly, so instead we give it a moment to load and
+    // watch for the frame staying effectively empty (about:blank navigation
+    // back, which browsers do when framing is refused).
+    let resolved = false;
+    const checkTimer = setTimeout(() => {
+      if(resolved) return;
+      try {
+        // If still on about:blank after the timeout, the load was refused.
+        if(frame.contentWindow && frame.contentWindow.location.href === 'about:blank') {
+          resolved = true;
+          showBlocked(url);
+        }
+      } catch(e) {
+        // Cross-origin access throwing here actually means a page DID load
+        // (just not one we can inspect) — that's the success case, leave as is.
+      }
+    }, 1800);
+
+    frame.onload = () => {
+      resolved = true;
+      clearTimeout(checkTimer);
+      try {
+        // Some browsers navigate a refused frame to about:blank synchronously.
+        if(frame.contentWindow && frame.contentWindow.location.href === 'about:blank' && url !== 'about:blank') {
+          showBlocked(url);
+        }
+      } catch(e) {
+        // Cross-origin — page loaded successfully, just can't be inspected. Fine.
+      }
+    };
+
+    frame.src = url;
+  }
+
+  goBtn.addEventListener('click', () => loadUrl(urlInput.value));
+  urlInput.addEventListener('keydown', e => { if(e.key === 'Enter') loadUrl(urlInput.value); });
+
+  quicklinks.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(btn.dataset.newtab) {
+        window.open(btn.dataset.url, '_blank', 'noopener');
+      } else {
+        loadUrl(btn.dataset.url);
+      }
+    });
+  });
+
+  openTabBtn.addEventListener('click', () => {
+    if(currentUrl) window.open(currentUrl, '_blank', 'noopener');
+  });
+  blockedOpenBtn.addEventListener('click', () => {
+    if(currentUrl) window.open(currentUrl, '_blank', 'noopener');
+  });
+
+  clearBtn.addEventListener('click', () => {
+    frame.src = 'about:blank';
+    frameWrap.style.display = 'none';
+    blockedEl.style.display = 'none';
+    emptyEl.style.display = 'flex';
+    openTabBtn.style.display = 'none';
+    clearBtn.style.display = 'none';
+    urlInput.value = '';
+    currentUrl = '';
+  });
+
+}
+</script>
+
+<script>
+// All init_* functions are now defined — safe to render the first pane.
+renderPane(1);
+
+// ══════════════════════════════════════════
+// SESSION SAVE / LOAD
+// Collects state from all live tool instances and writes to a JSON file.
+// On load, restores state into each instance (creating them first if needed).
+// Note: Loaded media (PDFs, images) cannot be saved — only text/data state.
+// ══════════════════════════════════════════
+function saveSession() {
+  const data = {
+    version: 1,
+    saved: new Date().toISOString(),
+    paneTools,
+    splitMode,
+    tools: {}
+  };
+
+  // Collect state from every instantiated tool
+  Object.entries(instances).forEach(([type, node]) => {
+    if(node._getState) {
+      try { data.tools[type] = node._getState(); } catch(e) {}
+    }
+  });
+
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `dungeon_desk_session_${stamp}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function loadSession(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if(!data.version) throw new Error('Unrecognised file');
+
+      // Restore pane layout
+      if(data.splitMode) setSplit(data.splitMode);
+      if(data.paneTools) {
+        setPaneTool(1, data.paneTools[1] || 'adventure');
+        setPaneTool(2, data.paneTools[2] || 'combat');
+      }
+
+      // Restore each tool's state (instantiate it first if not yet created)
+      if(data.tools) {
+        Object.entries(data.tools).forEach(([type, state]) => {
+          const node = getOrCreateInstance(type);
+          if(node._setState) {
+            try { node._setState(state); } catch(err) { console.warn('setState failed for', type, err); }
+          }
+        });
+      }
+
+      // Re-render panes so restored state is visible
+      renderPane(1);
+      if(data.splitMode === 2) renderPane(2);
+
+    } catch(err) {
+      alert('Could not load session file: ' + err.message);
+    }
+    input.value = ''; // reset so the same file can be loaded again
+  };
+  reader.readAsText(file);
+}
+</script>
+</body>
+</html>
