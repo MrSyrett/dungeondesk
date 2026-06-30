@@ -90,6 +90,14 @@ body::before {
   border-bottom: 2px solid var(--red);
   flex-shrink: 0;
 }
+/* Toolbar slot: fills remaining space to the right of the dropdown */
+.pane-toolbar-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
 .pane-actions {
   display: flex;
   align-items: center;
@@ -601,6 +609,7 @@ input[type="number"] { -moz-appearance: textfield; }
         <option value="notes">✎ Notes</option>
         <option value="browser">🌐 Browser</option>
       </select>
+      <div class="pane-toolbar-slot" id="pane-1-toolbar"></div>
     </div>
     <div class="pane-content" id="pane-1-content"></div>
   </div>
@@ -614,6 +623,7 @@ input[type="number"] { -moz-appearance: textfield; }
         <option value="notes">✎ Notes</option>
         <option value="browser">🌐 Browser</option>
       </select>
+      <div class="pane-toolbar-slot" id="pane-2-toolbar"></div>
     </div>
     <div class="pane-content" id="pane-2-content"></div>
   </div>
@@ -622,7 +632,7 @@ input[type="number"] { -moz-appearance: textfield; }
 <!-- ═══ TOOL TEMPLATES ═══ -->
 <template id="tpl-adventure">
   <div class="tool-instance doc-tool" data-tool="adventure">
-    <div class="toolrow">
+    <div class="toolbar-tpl" style="display:none">
       <label class="btn primary small" style="cursor:pointer;">
         Load File
         <input type="file" class="doc-file-input" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif" style="display:none;">
@@ -649,7 +659,7 @@ input[type="number"] { -moz-appearance: textfield; }
 
 <template id="tpl-maps">
   <div class="tool-instance doc-tool" data-tool="maps">
-    <div class="toolrow">
+    <div class="toolbar-tpl" style="display:none">
       <label class="btn primary small" style="cursor:pointer;">
         Load File
         <input type="file" class="doc-file-input" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif" style="display:none;">
@@ -676,7 +686,7 @@ input[type="number"] { -moz-appearance: textfield; }
 
 <template id="tpl-combat">
   <div class="tool-instance cbt-tool" data-tool="combat">
-    <div class="toolrow">
+    <div class="toolbar-tpl" style="display:none">
       <button class="btn primary small cbt-next-round">Next Round →</button>
       <span class="cbt-round-display">Round <span class="cbt-round-num">1</span></span>
       <div class="toolbar-spacer"></div>
@@ -711,7 +721,7 @@ input[type="number"] { -moz-appearance: textfield; }
 
 <template id="tpl-notes">
   <div class="tool-instance nts-tool" data-tool="notes">
-    <div class="toolrow">
+    <div class="toolbar-tpl" style="display:none">
       <div class="nts-format-row">
         <button class="fmt-btn h1" data-cmd="h1" title="Heading">H1</button>
         <button class="fmt-btn h2" data-cmd="h2" title="Subheading">H2</button>
@@ -734,7 +744,7 @@ Things players did, decisions made, NPCs met, loot found, plot threads to follow
 
 <template id="tpl-browser">
   <div class="tool-instance brw-tool" data-tool="browser">
-    <div class="toolrow">
+    <div class="toolbar-tpl" style="display:none">
       <input type="text" class="brw-url-input" placeholder="Enter a URL, e.g. tabletopaudio.com">
       <button class="btn primary small brw-go">Go</button>
       <button class="btn small ghost brw-open-tab" style="display:none;">Open in New Tab ↗</button>
@@ -815,6 +825,7 @@ function setPaneTool(paneNum, tool) {
 
 function renderPane(paneNum) {
   const content = document.getElementById('pane-' + paneNum + '-content');
+  const toolbarSlot = document.getElementById('pane-' + paneNum + '-toolbar');
   const tool = paneTools[paneNum];
   const node = getOrCreateInstance(tool);
 
@@ -827,7 +838,139 @@ function renderPane(paneNum) {
   });
   node.classList.add('active');
 
+  // Clone the tool's toolbar template into the pane header toolbar slot
+  if(toolbarSlot) {
+    toolbarSlot.innerHTML = '';
+    const tpl = node.querySelector('.toolbar-tpl');
+    if(tpl) {
+      // Clone the children of the hidden div into the toolbar slot
+      Array.from(tpl.children).forEach(child => {
+        toolbarSlot.appendChild(child.cloneNode(true));
+      });
+      syncToolbar(toolbarSlot, node);
+    }
+  }
+}
 
+// Wire cloned toolbar elements to the live tool instance elements.
+// Each cloned element gets its events proxied to the matching live element.
+function syncToolbar(slot, toolNode) {
+  // Map by class selector — each cloned element routes to its live twin
+  const pairs = [
+    // doc tools
+    ['.doc-file-input', null],            // handled via label click below
+    ['.doc-zoom-out',  '.doc-zoom-out'],
+    ['.doc-zoom-in',   '.doc-zoom-in'],
+    ['.doc-clear',     '.doc-clear'],
+    // combat
+    ['.cbt-next-round', '.cbt-next-round'],
+    ['.cbt-reset',      '.cbt-reset'],
+    // notes
+    ['.nts-export', '.nts-export'],
+    ['.nts-clear',  '.nts-clear'],
+    ['.fmt-btn',    '.fmt-btn'],       // handled in bulk below
+    // browser
+    ['.brw-go',       '.brw-go'],
+    ['.brw-open-tab', '.brw-open-tab'],
+    ['.brw-clear',    '.brw-clear'],
+  ];
+
+  pairs.forEach(([cloneSelector, liveSelector]) => {
+    if(!liveSelector) return;
+    if(cloneSelector === '.fmt-btn') {
+      // Multiple fmt-btns — wire each by index
+      const cloneBtns = slot.querySelectorAll('.fmt-btn');
+      const liveBtns = toolNode.querySelectorAll('.fmt-btn');
+      cloneBtns.forEach((btn, i) => {
+        if(liveBtns[i]) {
+          btn.addEventListener('mousedown', e => e.preventDefault());
+          btn.addEventListener('click', () => liveBtns[i].click());
+        }
+      });
+      return;
+    }
+    slot.querySelectorAll(cloneSelector).forEach(cloneEl => {
+      const liveEl = toolNode.querySelector(liveSelector);
+      if(!liveEl) return;
+      if(cloneEl.tagName === 'BUTTON') {
+        cloneEl.addEventListener('click', () => liveEl.click());
+      }
+    });
+  });
+
+  // File input: label wraps input in clone — clicking the label opens the live file input
+  const cloneLabel = slot.querySelector('label.btn');
+  if(cloneLabel) {
+    const liveInput = toolNode.querySelector('.doc-file-input');
+    if(liveInput) {
+      cloneLabel.addEventListener('click', e => {
+        e.preventDefault();
+        liveInput.click();
+      });
+      // Update filename display in clone when a file is picked
+      liveInput.addEventListener('change', () => {
+        const cloneFilename = slot.querySelector('.doc-filename');
+        const liveFilename = toolNode.querySelector('.doc-filename');
+        if(cloneFilename && liveFilename) {
+          // Mirror after a tick so liveFilename has been updated
+          setTimeout(() => {
+            cloneFilename.textContent = liveFilename.textContent;
+            const cloneControls = slot.querySelector('.doc-controls');
+            const liveControls = toolNode.querySelector('.doc-controls');
+            if(cloneControls && liveControls) {
+              cloneControls.style.display = liveControls.style.display;
+            }
+            const cloneZoom = slot.querySelector('.doc-zoom-label');
+            const liveZoom = toolNode.querySelector('.doc-zoom-label');
+            if(cloneZoom && liveZoom) cloneZoom.textContent = liveZoom.textContent;
+          }, 200);
+        }
+      });
+      // Also mirror zoom label changes on zoom btn clicks
+      ['doc-zoom-in','doc-zoom-out'].forEach(cls => {
+        const liveBtn = toolNode.querySelector('.' + cls);
+        if(liveBtn) liveBtn.addEventListener('click', () => {
+          setTimeout(() => {
+            const cloneZoom = slot.querySelector('.doc-zoom-label');
+            const liveZoom = toolNode.querySelector('.doc-zoom-label');
+            if(cloneZoom && liveZoom) cloneZoom.textContent = liveZoom.textContent;
+          }, 50);
+        });
+      });
+    }
+  }
+
+  // Browser URL input: two-way sync
+  const cloneUrlInput = slot.querySelector('.brw-url-input');
+  const liveUrlInput = toolNode.querySelector('.brw-url-input');
+  if(cloneUrlInput && liveUrlInput) {
+    cloneUrlInput.value = liveUrlInput.value;
+    const liveGo = toolNode.querySelector('.brw-go');
+    cloneUrlInput.addEventListener('input', () => { liveUrlInput.value = cloneUrlInput.value; });
+    cloneUrlInput.addEventListener('keydown', e => {
+      if(e.key === 'Enter') { liveUrlInput.value = cloneUrlInput.value; if(liveGo) liveGo.click(); }
+    });
+    // Mirror open-tab and clear visibility changes
+    const cloneOpenTab = slot.querySelector('.brw-open-tab');
+    const cloneClear = slot.querySelector('.brw-clear');
+    const liveOpenTab = toolNode.querySelector('.brw-open-tab');
+    const liveClearBtn = toolNode.querySelector('.brw-clear');
+    if(liveGo) liveGo.addEventListener('click', () => setTimeout(() => {
+      if(cloneOpenTab && liveOpenTab) cloneOpenTab.style.display = liveOpenTab.style.display;
+      if(cloneClear && liveClearBtn) cloneClear.style.display = liveClearBtn.style.display;
+    }, 100));
+  }
+
+  // Notes saved indicator: mirror via MutationObserver
+  const cloneSaved = slot.querySelector('.nts-saved-indicator');
+  const liveSaved = toolNode.querySelector('.nts-saved-indicator');
+  if(cloneSaved && liveSaved) {
+    const obs = new MutationObserver(() => {
+      cloneSaved.textContent = liveSaved.textContent;
+      cloneSaved.className = liveSaved.className;
+    });
+    obs.observe(liveSaved, { attributes: true, childList: true, characterData: true, subtree: true });
+  }
 }
 </script>
 
@@ -958,6 +1101,12 @@ function init_combat(root) {
   let nextNpcId = 1;
 
   const roundNumEl = root.querySelector('.cbt-round-num');
+
+  function updateRoundDisplay() {
+    document.querySelectorAll('.cbt-round-num').forEach(el => {
+      el.textContent = round;
+    });
+  }
   const trackerList = root.querySelector('.cbt-tracker-list');
   const npcList = root.querySelector('.cbt-npc-list');
   const trackersEmpty = root.querySelector('.cbt-trackers-empty');
@@ -1275,7 +1424,7 @@ function init_combat(root) {
   });
   root.querySelector('.cbt-next-round').addEventListener('click', () => {
     round += 1;
-    roundNumEl.textContent = round;
+    updateRoundDisplay();
     trackers.forEach(t => { if(t.kind === 'rounds') t.rounds = Math.max(0, t.rounds - 1); });
     renderTrackers();
   });
@@ -1284,7 +1433,7 @@ function init_combat(root) {
     round = 1;
     trackers = [];
     npcs = [];
-    roundNumEl.textContent = round;
+    updateRoundDisplay();
     renderTrackers();
     renderNpcs();
   });
@@ -1296,7 +1445,7 @@ function init_combat(root) {
   root._getState = () => ({ round, trackers, npcs });
   root._setState = (s) => {
     round = s.round || 1;
-    roundNumEl.textContent = round;
+    updateRoundDisplay();
     trackers = (s.trackers || []).map(t => ({...t, running: false, intervalId: null}));
     npcs = s.npcs || [];
     renderTrackers();
