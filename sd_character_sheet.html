@@ -960,7 +960,7 @@ function saveSheet(){
   // Don't store portrait in localStorage (too large)
   const toSave = {...data, _sheet: {...(data._sheet||{}), portrait: ''}};
   localStorage.setItem('sd_sheet', JSON.stringify(toSave));
-  if(window.__ddFlush) try { window.__ddFlush(); } catch(e) {}
+  if(window.__ddSave) window.__ddSave();
   addLog('Sheet Saved','💾','Saved to browser storage','normal');
 }
 function exportSheet(){
@@ -1092,24 +1092,21 @@ document.querySelector('.log-header').addEventListener('click', function(e) {
 // ── AUTO-SAVE ON EXIT / BACKGROUND ──
 function autoSaveOnExit() {
   try { saveSheet(); } catch(e) {}
-  try { if(window.__ddSyncSave) window.__ddSyncSave(); else if(window.__ddFlush) window.__ddFlush(); } catch(e) {}
 }
 window.addEventListener('beforeunload', autoSaveOnExit);
 document.addEventListener('visibilitychange', function() {
   if(document.visibilityState === 'hidden') autoSaveOnExit();
 });
 
-// Auto-save on input/change so saves happen during use, not just on exit
+// Auto-save 1.5s after any input — primary save strategy on mobile
 (function() {
-  var autoSaveTimer = null;
-  function triggerAutoSave() {
-    if(autoSaveTimer) clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(function() {
-      try { saveSheet(); } catch(e) {}
-    }, 1500);
+  var t = null;
+  function go() {
+    if(t) clearTimeout(t);
+    t = setTimeout(function() { try { saveSheet(); } catch(e) {} }, 1500);
   }
-  document.addEventListener('input', triggerAutoSave);
-  document.addEventListener('change', triggerAutoSave);
+  document.addEventListener('input', go);
+  document.addEventListener('change', go);
 })();
 </script>
 </body>

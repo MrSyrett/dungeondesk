@@ -1328,7 +1328,8 @@ function saveSheet() {
   // Strip portrait from localStorage to avoid quota issues (large base64)
   const toSave = {...data, portrait: data.portrait ? '__has_portrait__' : ''};
   localStorage.setItem('dcc_sheet', JSON.stringify(toSave));
-  if(window.__ddFlush) try { window.__ddFlush(); } catch(e) {}
+  // Immediately push to server — don't rely on debounce or page-exit saves on mobile
+  if(window.__ddSave) window.__ddSave();
   addLog('Sheet Saved', '💾', 'Saved to browser storage (portrait excluded — use Export to save portrait)', 'normal');
 }
 
@@ -1520,25 +1521,21 @@ document.querySelector('.log-header').addEventListener('click', function(e) {
 // ── AUTO-SAVE ON EXIT / BACKGROUND ──
 function autoSaveOnExit() {
   try { saveSheet(); } catch(e) {}
-  try { if(window.__ddSyncSave) window.__ddSyncSave(); else if(window.__ddFlush) window.__ddFlush(); } catch(e) {}
 }
 window.addEventListener('beforeunload', autoSaveOnExit);
 document.addEventListener('visibilitychange', function() {
   if(document.visibilityState === 'hidden') autoSaveOnExit();
 });
 
-// Auto-save on input/change so the shim's debounce fires frequently while
-// the user is active — the primary save strategy on mobile.
+// Auto-save 1.5s after any input — primary save strategy on mobile
 (function() {
-  var autoSaveTimer = null;
-  function triggerAutoSave() {
-    if(autoSaveTimer) clearTimeout(autoSaveTimer);
-    autoSaveTimer = setTimeout(function() {
-      try { saveSheet(); } catch(e) {}
-    }, 1500);
+  var t = null;
+  function go() {
+    if(t) clearTimeout(t);
+    t = setTimeout(function() { try { saveSheet(); } catch(e) {} }, 1500);
   }
-  document.addEventListener('input', triggerAutoSave);
-  document.addEventListener('change', triggerAutoSave);
+  document.addEventListener('input', go);
+  document.addEventListener('change', go);
 })();
 </script>
 </body>

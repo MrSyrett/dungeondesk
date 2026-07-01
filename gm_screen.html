@@ -34,6 +34,8 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  height: 100vh;
+  height: 100dvh; /* dynamic viewport height — accounts for iOS address bar */
 }
 
 body::before {
@@ -559,20 +561,27 @@ input[type="number"] { -moz-appearance: textfield; }
   /* Make sure cbt round display and next round button don't get hidden */
   .cbt-round-display { font-size: 11px; }
 
-  /* PDF viewer on mobile: iframes can't scroll multi-page PDFs on iOS.
-     Hide the iframe and show an "Open PDF" button instead. */
+  /* PDF viewer on mobile: give the entire pane chain a concrete height
+     so the iframe has real pixels to fill. The native PDF viewer inside
+     the iframe scrolls its own pages. */
+  .pane { flex: 1; min-height: 0; }
+  .pane-content { flex: 1; min-height: 0; overflow: hidden; }
+  .tool-instance { flex: 1; min-height: 0; }
+  .doc-body { flex: 1; min-height: 0; overflow: hidden; }
   .doc-frame-wrap.pdf-mode {
+    flex: 1;
     padding: 0;
     overflow: hidden;
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-    gap: 16px;
-    background: #1a1a1e;
+    align-items: stretch;
+    height: 100%;
   }
-  .doc-frame.pdf-frame { display: none !important; }
+  .doc-frame.pdf-frame {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: unset;
+  }
+  .pdf-mobile-open { display: none !important; }
   .pdf-close-btn { display: none !important; }
-  .pdf-mobile-open { display: flex !important; }
 
   .toolrow { padding: 8px 10px; gap: 8px; }
   .doc-filename { max-width: 120px; font-size: 10px; }
