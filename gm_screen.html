@@ -856,30 +856,23 @@ function syncToolbar(slot, toolNode) {
     ['.cbt-next-round', null],
     ['.cbt-reset',      null],
     // notes
-    ['.nts-export', '.nts-export'],
-    ['.nts-clear',  '.nts-clear'],
-    ['.fmt-btn',    '.fmt-btn'],       // handled in bulk below
+    ['.nts-export',    '.nts-export'],
+    ['.nts-clear',     '.nts-clear'],
+    ['.nts-md-toggle', '.nts-md-toggle'],
   ];
 
   pairs.forEach(([cloneSelector, liveSelector]) => {
     if(!liveSelector) return;
-    if(cloneSelector === '.fmt-btn') {
-      // Multiple fmt-btns — wire each by index
-      const cloneBtns = slot.querySelectorAll('.fmt-btn');
-      const liveBtns = toolNode.querySelectorAll('.fmt-btn');
-      cloneBtns.forEach((btn, i) => {
-        if(liveBtns[i]) {
-          btn.addEventListener('mousedown', e => e.preventDefault());
-          btn.addEventListener('click', () => liveBtns[i].click());
-        }
-      });
-      return;
-    }
     slot.querySelectorAll(cloneSelector).forEach(cloneEl => {
       const liveEl = toolNode.querySelector(liveSelector);
       if(!liveEl) return;
       if(cloneEl.tagName === 'BUTTON') {
-        cloneEl.addEventListener('click', () => liveEl.click());
+        cloneEl.addEventListener('click', () => {
+          liveEl.click();
+          // Mirror active state back to clone (e.g. MD toggle)
+          if(liveEl.classList.contains('active')) cloneEl.classList.add('active');
+          else cloneEl.classList.remove('active');
+        });
       }
     });
   });
