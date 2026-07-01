@@ -5,20 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Session Prep Builder — Dungeon Crawler Carl RPG</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700&family=Barlow:ital,wght@0,400;0,500;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
-// Mobile: start with sidebar collapsed
-if(window.innerWidth <= 768) {
-  const s = document.querySelector('.sidebar');
-  if(s) { s.classList.add('collapsed'); document.body.classList.add('sidebar-collapsed'); }
-  // Set desktop tab arrow on init
-  const _tabArrow=document.querySelector('.sidebar-tab .sidebar-tab-arrow');
-  if(_tabArrow) _tabArrow.textContent = window.innerWidth>=769 ? '▶' : '▼';
-  // On mobile: move tab out of sidebar so it isn't affected by sidebar's translateY
-  if(window.innerWidth < 769) {
-    const _tab = document.querySelector('.sidebar-tab');
-    if(_tab) document.body.appendChild(_tab);
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+// Mobile init: collapse sidebar and move tab to body so it stays visible
+document.addEventListener("DOMContentLoaded", function() {
+  if(window.innerWidth <= 768) {
+    var s = document.querySelector('.sidebar');
+    if(s) { s.classList.add('collapsed'); document.body.classList.add('sidebar-collapsed'); }
+    // Move tab to body so it isn't clipped by sidebar's translateY transform
+    var tab = document.querySelector('.sidebar-tab');
+    if(tab) document.body.appendChild(tab);
   }
-}
+});
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
@@ -608,12 +606,19 @@ let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
 let saveTimer = null;
 
 function loadState() {
-  const saved = localStorage.getItem('dcw_builder_v5');
+  var saved = null;
+  if (window.__ddState && window.__ddState['dcc_session']) {
+    saved = window.__ddState['dcc_session'];
+  } else {
+    saved = localStorage.getItem('dcw_builder_v5');
+  }
   if (saved) try { state = {...DEFAULT_STATE,...JSON.parse(saved)}; } catch(e){}
 }
 function saveState() {
   const toSave={...state, mappath:state.mappath?'__has_map__':'', maps:(state.maps||[]).map(m=>({...m,src:m.src?'__has_map__':''}))};
-  try { localStorage.setItem('dcw_builder_v5', JSON.stringify(toSave)); } catch(e) {}
+  const _json = JSON.stringify(toSave);
+  try { localStorage.setItem('dcw_builder_v5', _json); } catch(e) {}
+  if (window.__ddSave) window.__ddSave({ 'dcc_session': _json });
   const ind = document.getElementById('save-indicator');
   ind.textContent='Saved ✓'; ind.classList.add('saved');
   setTimeout(()=>{ ind.textContent='All changes saved'; ind.classList.remove('saved'); },1500);
