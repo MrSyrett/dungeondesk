@@ -1092,7 +1092,7 @@ document.querySelector('.log-header').addEventListener('click', function(e) {
 // ── AUTO-SAVE ON EXIT / BACKGROUND ──
 function autoSaveOnExit() {
   try { saveSheet(); } catch(e) {}
-  try { if(window.__ddFlush) window.__ddFlush(); } catch(e) {}
+  try { if(window.__ddSyncSave) window.__ddSyncSave(); else if(window.__ddFlush) window.__ddFlush(); } catch(e) {}
 }
 window.addEventListener('beforeunload', autoSaveOnExit);
 document.addEventListener('visibilitychange', function() {

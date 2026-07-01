@@ -314,6 +314,8 @@ input[type="number"] { -moz-appearance: textfield; }
   box-shadow: none;
   flex-shrink: 0;
 }
+/* Hidden on desktop, shown on mobile via media query */
+.pdf-close-btn { display: none; }
 .doc-image {
   max-width: none;
   box-shadow: 0 4px 24px rgba(0,0,0,0.5);
@@ -532,10 +534,43 @@ input[type="number"] { -moz-appearance: textfield; }
   /* Make sure cbt round display and next round button don't get hidden */
   .cbt-round-display { font-size: 11px; }
 
-  /* PDF viewer: make the pane scrollable on mobile so all pages are reachable */
-  .doc-frame-wrap.pdf-mode { height: auto; overflow: visible; }
-  .doc-frame.pdf-frame { height: 85vh; min-height: 85vh; width: 100%; }
-  .doc-body { overflow-y: auto; }
+  /* PDF viewer on mobile: break out of the constrained flex chain entirely.
+     The pane has overflow:hidden all the way up, so the iframe can't grow.
+     Instead make the entire doc-body take the full available space and
+     let the PDF embed fill it with its own internal scroll. */
+  .doc-body { overflow: hidden; flex: 1; }
+  .doc-frame-wrap.pdf-mode {
+    position: fixed !important;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 500;
+    overflow: hidden;
+    padding: 0;
+    background: #1a1a1e;
+  }
+  .doc-frame.pdf-frame {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: unset;
+  }
+  /* Show an exit button when PDF is fullscreen on mobile */
+  .pdf-close-btn {
+    display: flex !important;
+    position: fixed;
+    top: 8px; right: 8px;
+    z-index: 501;
+    background: rgba(8,8,9,0.85);
+    border: 1px solid #3a3a40;
+    color: #cfcabd;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 4px;
+  }
 
   .toolrow { padding: 8px 10px; gap: 8px; }
   .doc-filename { max-width: 120px; font-size: 10px; }
@@ -969,6 +1004,12 @@ function initDocTool(root) {
       iframe.className = 'doc-frame pdf-frame';
       iframe.src = dataUrl;
       frameWrap.appendChild(iframe);
+      // Mobile close button — exits the fullscreen PDF overlay
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'pdf-close-btn';
+      closeBtn.textContent = '✕ Close PDF';
+      closeBtn.addEventListener('click', () => clearBtn.click());
+      frameWrap.appendChild(closeBtn);
       mediaEl = iframe;
       zoomInBtn.style.display = 'none';
       zoomOutBtn.style.display = 'none';
