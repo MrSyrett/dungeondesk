@@ -9,10 +9,15 @@
 // Mobile: start with sidebar collapsed
 if(window.innerWidth <= 768) {
   const s = document.querySelector('.sidebar');
-  if(s) { s.classList.add('collapsed'); document.getElementById('collapse-btn').textContent = '▼'; }
+  if(s) { s.classList.add('collapsed'); document.body.classList.add('sidebar-collapsed'); }
   // Set desktop tab arrow on init
   const _tabArrow=document.querySelector('.sidebar-tab .sidebar-tab-arrow');
   if(_tabArrow) _tabArrow.textContent = window.innerWidth>=769 ? '▶' : '▼';
+  // On mobile: move tab out of sidebar so it isn't affected by sidebar's translateY
+  if(window.innerWidth < 769) {
+    const _tab = document.querySelector('.sidebar-tab');
+    if(_tab) document.body.appendChild(_tab);
+  }
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -307,11 +312,58 @@ if(window.innerWidth <= 768) {
     body { padding-bottom: 0; }
 }
 
-    /* External sidebar tab — always visible on mobile */
+    /* Sidebar tab — desktop: vertical pull-tab on right edge; mobile: fixed top bar */
     .sidebar-tab { display: none; }
 
+    /* ── DESKTOP ── */
+    @media (min-width: 769px) {
+      .sidebar { position: relative; overflow: visible; }
+      /* body has overflow:hidden so we can't go right:-28px outside the sidebar.
+         Instead pin the tab to a fixed position just after the sidebar's right edge. */
+      .sidebar-tab {
+        display: flex !important;
+        position: fixed;
+        left: 320px; /* matches sidebar width */
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 50;
+        width: 28px;
+        height: 72px;
+        border-radius: 0 6px 6px 0;
+        background: var(--ui-accent, #b82018);
+        color: white;
+        border: none;
+        cursor: pointer;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.3);
+        writing-mode: vertical-rl;
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        padding: 8px 0;
+        transition: left 0.25s;
+      }
+      /* When sidebar is collapsed (width: 42px), shift tab left */
+      .sidebar.collapsed ~ * .sidebar-tab,
+      .sidebar.collapsed .sidebar-tab {
+        left: 42px;
+      }
+      .sidebar-tab-arrow {
+        writing-mode: horizontal-tb;
+        transition: transform 0.25s ease;
+        font-size: 12px;
+        margin: 0;
+      }
+      /* Hide the old internal collapse button on desktop */
+      #collapse-btn { display: none; }
+    }
+
+    /* ── MOBILE ── */
     @media (max-width: 768px) {
-      /* Tab sits above the footer bar (footer is ~52px tall) */
       .sidebar-tab {
         display: flex;
         position: fixed;
@@ -334,64 +386,20 @@ if(window.innerWidth <= 768) {
         text-transform: uppercase;
         cursor: pointer;
         box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        writing-mode: horizontal-tb;
       }
       .sidebar-tab-arrow {
         display: inline-block;
         margin-right: 5px;
         transition: transform 0.25s ease;
       }
-      /* Arrow rotates when sidebar is collapsed */
+      /* Open: arrow points up (▲). Collapsed: arrow points down (▼) */
       .sidebar-tab-arrow { transform: rotate(180deg); }
-      .sidebar.collapsed ~ .sidebar-tab .sidebar-tab-arrow { transform: rotate(0deg); }
-      /* Hide internal collapse button — tab replaces it */
+      body.sidebar-collapsed .sidebar-tab .sidebar-tab-arrow { transform: rotate(0deg); }
+      body.sidebar-collapsed .sidebar-footer { display: none !important; }
+      /* Hide old internal collapse button */
       #collapse-btn { display: none !important; }
-      /* Hide footer when sidebar is collapsed — needs !important to beat fixed positioning rule */
-      .sidebar.collapsed .sidebar-footer { display: none !important; }
     }
-
-  /* Desktop sidebar tab — on the right edge of the sidebar */
-  @media (min-width: 769px) {
-    .sidebar {
-      position: relative;
-      overflow: visible; /* allow tab to protrude */
-    }
-    .sidebar-tab {
-      display: flex !important;
-      position: absolute;
-      right: -28px;
-      top: 50%;
-      transform: translateY(-50%);
-      z-index: 10;
-      width: 28px;
-      height: 72px;
-      border-radius: 0 6px 6px 0;
-      background: var(--ui-accent, #b82018);
-      color: white;
-      border: none;
-      cursor: pointer;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      box-shadow: 2px 0 8px rgba(0,0,0,0.3);
-      writing-mode: vertical-rl;
-      font-family: 'Barlow Condensed', sans-serif;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      padding: 8px 0;
-    }
-    .sidebar-tab-arrow {
-      writing-mode: horizontal-tb;
-      margin-right: 0;
-      transition: transform 0.25s ease;
-      font-size: 12px;
-    }
-    /* Arrow: ◀ when open (pointing left = collapse), ▶ when collapsed */
-    .sidebar-tab-arrow { transform: rotate(0deg); }
-    .sidebar.collapsed ~ .sidebar-tab .sidebar-tab-arrow { transform: rotate(180deg) !important; }
-  }
 
 </style>
 </head>
@@ -501,11 +509,10 @@ if(window.innerWidth <= 768) {
     </label>
     <input type="file" id="f-import" accept=".html" style="display:none" onchange="importHTML(this)">
   </div>
+  <button class="sidebar-tab" onclick="toggleSidebar()" aria-label="Toggle controls"><span class="sidebar-tab-arrow">◀</span> Builder</button>
 </div>
 
 <!-- PREVIEW -->
-
-<button class="sidebar-tab" onclick="toggleSidebar()" aria-label="Toggle controls"><span class="sidebar-tab-arrow">▼</span> Builder</button>
 <div class="preview-area">
 
   <!-- PAGE 1: Overview, Secrets & Clues, Loot, NPCs, Hooks & Opening -->
@@ -1711,14 +1718,16 @@ function savePDF() {
 
 function toggleSidebar() {
   const sidebar=document.querySelector('.sidebar');
-  const btn=document.getElementById('collapse-btn');
   const collapsed=sidebar.classList.toggle('collapsed');
-  btn.textContent=collapsed?'▶':'◀';
-  btn.title=collapsed?'Show controls':'Hide controls';
-  // Update external tab arrow text for desktop (CSS handles mobile rotation)
-  const tabArrow=document.querySelector('.sidebar-tab .sidebar-tab-arrow');
-  if(tabArrow && window.innerWidth>=769) {
-    tabArrow.textContent=collapsed?'▶':'◀';
+  const tab=document.querySelector('.sidebar-tab');
+  if(window.innerWidth>=769) {
+    // Desktop: update arrow text and tab position
+    const tabArrow=tab && tab.querySelector('.sidebar-tab-arrow');
+    if(tabArrow) tabArrow.textContent=collapsed?'▶':'◀';
+    if(tab) tab.style.left=collapsed?'42px':'320px';
+  } else {
+    // Mobile: toggle body class for CSS arrow rotation and footer hide
+    document.body.classList.toggle('sidebar-collapsed', collapsed);
   }
 }
 
