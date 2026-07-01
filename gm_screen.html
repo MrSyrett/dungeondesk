@@ -1517,10 +1517,10 @@ function init_notes(root) {
     sel.addRange(range);
   }
 
-  // ── Inline markdown: convert **bold**, *italic*, `code` in a text node ──
+  // ── Inline markdown: convert **bold**, *italic*, `code` ──
+  // Called after the closing delimiter is typed. Replaces block content
+  // and places cursor in a fresh text node AFTER the inline element.
   function applyInline(block) {
-    // Work on the raw text content only — don't re-process already-rendered elements
-    // We rebuild the block's innerHTML from its text by walking child nodes
     let text = '';
     block.childNodes.forEach(n => {
       if(n.nodeType === 3) text += n.textContent;
@@ -1529,28 +1529,38 @@ function init_notes(root) {
       else if(n.nodeName === 'CODE') text += '`' + n.textContent + '`';
       else text += n.textContent;
     });
-    // Now render inline patterns
+
     const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    // Only replace if something actually changes
     const rendered = esc(text)
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/(?<!\*)\*(.+?)\*(?!\*)/g, '<em>$1</em>')
       .replace(/`(.+?)`/g, '<code>$1</code>');
-    if(rendered !== esc(text)) {
-      block.innerHTML = rendered;
-      setCursorAtEnd(block);
-    }
+    if(rendered === esc(text)) return; // nothing to convert
+
+    // Rebuild the block — append a trailing plain text node so the cursor
+    // lands outside the inline element, not inside it
+    block.innerHTML = rendered;
+    const trail = document.createTextNode('\u200B'); // zero-width space as anchor
+    block.appendChild(trail);
+    const range = document.createRange();
+    const sel = getSelection();
+    range.setStartAfter(trail);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
   }
 
-  // ── Block-level conversion: check if line starts with # ## ### - > --- ──
+  // ── Block-level conversion: triggered on Enter for heading/quote prefixes ──
   function tryBlockConvert(block) {
-    const text = block.textContent;
+    const text = block.textContent.replace(/\u200B/g, ''); // strip zero-width spaces
     let newTag = null, newText = null;
 
-    if(/^# (.+)/.test(text))        { newTag = 'h1'; newText = text.slice(2); }
-    else if(/^## (.+)/.test(text))  { newTag = 'h2'; newText = text.slice(3); }
-    else if(/^### (.+)/.test(text)) { newTag = 'h3'; newText = text.slice(4); }
-    else if(/^> (.*)/.test(text))   { newTag = 'blockquote'; newText = text.slice(2); }
-    else if(/^[-*] (.*)/.test(text)){ newTag = 'li-ul'; newText = text.replace(/^[-*] /,''); }
+    if(/^# (.+)/.test(text))        { newTag = 'h1'; newText = text.slice(2).trim(); }
+    else if(/^## (.+)/.test(text))  { newTag = 'h2'; newText = text.slice(3).trim(); }
+    else if(/^### (.+)/.test(text)) { newTag = 'h3'; newText = text.slice(4).trim(); }
+    else if(/^> (.*)/.test(text))   { newTag = 'blockquote'; newText = text.slice(2).trim(); }
+    else if(/^[-*] (.*)/.test(text)){ newTag = 'li-ul'; newText = text.replace(/^[-*] /,'').trim(); }
     else if(/^---+$/.test(text.trim())) { newTag = 'hr'; newText = ''; }
 
     if(!newTag) return false;
@@ -1564,7 +1574,6 @@ function init_notes(root) {
       block.remove();
       setCursorAtStart(p);
     } else if(newTag === 'li-ul') {
-      // Wrap in ul if previous sibling isn't ul
       const prev = block.previousSibling;
       let ul = (prev && prev.nodeName === 'UL') ? prev : null;
       if(!ul) { ul = document.createElement('ul'); editor.insertBefore(ul, block); }
@@ -1581,21 +1590,43 @@ function init_notes(root) {
     return true;
   }
 
-  // ── Enter key: create new paragraph after any block ──
+  // ── Enter key handler ──
   editor.addEventListener('keydown', e => {
     if(e.key === 'Enter') {
       const block = getCursorBlock();
       if(!block) return;
       const tag = block.nodeName;
-      // For headings and blockquotes: Enter creates a new plain paragraph
+      const text = block.textContent.replace(/\u200B/g,'');
+
+      // If current block has a heading/blockquote prefix → convert it first, then make new para
+      if(tag === 'P' || tag === 'DIV') {
+        if(/^#{1,3} .+/.test(text) || /^> /.test(text) || /^[-*] /.test(text) || /^---+$/.test(text.trim())) {
+          e.preventDefault();
+          const converted = tryBlockConvert(block);
+          if(converted) {
+            // After conversion, the new block is already focused — add a paragraph after it
+            const focused = getCursorBlock();
+            if(focused && focused.nodeName !== 'P') {
+              const p = document.createElement('p'); p.innerHTML = '<br>';
+              focused.after(p);
+              setCursorAtStart(p);
+            }
+          }
+          return;
+        }
+      }
+
+      // Headings/blockquotes already converted → Enter exits to new paragraph
       if(['H1','H2','H3','BLOCKQUOTE'].includes(tag)) {
         e.preventDefault();
         const p = document.createElement('p'); p.innerHTML = '<br>';
         block.after(p);
         setCursorAtStart(p);
+        return;
       }
-      // For list items: Enter on empty item exits the list
-      if(tag === 'LI' && !block.textContent.trim()) {
+
+      // Empty list item → exit list
+      if(tag === 'LI' && !text.trim()) {
         e.preventDefault();
         const ul = block.closest('ul,ol');
         const p = document.createElement('p'); p.innerHTML = '<br>';
@@ -1605,7 +1636,8 @@ function init_notes(root) {
         setCursorAtStart(p);
       }
     }
-    // Backspace at start of a heading → convert back to paragraph
+
+    // Backspace at start of heading → back to paragraph
     if(e.key === 'Backspace') {
       const sel = getSelection();
       if(!sel.rangeCount) return;
@@ -1624,31 +1656,19 @@ function init_notes(root) {
     }
   });
 
-  // ── Input handler: block conversion + inline rendering ──
+  // ── Input handler: inline markdown only ──
   editor.addEventListener('input', () => {
-    // Ensure there's always at least one block
     if(!editor.innerHTML.trim() || editor.innerHTML === '<br>') {
       editor.innerHTML = '<p><br></p>';
     }
     const block = getCursorBlock();
     if(block && block.nodeType === 1) {
-      const text = block.textContent;
-      // Try block conversion on space after prefix (e.g. "# " typed)
-      const blockPrefixes = /^(#{1,3} |[-*] |> |---)/.test(text);
-      if(blockPrefixes) {
-        // Only convert when a space has been typed after the prefix
-        if(text.endsWith(' ') || text === '---') {
-          tryBlockConvert(block);
-        }
-      } else {
-        // Try inline conversion when closing delimiter typed
-        if(text.includes('**') || text.includes('*') || text.includes('`')) {
-          const closes = (text.match(/\*\*/g)||[]).length >= 2 ||
-                         (text.match(/(?<!\*)\*(?!\*)/g)||[]).length >= 2 ||
-                         (text.match(/`/g)||[]).length >= 2;
-          if(closes) applyInline(block);
-        }
-      }
+      const text = block.textContent.replace(/\u200B/g,'');
+      // Inline conversion: fire when a closing delimiter is completed
+      const hasBold   = (text.match(/\*\*/g)||[]).length >= 2;
+      const hasItalic = (text.match(/(?<!\*)\*(?!\*)/g)||[]).length >= 2;
+      const hasCode   = (text.match(/`/g)||[]).length >= 2;
+      if(hasBold || hasItalic || hasCode) applyInline(block);
     }
     flashSaved();
   });
