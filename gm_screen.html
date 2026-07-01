@@ -509,36 +509,32 @@ input[type="number"] { -moz-appearance: textfield; }
 /* ═══ NOTES TOOL ═══ */
 .nts-saved-indicator { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); opacity: 0; transition: opacity 0.3s; }
 .nts-saved-indicator.show { opacity: 1; color: var(--green-light); }
-
-.nts-format-row { display: flex; align-items: center; gap: 4px; }
-.fmt-btn {
-  width: 30px; height: 30px; background: var(--panel); border: 1px solid var(--border); color: var(--light);
-  cursor: pointer; font-size: 13px; display: flex; align-items: center; justify-content: center;
-}
-.fmt-btn:hover { border-color: var(--mid); color: white; }
-.fmt-btn.h1 { font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 13px; }
-.fmt-btn.h2 { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px; }
-.fmt-btn.bold { font-weight: 900; }
-.fmt-divider { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
-
-.nts-body { flex: 1; display: flex; padding: 16px; background: var(--black); min-height: 0; }
+.nts-body { flex: 1; display: flex; min-height: 0; background: var(--black); }
 .nts-editor {
   flex: 1;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  color: var(--white);
+  outline: none;
+  padding: 20px 24px;
+  overflow-y: auto;
   font-family: 'Barlow', sans-serif;
   font-size: 14px;
-  line-height: 1.7;
-  padding: 16px;
-  overflow-y: auto;
-  outline: none;
+  line-height: 1.75;
+  color: var(--light);
+  caret-color: var(--gold);
+  min-height: 0;
 }
-.nts-editor h1 { font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700; margin: 14px 0 8px; color: var(--gold); }
-.nts-editor h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; margin: 12px 0 6px; color: var(--light); border-bottom: 1px solid var(--border); padding-bottom: 3px; }
-.nts-editor b, .nts-editor strong { color: var(--white); }
-.nts-editor:empty::before { content: attr(data-placeholder); color: var(--muted); }
-.nts-editor p { margin: 0 0 8px; min-height: 1em; }
+.nts-editor:empty::before { content: attr(data-placeholder); color: var(--muted); pointer-events: none; }
+/* Block styles rendered in place */
+.nts-editor h1 { font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700; color: var(--gold); margin: 8px 0 6px; }
+.nts-editor h2 { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--light); border-bottom: 1px solid var(--border); padding-bottom: 3px; margin: 12px 0 6px; }
+.nts-editor h3 { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; color: var(--mid); margin: 10px 0 4px; }
+.nts-editor p { margin: 0 0 4px; min-height: 1.75em; }
+.nts-editor strong { color: var(--white); font-weight: 700; }
+.nts-editor em { font-style: italic; }
+.nts-editor ul, .nts-editor ol { margin: 0 0 6px; padding-left: 20px; }
+.nts-editor li { margin-bottom: 2px; }
+.nts-editor blockquote { border-left: 3px solid var(--gold); margin: 6px 0; padding: 2px 12px; color: var(--mid); font-style: italic; }
+.nts-editor hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+.nts-editor code { font-family: 'Share Tech Mono', monospace; font-size: 12px; background: var(--panel-2); padding: 1px 4px; border-radius: 2px; }
 
 
 
@@ -595,8 +591,7 @@ input[type="number"] { -moz-appearance: textfield; }
   .npc-hp-input { min-height: 32px; font-size: 14px; }
   .tracker-name-input, .npc-name-input { font-size: 14px; }
 
-  .nts-body { padding: 10px; }
-  .nts-editor { font-size: 16px; padding: 12px; }
+  .nts-editor { font-size: 16px; padding: 14px 16px; }
 }
 </style>
 </head>
@@ -745,13 +740,6 @@ input[type="number"] { -moz-appearance: textfield; }
 <template id="tpl-notes">
   <div class="tool-instance nts-tool" data-tool="notes">
     <div class="toolbar-tpl" style="display:none">
-      <div class="nts-format-row">
-        <button class="fmt-btn h1" data-cmd="h1" title="Heading">H1</button>
-        <button class="fmt-btn h2" data-cmd="h2" title="Subheading">H2</button>
-        <button class="fmt-btn bold" data-cmd="bold" title="Bold"><b>B</b></button>
-        <div class="fmt-divider"></div>
-        <button class="fmt-btn" data-cmd="p" title="Normal text">¶</button>
-      </div>
       <span class="nts-saved-indicator"></span>
       <div class="toolbar-spacer"></div>
       <button class="btn small ghost nts-export">Export .md</button>
@@ -762,9 +750,7 @@ input[type="number"] { -moz-appearance: textfield; }
       <button class="btn small ghost nts-clear">Clear</button>
     </div>
     <div class="nts-body">
-      <div class="nts-editor" contenteditable="true" data-placeholder="Session notes...
-
-Things players did, decisions made, NPCs met, loot found, plot threads to follow up on next time."></div>
+      <div class="nts-editor" contenteditable="true" data-placeholder="Start typing... Use # for headings, **bold**, *italic*, - for lists"></div>
     </div>
   </div>
 </template>
@@ -1499,108 +1485,273 @@ function init_notes(root) {
   const importInput = root.querySelector('.nts-import-input');
   const clearBtn = root.querySelector('.nts-clear');
   const savedIndicator = root.querySelector('.nts-saved-indicator');
-  const fmtBtns = root.querySelectorAll('.fmt-btn');
 
   if(!editor.innerHTML.trim()) editor.innerHTML = '<p><br></p>';
 
-  fmtBtns.forEach(btn => {
-    btn.addEventListener('mousedown', e => e.preventDefault());
-    btn.addEventListener('click', () => {
-      editor.focus();
-      const cmd = btn.dataset.cmd;
-      if(cmd === 'bold') document.execCommand('bold');
-      else if(cmd === 'h1') document.execCommand('formatBlock', false, 'H1');
-      else if(cmd === 'h2') document.execCommand('formatBlock', false, 'H2');
-      else if(cmd === 'p') document.execCommand('formatBlock', false, 'P');
+  // ── Helpers ──
+  function getSelection() { return window.getSelection(); }
+  function getCursorBlock() {
+    const sel = getSelection();
+    if(!sel.rangeCount) return null;
+    let node = sel.getRangeAt(0).startContainer;
+    while(node && node !== editor) {
+      if(node.parentNode === editor) return node;
+      node = node.parentNode;
+    }
+    return null;
+  }
+  function setCursorAtEnd(el) {
+    const range = document.createRange();
+    const sel = getSelection();
+    range.selectNodeContents(el);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+  function setCursorAtStart(el) {
+    const range = document.createRange();
+    const sel = getSelection();
+    range.setStart(el, 0);
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+
+  // ── Inline markdown: convert **bold**, *italic*, `code` in a text node ──
+  function applyInline(block) {
+    // Work on the raw text content only — don't re-process already-rendered elements
+    // We rebuild the block's innerHTML from its text by walking child nodes
+    let text = '';
+    block.childNodes.forEach(n => {
+      if(n.nodeType === 3) text += n.textContent;
+      else if(n.nodeName === 'STRONG') text += '**' + n.textContent + '**';
+      else if(n.nodeName === 'EM') text += '*' + n.textContent + '*';
+      else if(n.nodeName === 'CODE') text += '`' + n.textContent + '`';
+      else text += n.textContent;
     });
+    // Now render inline patterns
+    const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const rendered = esc(text)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g, '<em>$1</em>')
+      .replace(/`(.+?)`/g, '<code>$1</code>');
+    if(rendered !== esc(text)) {
+      block.innerHTML = rendered;
+      setCursorAtEnd(block);
+    }
+  }
+
+  // ── Block-level conversion: check if line starts with # ## ### - > --- ──
+  function tryBlockConvert(block) {
+    const text = block.textContent;
+    let newTag = null, newText = null;
+
+    if(/^# (.+)/.test(text))        { newTag = 'h1'; newText = text.slice(2); }
+    else if(/^## (.+)/.test(text))  { newTag = 'h2'; newText = text.slice(3); }
+    else if(/^### (.+)/.test(text)) { newTag = 'h3'; newText = text.slice(4); }
+    else if(/^> (.*)/.test(text))   { newTag = 'blockquote'; newText = text.slice(2); }
+    else if(/^[-*] (.*)/.test(text)){ newTag = 'li-ul'; newText = text.replace(/^[-*] /,''); }
+    else if(/^---+$/.test(text.trim())) { newTag = 'hr'; newText = ''; }
+
+    if(!newTag) return false;
+
+    const newEl = document.createElement(newTag === 'li-ul' ? 'li' : (newTag === 'hr' ? 'hr' : newTag));
+
+    if(newTag === 'hr') {
+      editor.insertBefore(newEl, block);
+      const p = document.createElement('p'); p.innerHTML = '<br>';
+      editor.insertBefore(p, block);
+      block.remove();
+      setCursorAtStart(p);
+    } else if(newTag === 'li-ul') {
+      // Wrap in ul if previous sibling isn't ul
+      const prev = block.previousSibling;
+      let ul = (prev && prev.nodeName === 'UL') ? prev : null;
+      if(!ul) { ul = document.createElement('ul'); editor.insertBefore(ul, block); }
+      newEl.innerHTML = newText || '<br>';
+      ul.appendChild(newEl);
+      block.remove();
+      setCursorAtEnd(newEl);
+    } else {
+      newEl.innerHTML = newText || '<br>';
+      editor.insertBefore(newEl, block);
+      block.remove();
+      setCursorAtEnd(newEl);
+    }
+    return true;
+  }
+
+  // ── Enter key: create new paragraph after any block ──
+  editor.addEventListener('keydown', e => {
+    if(e.key === 'Enter') {
+      const block = getCursorBlock();
+      if(!block) return;
+      const tag = block.nodeName;
+      // For headings and blockquotes: Enter creates a new plain paragraph
+      if(['H1','H2','H3','BLOCKQUOTE'].includes(tag)) {
+        e.preventDefault();
+        const p = document.createElement('p'); p.innerHTML = '<br>';
+        block.after(p);
+        setCursorAtStart(p);
+      }
+      // For list items: Enter on empty item exits the list
+      if(tag === 'LI' && !block.textContent.trim()) {
+        e.preventDefault();
+        const ul = block.closest('ul,ol');
+        const p = document.createElement('p'); p.innerHTML = '<br>';
+        ul.after(p);
+        block.remove();
+        if(!ul.children.length) ul.remove();
+        setCursorAtStart(p);
+      }
+    }
+    // Backspace at start of a heading → convert back to paragraph
+    if(e.key === 'Backspace') {
+      const sel = getSelection();
+      if(!sel.rangeCount) return;
+      const range = sel.getRangeAt(0);
+      const block = getCursorBlock();
+      if(!block) return;
+      const tag = block.nodeName;
+      if(['H1','H2','H3','BLOCKQUOTE'].includes(tag) && range.startOffset === 0 && range.collapsed) {
+        e.preventDefault();
+        const p = document.createElement('p');
+        p.innerHTML = block.innerHTML || '<br>';
+        editor.insertBefore(p, block);
+        block.remove();
+        setCursorAtStart(p);
+      }
+    }
+  });
+
+  // ── Input handler: block conversion + inline rendering ──
+  editor.addEventListener('input', () => {
+    // Ensure there's always at least one block
+    if(!editor.innerHTML.trim() || editor.innerHTML === '<br>') {
+      editor.innerHTML = '<p><br></p>';
+    }
+    const block = getCursorBlock();
+    if(block && block.nodeType === 1) {
+      const text = block.textContent;
+      // Try block conversion on space after prefix (e.g. "# " typed)
+      const blockPrefixes = /^(#{1,3} |[-*] |> |---)/.test(text);
+      if(blockPrefixes) {
+        // Only convert when a space has been typed after the prefix
+        if(text.endsWith(' ') || text === '---') {
+          tryBlockConvert(block);
+        }
+      } else {
+        // Try inline conversion when closing delimiter typed
+        if(text.includes('**') || text.includes('*') || text.includes('`')) {
+          const closes = (text.match(/\*\*/g)||[]).length >= 2 ||
+                         (text.match(/(?<!\*)\*(?!\*)/g)||[]).length >= 2 ||
+                         (text.match(/`/g)||[]).length >= 2;
+          if(closes) applyInline(block);
+        }
+      }
+    }
+    flashSaved();
   });
 
   let saveTimeout;
-  editor.addEventListener('input', () => {
+  function flashSaved() {
     clearTimeout(saveTimeout);
     saveTimeout = setTimeout(() => {
       savedIndicator.textContent = '✓ Up to date';
       savedIndicator.classList.add('show');
       setTimeout(() => savedIndicator.classList.remove('show'), 1500);
-    }, 600);
-  });
+    }, 800);
+  }
 
-  // Export as Markdown
-  exportBtn.addEventListener('click', () => {
-    const clone = editor.cloneNode(true);
+  // ── Export: walk DOM → Markdown ──
+  function domToMd(el) {
     let md = '';
-    clone.childNodes.forEach(node => {
-      if(node.nodeType === 1) {
-        const tag = node.tagName;
-        // Convert bold spans within text
-        let content = '';
-        node.childNodes.forEach(child => {
-          if(child.nodeType === 3) content += child.textContent;
-          else if(child.tagName === 'B' || child.tagName === 'STRONG') content += '**' + child.textContent + '**';
-          else content += child.textContent;
+    el.childNodes.forEach(node => {
+      if(node.nodeType === 3) { md += node.textContent; return; }
+      const t = node.nodeName;
+      const inner = node.textContent;
+      if(t === 'H1') md += '# ' + inner + '\n\n';
+      else if(t === 'H2') md += '## ' + inner + '\n\n';
+      else if(t === 'H3') md += '### ' + inner + '\n\n';
+      else if(t === 'BLOCKQUOTE') md += '> ' + inner + '\n\n';
+      else if(t === 'HR') md += '---\n\n';
+      else if(t === 'UL') { node.querySelectorAll('li').forEach(li => { md += '- ' + li.textContent + '\n'; }); md += '\n'; }
+      else if(t === 'OL') { let i=1; node.querySelectorAll('li').forEach(li => { md += (i++) + '. ' + li.textContent + '\n'; }); md += '\n'; }
+      else if(t === 'P' || t === 'DIV') {
+        // Inline: reconstruct with markdown markers
+        let line = '';
+        node.childNodes.forEach(c => {
+          if(c.nodeType === 3) line += c.textContent;
+          else if(c.nodeName === 'STRONG') line += '**' + c.textContent + '**';
+          else if(c.nodeName === 'EM') line += '*' + c.textContent + '*';
+          else if(c.nodeName === 'CODE') line += '`' + c.textContent + '`';
+          else line += c.textContent;
         });
-        if(tag === 'H1') md += '# ' + content + '\n\n';
-        else if(tag === 'H2') md += '## ' + content + '\n\n';
-        else if(content.trim()) md += content + '\n\n';
-      } else if(node.nodeType === 3 && node.textContent.trim()) {
-        md += node.textContent + '\n\n';
+        if(line.trim()) md += line + '\n\n';
       }
     });
-    if(!md.trim()) { alert('No notes to export yet.'); return; }
-    const blob = new Blob([md.trim()], {type: 'text/markdown'});
+    return md.trim();
+  }
+
+  // ── Import: Markdown → DOM ──
+  function mdToDom(md) {
+    const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const inline = s => esc(s)
+      .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+      .replace(/\*(.+?)\*/g,'<em>$1</em>')
+      .replace(/`(.+?)`/g,'<code>$1</code>');
+    let html = '';
+    const lines = md.split('\n');
+    let ulOpen = false;
+    const closeUl = () => { if(ulOpen){ html += '</ul>'; ulOpen = false; } };
+    lines.forEach(line => {
+      if(/^# (.+)/.test(line))       { closeUl(); html += `<h1>${inline(line.slice(2))}</h1>`; }
+      else if(/^## (.+)/.test(line)) { closeUl(); html += `<h2>${inline(line.slice(3))}</h2>`; }
+      else if(/^### (.+)/.test(line)){ closeUl(); html += `<h3>${inline(line.slice(4))}</h3>`; }
+      else if(/^> (.*)/.test(line))  { closeUl(); html += `<blockquote>${inline(line.slice(2))}</blockquote>`; }
+      else if(/^---+$/.test(line.trim())){ closeUl(); html += '<hr>'; }
+      else if(/^[-*] (.+)/.test(line)){ if(!ulOpen){html+='<ul>';ulOpen=true;} html += `<li>${inline(line.replace(/^[-*] /,''))}</li>`; }
+      else if(line.trim() === '')    { closeUl(); html += '<p><br></p>'; }
+      else                           { closeUl(); html += `<p>${inline(line)}</p>`; }
+    });
+    closeUl();
+    return html || '<p><br></p>';
+  }
+
+  exportBtn.addEventListener('click', () => {
+    const md = domToMd(editor);
+    if(!md) { alert('No notes to export yet.'); return; }
+    const blob = new Blob([md], {type: 'text/markdown'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    const stamp = new Date().toISOString().slice(0,10);
-    a.href = url; a.download = `session_notes_${stamp}.md`; a.click();
+    a.href = url; a.download = `session_notes_${new Date().toISOString().slice(0,10)}.md`; a.click();
     URL.revokeObjectURL(url);
   });
 
-  // Import Markdown — convert to editor HTML
   if(importInput) {
     importInput.addEventListener('change', () => {
-      const file = importInput.files[0];
-      if(!file) return;
+      const file = importInput.files[0]; if(!file) return;
       const reader = new FileReader();
       reader.onload = e => {
-        const md = e.target.result;
-        // Convert markdown to editor-compatible HTML
-        const html = md.split(/\n\n+/).map(block => {
-          block = block.trim();
-          if(!block) return '';
-          if(block.startsWith('# ')) return '<h1>' + escMd(block.slice(2)) + '</h1>';
-          if(block.startsWith('## ')) return '<h2>' + escMd(block.slice(3)) + '</h2>';
-          if(block.startsWith('### ')) return '<h2>' + escMd(block.slice(4)) + '</h2>';
-          // Convert inline bold **text** and *text*
-          const inline = escMd(block)
-            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.+?)\*/g, '<em>$1</em>');
-          return '<p>' + inline.replace(/\n/g, '<br>') + '</p>';
-        }).filter(Boolean).join('');
-        if(editor.textContent.trim()) {
-          if(!confirm('Replace current notes with imported content?')) { importInput.value = ''; return; }
-        }
-        editor.innerHTML = html || '<p><br></p>';
+        if(editor.textContent.trim() && !confirm('Replace current notes with imported content?')) { importInput.value=''; return; }
+        editor.innerHTML = mdToDom(e.target.result);
         importInput.value = '';
       };
       reader.readAsText(file);
     });
   }
 
-  function escMd(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-
   clearBtn.addEventListener('click', () => {
     if(!editor.textContent.trim()) return;
-    if(confirm('Clear all session notes? This cannot be undone.')) {
-      editor.innerHTML = '<p><br></p>';
-    }
+    if(confirm('Clear all session notes? This cannot be undone.')) editor.innerHTML = '<p><br></p>';
   });
 
-  // ── State hooks for session save/load ──
-  root._getState = () => ({ html: editor.innerHTML });
-  root._setState = (s) => { if(s.html) editor.innerHTML = s.html; };
-
+  // ── State: store as Markdown ──
+  root._getState = () => ({ md: domToMd(editor) });
+  root._setState = (s) => {
+    if(s.md !== undefined) editor.innerHTML = mdToDom(s.md);
+    else if(s.html) editor.innerHTML = s.html; // legacy
+  };
 }
 </script>
 
