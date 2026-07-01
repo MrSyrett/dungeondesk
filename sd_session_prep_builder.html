@@ -10,6 +10,9 @@
 if(window.innerWidth <= 768) {
   const s = document.querySelector('.sidebar');
   if(s) { s.classList.add('collapsed'); document.getElementById('collapse-btn').textContent = '▼'; }
+  // Set desktop tab arrow on init
+  const _tabArrow=document.querySelector('.sidebar-tab .sidebar-tab-arrow');
+  if(_tabArrow) _tabArrow.textContent = window.innerWidth>=769 ? '▶' : '▼';
 }
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -357,6 +360,50 @@ if(window.innerWidth <= 768) {
       /* Hide footer when sidebar is collapsed — needs !important to beat fixed positioning rule */
       .sidebar.collapsed .sidebar-footer { display: none !important; }
     }
+
+  /* Desktop sidebar tab — on the right edge of the sidebar */
+  @media (min-width: 769px) {
+    .sidebar {
+      position: relative;
+      overflow: visible; /* allow tab to protrude */
+    }
+    .sidebar-tab {
+      display: flex !important;
+      position: absolute;
+      right: -28px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      width: 28px;
+      height: 72px;
+      border-radius: 0 6px 6px 0;
+      background: var(--ui-accent, #b82018);
+      color: white;
+      border: none;
+      cursor: pointer;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      box-shadow: 2px 0 8px rgba(0,0,0,0.3);
+      writing-mode: vertical-rl;
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      padding: 8px 0;
+    }
+    .sidebar-tab-arrow {
+      writing-mode: horizontal-tb;
+      margin-right: 0;
+      transition: transform 0.25s ease;
+      font-size: 12px;
+    }
+    /* Arrow: ◀ when open (pointing left = collapse), ▶ when collapsed */
+    .sidebar-tab-arrow { transform: rotate(0deg); }
+    .sidebar.collapsed ~ .sidebar-tab .sidebar-tab-arrow { transform: rotate(180deg) !important; }
+  }
 
 </style>
 </head>
@@ -1694,6 +1741,11 @@ function toggleSidebar() {
   const collapsed=sidebar.classList.toggle('collapsed');
   btn.textContent=collapsed?'▶':'◀';
   btn.title=collapsed?'Show controls':'Hide controls';
+  // Update external tab arrow text for desktop (CSS handles mobile rotation)
+  const tabArrow=document.querySelector('.sidebar-tab .sidebar-tab-arrow');
+  if(tabArrow && window.innerWidth>=769) {
+    tabArrow.textContent=collapsed?'▶':'◀';
+  }
 }
 
 function toggleDarkMode(cb) {

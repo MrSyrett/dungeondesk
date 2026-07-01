@@ -1425,11 +1425,7 @@ function autoLoad() {
   try {
     const data = JSON.parse(saved);
     applySheet(data);
-    var st = document.getElementById('dd-status');
-    if(st) st.textContent = 'Loaded ✓';
   } catch(e) {
-    var st = document.getElementById('dd-status');
-    if(st) st.textContent = 'Load err: ' + e.message;
   }
 }
 
