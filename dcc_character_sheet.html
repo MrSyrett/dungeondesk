@@ -1414,7 +1414,17 @@ function importSheet(input) {
 
 function autoLoad() {
   const saved = localStorage.getItem('dcc_sheet');
-  if(saved) try { applySheet(JSON.parse(saved)); } catch(e) {}
+  if(!saved) return;
+  try {
+    const data = JSON.parse(saved);
+    applySheet(data);
+    // Update dd-status to confirm load success
+    var st = document.getElementById('dd-status');
+    if(st) st.textContent = 'Loaded ✓';
+  } catch(e) {
+    var st = document.getElementById('dd-status');
+    if(st) st.textContent = 'Load error: ' + e.message;
+  }
 }
 
 // ── INIT ──
@@ -1569,7 +1579,11 @@ document.querySelector('.log-header').addEventListener('click', function(e) {
 })();
 
 // ── AUTO-SAVE ON EXIT / BACKGROUND ──
+var _pageReady = false; // don't save until page has fully loaded
+setTimeout(function() { _pageReady = true; }, 3000);
+
 function autoSaveOnExit() {
+  if(!_pageReady) return;
   try { saveSheet(); } catch(e) {}
 }
 window.addEventListener('beforeunload', autoSaveOnExit);
@@ -1581,6 +1595,7 @@ document.addEventListener('visibilitychange', function() {
 (function() {
   var t = null;
   function go() {
+    if(!_pageReady) return;
     if(t) clearTimeout(t);
     t = setTimeout(function() { try { saveSheet(); } catch(e) {} }, 1500);
   }
