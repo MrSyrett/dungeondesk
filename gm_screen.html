@@ -535,6 +535,14 @@ input[type="number"] { -moz-appearance: textfield; }
 .nts-editor blockquote { border-left: 3px solid var(--gold); margin: 6px 0; padding: 2px 12px; color: var(--mid); font-style: italic; }
 .nts-editor hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
 .nts-editor code { font-family: 'Share Tech Mono', monospace; font-size: 12px; background: var(--panel-2); padding: 1px 4px; border-radius: 2px; }
+.nts-raw {
+  flex: 1; display: none;
+  background: var(--panel-2); border: none; outline: none;
+  color: var(--light); font-family: 'Share Tech Mono', monospace;
+  font-size: 12px; line-height: 1.6; padding: 20px 24px;
+  resize: none; min-height: 0;
+}
+.nts-md-toggle.active { background: var(--red); border-color: var(--red); color: white; }
 
 
 
@@ -742,6 +750,7 @@ input[type="number"] { -moz-appearance: textfield; }
     <div class="toolbar-tpl" style="display:none">
       <span class="nts-saved-indicator"></span>
       <div class="toolbar-spacer"></div>
+      <button class="btn small ghost nts-md-toggle" title="Toggle Markdown source">MD</button>
       <button class="btn small ghost nts-export">Export .md</button>
       <label class="btn small ghost" style="cursor:pointer;" title="Import a Markdown file">
         Import .md
@@ -751,6 +760,7 @@ input[type="number"] { -moz-appearance: textfield; }
     </div>
     <div class="nts-body">
       <div class="nts-editor" contenteditable="true" data-placeholder="Start typing... Use # for headings, **bold**, *italic*, - for lists"></div>
+      <textarea class="nts-raw" style="display:none;" placeholder="Raw Markdown..."></textarea>
     </div>
   </div>
 </template>
@@ -1481,12 +1491,35 @@ function init_combat(root) {
 // ══════════════════════════════════════════
 function init_notes(root) {
   const editor = root.querySelector('.nts-editor');
+  const rawArea = root.querySelector('.nts-raw');
+  const mdToggle = root.querySelector('.nts-md-toggle');
   const exportBtn = root.querySelector('.nts-export');
   const importInput = root.querySelector('.nts-import-input');
   const clearBtn = root.querySelector('.nts-clear');
   const savedIndicator = root.querySelector('.nts-saved-indicator');
 
   if(!editor.innerHTML.trim()) editor.innerHTML = '<p><br></p>';
+
+  let mdMode = false;
+
+  mdToggle.addEventListener('click', () => {
+    mdMode = !mdMode;
+    mdToggle.classList.toggle('active', mdMode);
+    if(mdMode) {
+      // Switch to raw MD view: convert DOM → markdown
+      rawArea.value = domToMd(editor);
+      editor.style.display = 'none';
+      rawArea.style.display = 'flex';
+      rawArea.style.flex = '1';
+      rawArea.focus();
+    } else {
+      // Switch back to preview: parse markdown → DOM
+      editor.innerHTML = mdToDom(rawArea.value);
+      rawArea.style.display = 'none';
+      editor.style.display = '';
+      editor.focus();
+    }
+  });
 
   // ── Helpers ──
   function getSelection() { return window.getSelection(); }
@@ -1739,7 +1772,7 @@ function init_notes(root) {
   }
 
   exportBtn.addEventListener('click', () => {
-    const md = domToMd(editor);
+    const md = mdMode ? rawArea.value.trim() : domToMd(editor);
     if(!md) { alert('No notes to export yet.'); return; }
     const blob = new Blob([md], {type: 'text/markdown'});
     const url = URL.createObjectURL(blob);
@@ -1753,8 +1786,13 @@ function init_notes(root) {
       const file = importInput.files[0]; if(!file) return;
       const reader = new FileReader();
       reader.onload = e => {
-        if(editor.textContent.trim() && !confirm('Replace current notes with imported content?')) { importInput.value=''; return; }
-        editor.innerHTML = mdToDom(e.target.result);
+        const hasContent = mdMode ? rawArea.value.trim() : editor.textContent.trim();
+        if(hasContent && !confirm('Replace current notes with imported content?')) { importInput.value=''; return; }
+        if(mdMode) {
+          rawArea.value = e.target.result;
+        } else {
+          editor.innerHTML = mdToDom(e.target.result);
+        }
         importInput.value = '';
       };
       reader.readAsText(file);
@@ -1762,15 +1800,20 @@ function init_notes(root) {
   }
 
   clearBtn.addEventListener('click', () => {
-    if(!editor.textContent.trim()) return;
-    if(confirm('Clear all session notes? This cannot be undone.')) editor.innerHTML = '<p><br></p>';
+    const hasContent = mdMode ? rawArea.value.trim() : editor.textContent.trim();
+    if(!hasContent) return;
+    if(confirm('Clear all session notes? This cannot be undone.')) {
+      editor.innerHTML = '<p><br></p>';
+      rawArea.value = '';
+      if(mdMode) { rawArea.style.display='flex'; rawArea.style.flex='1'; }
+    }
   });
 
   // ── State: store as Markdown ──
-  root._getState = () => ({ md: domToMd(editor) });
+  root._getState = () => ({ md: mdMode ? rawArea.value : domToMd(editor) });
   root._setState = (s) => {
-    if(s.md !== undefined) editor.innerHTML = mdToDom(s.md);
-    else if(s.html) editor.innerHTML = s.html; // legacy
+    if(s.md !== undefined) { editor.innerHTML = mdToDom(s.md); rawArea.value = s.md; }
+    else if(s.html) editor.innerHTML = s.html;
   };
 }
 </script>
