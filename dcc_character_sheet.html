@@ -265,9 +265,41 @@ body.dark select.skill-stat-sel{background:var(--input-bg);}
 ::-webkit-scrollbar{width:6px;height:6px;}
 ::-webkit-scrollbar-track{background:#111;}
 ::-webkit-scrollbar-thumb{background:#444;border-radius:3px;}
+
+/* ── Mobile roll toast ── */
+#roll-toast {
+  display: none;
+  position: fixed;
+  bottom: 52px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: rgba(10,10,12,0.93);
+  border: 2px solid var(--red, #b82018);
+  border-radius: 8px;
+  padding: 10px 20px;
+  text-align: center;
+  min-width: 160px;
+  max-width: 82vw;
+  pointer-events: none;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.7);
+}
+#roll-toast.show { display: block; animation: _toast-in 0.18s ease; }
+#roll-toast.crit { border-color: #6dbf6d; }
+#roll-toast.fumble { border-color: #df6a6a; }
+#roll-toast .t-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: #8a8a93; margin-bottom: 3px; }
+#roll-toast .t-result { font-family: 'Share Tech Mono', monospace; font-size: 30px; font-weight: 900; color: #e8c84a; line-height: 1; }
+#roll-toast.crit .t-result { color: #6dbf6d; }
+#roll-toast.fumble .t-result { color: #df6a6a; }
+#roll-toast .t-detail { font-size: 11px; color: #a0a0aa; margin-top: 3px; }
+@keyframes _toast-in {
+  from { opacity: 0; transform: translateX(-50%) translateY(8px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
 </style>
 </head>
 <body>
+<div id="roll-toast"><div class="t-label"></div><div class="t-result"></div><div class="t-detail"></div></div>
 <div class="app-wrap">
 
 <!-- ═══ SHEET ═══ -->
@@ -854,6 +886,23 @@ function loadPortrait(input) {
 function d(sides) { return Math.floor(Math.random()*sides)+1; }
 function parseMod(val) { if(!val) return 0; const n=parseInt((val+'').replace(/\s/g,'')); return isNaN(n)?0:n; }
 
+
+// ── Roll toast: shown on mobile when log is collapsed ──
+var _toastTimer = null;
+function showRollToast(label, result, detail, type) {
+  if (window.innerWidth > 768) return;
+  var log = document.querySelector('.roll-log');
+  if (!log || !log.classList.contains('collapsed')) return;
+  var t = document.getElementById('roll-toast');
+  if (!t) return;
+  t.className = 'show' + (type === 'crit' ? ' crit' : type === 'fumble' ? ' fumble' : '');
+  t.querySelector('.t-label').textContent = label;
+  t.querySelector('.t-result').textContent = result;
+  t.querySelector('.t-detail').textContent = detail;
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function() { t.className = ''; }, 3500);
+}
+
 function addLog(label, result, detail, type='normal') {
   const entries = document.getElementById('log-entries');
   const hint = entries.querySelector('.log-hint');
@@ -865,6 +914,7 @@ function addLog(label, result, detail, type='normal') {
   div.innerHTML = `<div class="roll-label">${label}${advLabel}</div><div class="roll-result">${result}</div><div class="roll-detail">${detail}</div>`;
   entries.insertBefore(div, entries.firstChild);
   entries.scrollTop = 0;
+  showRollToast(label, result, detail, type);
   clearAdv();
 }
 
