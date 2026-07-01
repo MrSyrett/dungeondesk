@@ -754,7 +754,11 @@ input[type="number"] { -moz-appearance: textfield; }
       </div>
       <span class="nts-saved-indicator"></span>
       <div class="toolbar-spacer"></div>
-      <button class="btn small ghost nts-export">Export .txt</button>
+      <button class="btn small ghost nts-export">Export .md</button>
+      <label class="btn small ghost" style="cursor:pointer;" title="Import a Markdown file">
+        Import .md
+        <input type="file" class="nts-import-input" accept=".md,.markdown,.txt" style="display:none;">
+      </label>
       <button class="btn small ghost nts-clear">Clear</button>
     </div>
     <div class="nts-body">
@@ -924,6 +928,16 @@ function syncToolbar(slot, toolNode) {
         });
       });
     }
+  }
+
+  // Notes import: cloned label click triggers live file input
+  const cloneImportLabel = slot.querySelector('label:has(.nts-import-input)');
+  const liveImportInput = toolNode.querySelector('.nts-import-input');
+  if(cloneImportLabel && liveImportInput) {
+    cloneImportLabel.addEventListener('click', e => {
+      e.preventDefault();
+      liveImportInput.click();
+    });
   }
 
   // Notes saved indicator: mirror via MutationObserver
@@ -1482,6 +1496,7 @@ function init_combat(root) {
 function init_notes(root) {
   const editor = root.querySelector('.nts-editor');
   const exportBtn = root.querySelector('.nts-export');
+  const importInput = root.querySelector('.nts-import-input');
   const clearBtn = root.querySelector('.nts-clear');
   const savedIndicator = root.querySelector('.nts-saved-indicator');
   const fmtBtns = root.querySelectorAll('.fmt-btn');
@@ -1510,28 +1525,70 @@ function init_notes(root) {
     }, 600);
   });
 
+  // Export as Markdown
   exportBtn.addEventListener('click', () => {
     const clone = editor.cloneNode(true);
-    let text = '';
+    let md = '';
     clone.childNodes.forEach(node => {
       if(node.nodeType === 1) {
         const tag = node.tagName;
-        const content = node.textContent;
-        if(tag === 'H1') text += '# ' + content + '\n\n';
-        else if(tag === 'H2') text += '## ' + content + '\n\n';
-        else text += content + '\n\n';
+        // Convert bold spans within text
+        let content = '';
+        node.childNodes.forEach(child => {
+          if(child.nodeType === 3) content += child.textContent;
+          else if(child.tagName === 'B' || child.tagName === 'STRONG') content += '**' + child.textContent + '**';
+          else content += child.textContent;
+        });
+        if(tag === 'H1') md += '# ' + content + '\n\n';
+        else if(tag === 'H2') md += '## ' + content + '\n\n';
+        else if(content.trim()) md += content + '\n\n';
       } else if(node.nodeType === 3 && node.textContent.trim()) {
-        text += node.textContent + '\n\n';
+        md += node.textContent + '\n\n';
       }
     });
-    if(!text.trim()) { alert('No notes to export yet.'); return; }
-    const blob = new Blob([text], {type: 'text/plain'});
+    if(!md.trim()) { alert('No notes to export yet.'); return; }
+    const blob = new Blob([md.trim()], {type: 'text/markdown'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     const stamp = new Date().toISOString().slice(0,10);
-    a.href = url; a.download = `session_notes_${stamp}.txt`; a.click();
+    a.href = url; a.download = `session_notes_${stamp}.md`; a.click();
     URL.revokeObjectURL(url);
   });
+
+  // Import Markdown — convert to editor HTML
+  if(importInput) {
+    importInput.addEventListener('change', () => {
+      const file = importInput.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const md = e.target.result;
+        // Convert markdown to editor-compatible HTML
+        const html = md.split(/\n\n+/).map(block => {
+          block = block.trim();
+          if(!block) return '';
+          if(block.startsWith('# ')) return '<h1>' + escMd(block.slice(2)) + '</h1>';
+          if(block.startsWith('## ')) return '<h2>' + escMd(block.slice(3)) + '</h2>';
+          if(block.startsWith('### ')) return '<h2>' + escMd(block.slice(4)) + '</h2>';
+          // Convert inline bold **text** and *text*
+          const inline = escMd(block)
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.+?)\*/g, '<em>$1</em>');
+          return '<p>' + inline.replace(/\n/g, '<br>') + '</p>';
+        }).filter(Boolean).join('');
+        if(editor.textContent.trim()) {
+          if(!confirm('Replace current notes with imported content?')) { importInput.value = ''; return; }
+        }
+        editor.innerHTML = html || '<p><br></p>';
+        importInput.value = '';
+      };
+      reader.readAsText(file);
+    });
+  }
+
+  function escMd(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
 
   clearBtn.addEventListener('click', () => {
     if(!editor.textContent.trim()) return;
