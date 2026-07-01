@@ -1319,7 +1319,7 @@ function newCharacter() {
   if(ph) ph.style.display = '';
 
   // Clear localStorage
-  
+  localStorage.removeItem('dcc_sheet');
   addLog('New Character', '✦', 'Sheet cleared', 'normal');
 }
 
@@ -1327,7 +1327,9 @@ function saveSheet() {
   const data = collectSheet();
   // Strip portrait from localStorage to avoid quota issues (large base64)
   const toSave = {...data, portrait: data.portrait ? '__has_portrait__' : ''};
-    addLog('Sheet Saved', '💾', 'Saved to browser storage (portrait excluded — use Export to save portrait)', 'normal');
+  localStorage.setItem('dcc_sheet', JSON.stringify(toSave));
+  if(window.__ddFlush) try { window.__ddFlush(); } catch(e) {}
+  addLog('Sheet Saved', '💾', 'Saved to browser storage (portrait excluded — use Export to save portrait)', 'normal');
 }
 
 function exportSheet() {
@@ -1360,11 +1362,12 @@ function importSheet(input) {
 }
 
 function autoLoad() {
-    }
+  const saved = localStorage.getItem('dcc_sheet');
+  if(saved) try { applySheet(JSON.parse(saved)); } catch(e) {}
+}
 
 // ── INIT ──
-if(false;
-) === '1') {
+if(localStorage.getItem('dcc_dark') === '1') {
   document.body.classList.add('dark');
   document.getElementById('dm-toggle').classList.add('on');
 }
@@ -1517,6 +1520,7 @@ document.querySelector('.log-header').addEventListener('click', function(e) {
 // ── AUTO-SAVE ON EXIT / BACKGROUND ──
 function autoSaveOnExit() {
   try { saveSheet(); } catch(e) {}
+  try { if(window.__ddFlush) window.__ddFlush(); } catch(e) {}
 }
 window.addEventListener('beforeunload', autoSaveOnExit);
 document.addEventListener('visibilitychange', function() {

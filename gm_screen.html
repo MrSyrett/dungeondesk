@@ -249,7 +249,8 @@ input[type="number"] { -moz-appearance: textfield; }
 
 /* ═══ ADVENTURE / MAPS (document viewer) ═══ */
 .doc-filename {
-  display: none !important;
+  display: none;
+}
   max-width: 240px;
 }
 .doc-controls { display: flex; align-items: center; gap: 6px; }
@@ -611,6 +612,7 @@ input[type="number"] { -moz-appearance: textfield; }
         Load File
         <input type="file" class="doc-file-input" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif" style="display:none;">
       </label>
+      <span class="doc-filename" style="display:none"></span>
       <div class="toolbar-spacer"></div>
       <div class="doc-controls" style="display:none;">
         <button class="btn small doc-zoom-out">−</button>
@@ -637,6 +639,7 @@ input[type="number"] { -moz-appearance: textfield; }
         Load File
         <input type="file" class="doc-file-input" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif" style="display:none;">
       </label>
+      <span class="doc-filename" style="display:none"></span>
       <div class="toolbar-spacer"></div>
       <div class="doc-controls" style="display:none;">
         <button class="btn small doc-zoom-out">−</button>

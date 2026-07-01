@@ -959,7 +959,9 @@ function saveSheet(){
   const data = collectSheet();
   // Don't store portrait in localStorage (too large)
   const toSave = {...data, _sheet: {...(data._sheet||{}), portrait: ''}};
-    addLog('Sheet Saved','💾','Saved to browser storage','normal');
+  localStorage.setItem('sd_sheet', JSON.stringify(toSave));
+  if(window.__ddFlush) try { window.__ddFlush(); } catch(e) {}
+  addLog('Sheet Saved','💾','Saved to browser storage','normal');
 }
 function exportSheet(){
   const data = collectSheet();
@@ -993,15 +995,17 @@ function newCharacter(){
   document.querySelectorAll('#gear-list .gear-name').forEach(el=>el.value='');
   document.querySelectorAll('#gear-list .gear-qty').forEach(el=>el.value='');
   const tbody=document.getElementById('attacks-body');tbody.innerHTML='';buildAttacks();
-    addLog('New Character','✦','Sheet cleared','normal');
+  localStorage.removeItem('sd_sheet');
+  addLog('New Character','✦','Sheet cleared','normal');
 }
 
 function autoLoad(){
-    }
+  const saved = localStorage.getItem('sd_sheet');
+  if(saved) try { applySheet(JSON.parse(saved)); } catch(e) {}
+}
 
 // INIT
-if(false;
-)==='1'){document.body.classList.add('dark');document.getElementById('dm-toggle').classList.add('on');}
+if(localStorage.getItem('sd_dark')==='1'){document.body.classList.add('dark');document.getElementById('dm-toggle').classList.add('on');}
 buildStats();
 buildAttacks();
 buildSpells();
@@ -1088,6 +1092,7 @@ document.querySelector('.log-header').addEventListener('click', function(e) {
 // ── AUTO-SAVE ON EXIT / BACKGROUND ──
 function autoSaveOnExit() {
   try { saveSheet(); } catch(e) {}
+  try { if(window.__ddFlush) window.__ddFlush(); } catch(e) {}
 }
 window.addEventListener('beforeunload', autoSaveOnExit);
 document.addEventListener('visibilitychange', function() {
