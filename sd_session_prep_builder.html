@@ -1482,22 +1482,26 @@ function renderPreview() {
   const renderFlowchart = (fcId) => {
     const fc=document.getElementById(fcId);
     if(!fc) return;
-    const soNodes=state.strongopen.map(s=>({name:s.name,tag:s.tag||'STRONG OPEN',type:s.type||'combat'}));
-    const locNodes=state.locations.map(l=>({name:l.name,tag:l.tag,type:l.type||'combat'}));
+    const soNodes=state.strongopen.map(s=>({name:s.name,type:s.type||'combat'}));
+    const locNodes=state.locations.map(l=>({name:l.name,type:l.type||'combat'}));
     const allNodes=[...soNodes,...locNodes];
     if(!allNodes.length){fc.innerHTML='';return;}
     const typeNodeColors={
-      combat:{bg:'#C0392B',lbl:'rgba(255,255,255,0.8)',txt:'white'},
-      exploration:{bg:'#2d6a2d',lbl:'rgba(255,255,255,0.8)',txt:'white'},
-      npc:{bg:'#1a4a8a',lbl:'rgba(255,255,255,0.8)',txt:'white'},
+      combat:{bg:'#C0392B',txt:'white'},
+      exploration:{bg:'#2d6a2d',txt:'white'},
+      npc:{bg:'#1a4a8a',txt:'white'},
     };
-    fc.innerHTML=allNodes.map((n,i)=>{
-      const c=typeNodeColors[n.type]||typeNodeColors.combat;
-      const tag=n.tag?n.tag.split('//')[0].trim().toUpperCase():n.type.toUpperCase();
-      return `<div class="flow-node" style="background:${c.bg};">
-        <div class="flow-label" style="color:${c.lbl}">${tag}</div>
-        <div class="flow-name" style="color:${c.txt}">${escH(n.name.substring(0,14))}</div>
-      </div>${i<allNodes.length-1?'<div class="flow-arrow">→</div>':''}`;
+    // Scale nodes down when there are many to prevent overflow
+    const n=allNodes.length;
+    const nodePad  = n>12 ? '2px 3px' : n>8 ? '3px 5px' : '4px 7px';
+    const nameSz   = n>12 ? '7px'  : n>8 ? '8px'  : '9px';
+    const arrowSz  = n>12 ? '8px'  : n>8 ? '9px'  : '11px';
+    const nameLen  = n>12 ? 10 : n>8 ? 12 : 14;
+    fc.innerHTML=allNodes.map((node,i)=>{
+      const c=typeNodeColors[node.type]||typeNodeColors.combat;
+      return `<div class="flow-node" style="background:${c.bg};padding:${nodePad};">
+        <div class="flow-name" style="color:${c.txt};font-size:${nameSz};">${escH(node.name.substring(0,nameLen))}</div>
+      </div>${i<allNodes.length-1?`<div class="flow-arrow" style="font-size:${arrowSz};">→</div>`:''}`;
     }).join('');
   };
   renderFlowchart('p-flowchart');
