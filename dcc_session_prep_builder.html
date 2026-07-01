@@ -300,9 +300,51 @@ if(window.innerWidth <= 768) {
       min-width: 0;
     }
     /* Bump preview area up so it's not hidden behind the footer bar */
-    .preview-area { padding-bottom: 72px !important; }
+    .preview-area { padding-bottom: 0 !important; margin-top: 82px !important; }
     body { padding-bottom: 0; }
 }
+
+    /* External sidebar tab — always visible on mobile */
+    .sidebar-tab { display: none; }
+
+    @media (max-width: 768px) {
+      /* Tab sits above the footer bar (footer is ~52px tall) */
+      .sidebar-tab {
+        display: flex;
+        position: fixed;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 201;
+        background: var(--ui-accent, #b82018);
+        color: white;
+        border: none;
+        border-radius: 0 0 8px 8px;
+        width: 88px;
+        height: 30px;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Barlow Condensed', sans-serif;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        cursor: pointer;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      }
+      .sidebar-tab-arrow {
+        display: inline-block;
+        margin-right: 5px;
+        transition: transform 0.25s ease;
+      }
+      /* Arrow rotates when sidebar is collapsed */
+      .sidebar-tab-arrow { transform: rotate(180deg); }
+      .sidebar.collapsed ~ .sidebar-tab .sidebar-tab-arrow { transform: rotate(0deg); }
+      /* Hide internal collapse button — tab replaces it */
+      #collapse-btn { display: none !important; }
+      /* Hide footer when sidebar is collapsed — needs !important to beat fixed positioning rule */
+      .sidebar.collapsed .sidebar-footer { display: none !important; }
+    }
 
 </style>
 </head>
@@ -415,6 +457,8 @@ if(window.innerWidth <= 768) {
 </div>
 
 <!-- PREVIEW -->
+
+<button class="sidebar-tab" onclick="toggleSidebar()" aria-label="Toggle controls"><span class="sidebar-tab-arrow">▼</span> Builder</button>
 <div class="preview-area">
 
   <!-- PAGE 1: Overview, Secrets & Clues, Loot, NPCs, Hooks & Opening -->
