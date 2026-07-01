@@ -1098,6 +1098,19 @@ window.addEventListener('beforeunload', autoSaveOnExit);
 document.addEventListener('visibilitychange', function() {
   if(document.visibilityState === 'hidden') autoSaveOnExit();
 });
+
+// Auto-save on input/change so saves happen during use, not just on exit
+(function() {
+  var autoSaveTimer = null;
+  function triggerAutoSave() {
+    if(autoSaveTimer) clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(function() {
+      try { saveSheet(); } catch(e) {}
+    }, 1500);
+  }
+  document.addEventListener('input', triggerAutoSave);
+  document.addEventListener('change', triggerAutoSave);
+})();
 </script>
 </body>
 </html>

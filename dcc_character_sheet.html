@@ -1526,6 +1526,20 @@ window.addEventListener('beforeunload', autoSaveOnExit);
 document.addEventListener('visibilitychange', function() {
   if(document.visibilityState === 'hidden') autoSaveOnExit();
 });
+
+// Auto-save on input/change so the shim's debounce fires frequently while
+// the user is active — the primary save strategy on mobile.
+(function() {
+  var autoSaveTimer = null;
+  function triggerAutoSave() {
+    if(autoSaveTimer) clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(function() {
+      try { saveSheet(); } catch(e) {}
+    }, 1500);
+  }
+  document.addEventListener('input', triggerAutoSave);
+  document.addEventListener('change', triggerAutoSave);
+})();
 </script>
 </body>
 </html>

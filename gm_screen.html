@@ -314,8 +314,33 @@ input[type="number"] { -moz-appearance: textfield; }
   box-shadow: none;
   flex-shrink: 0;
 }
-/* Hidden on desktop, shown on mobile via media query */
+/* Hidden on desktop; shown on mobile via media query */
 .pdf-close-btn { display: none; }
+.pdf-mobile-open {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  padding: 24px;
+}
+.pdf-mobile-open-icon { font-size: 36px; opacity: 0.5; }
+.pdf-mobile-open-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 13px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--mid);
+}
+.pdf-mobile-open-sub { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; color: var(--muted); }
+.pdf-mobile-open-btn {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-weight: 700; font-size: 12px;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 10px 20px;
+  background: var(--red); color: white;
+  border: none; cursor: pointer;
+  border-radius: 3px;
+}
 .doc-image {
   max-width: none;
   box-shadow: 0 4px 24px rgba(0,0,0,0.5);
@@ -534,43 +559,20 @@ input[type="number"] { -moz-appearance: textfield; }
   /* Make sure cbt round display and next round button don't get hidden */
   .cbt-round-display { font-size: 11px; }
 
-  /* PDF viewer on mobile: break out of the constrained flex chain entirely.
-     The pane has overflow:hidden all the way up, so the iframe can't grow.
-     Instead make the entire doc-body take the full available space and
-     let the PDF embed fill it with its own internal scroll. */
-  .doc-body { overflow: hidden; flex: 1; }
+  /* PDF viewer on mobile: iframes can't scroll multi-page PDFs on iOS.
+     Hide the iframe and show an "Open PDF" button instead. */
   .doc-frame-wrap.pdf-mode {
-    position: fixed !important;
-    top: 0; left: 0; right: 0; bottom: 0;
-    width: 100vw !important;
-    height: 100vh !important;
-    z-index: 500;
-    overflow: hidden;
     padding: 0;
+    overflow: hidden;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
     background: #1a1a1e;
   }
-  .doc-frame.pdf-frame {
-    width: 100% !important;
-    height: 100% !important;
-    min-height: unset;
-  }
-  /* Show an exit button when PDF is fullscreen on mobile */
-  .pdf-close-btn {
-    display: flex !important;
-    position: fixed;
-    top: 8px; right: 8px;
-    z-index: 501;
-    background: rgba(8,8,9,0.85);
-    border: 1px solid #3a3a40;
-    color: #cfcabd;
-    padding: 8px 14px;
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    cursor: pointer;
-    border-radius: 4px;
-  }
+  .doc-frame.pdf-frame { display: none !important; }
+  .pdf-close-btn { display: none !important; }
+  .pdf-mobile-open { display: flex !important; }
 
   .toolrow { padding: 8px 10px; gap: 8px; }
   .doc-filename { max-width: 120px; font-size: 10px; }
@@ -1004,12 +1006,19 @@ function initDocTool(root) {
       iframe.className = 'doc-frame pdf-frame';
       iframe.src = dataUrl;
       frameWrap.appendChild(iframe);
-      // Mobile close button — exits the fullscreen PDF overlay
-      const closeBtn = document.createElement('button');
-      closeBtn.className = 'pdf-close-btn';
-      closeBtn.textContent = '✕ Close PDF';
-      closeBtn.addEventListener('click', () => clearBtn.click());
-      frameWrap.appendChild(closeBtn);
+      // Mobile: iframe can't scroll multi-page PDFs on iOS — show an open button instead
+      const mobileOpen = document.createElement('div');
+      mobileOpen.className = 'pdf-mobile-open';
+      mobileOpen.innerHTML = `
+        <div class="pdf-mobile-open-icon">📄</div>
+        <div class="pdf-mobile-open-title">${fileName}</div>
+        <div class="pdf-mobile-open-sub">PDF scrolling is limited in embedded viewers on mobile</div>
+        <button class="pdf-mobile-open-btn">Open Full PDF ↗</button>
+      `;
+      mobileOpen.querySelector('.pdf-mobile-open-btn').addEventListener('click', () => {
+        window.open(dataUrl, '_blank');
+      });
+      frameWrap.appendChild(mobileOpen);
       mediaEl = iframe;
       zoomInBtn.style.display = 'none';
       zoomOutBtn.style.display = 'none';
