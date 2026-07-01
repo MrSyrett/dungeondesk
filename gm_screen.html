@@ -588,6 +588,10 @@ input[type="number"] { -moz-appearance: textfield; }
 
   .cbt-body { flex-direction: column; }
   .npc-hp-btn, .tracker-adjust-btn { width: 32px; height: 32px; }
+  /* DCC segments: shrink so 10 fit on one line before wrapping */
+  .npc-seg { min-width: 0; height: 26px; flex: 1 1 0; }
+  .npc-seg-num { font-size: 10px; }
+  .npc-seg-row { gap: 2px; }
   .npc-hp-input { min-height: 32px; font-size: 14px; }
   .tracker-name-input, .npc-name-input { font-size: 14px; }
 
@@ -600,7 +604,7 @@ input[type="number"] { -moz-appearance: textfield; }
 
 <!-- ═══ TOP BAR ═══ -->
 <div class="topbar">
-  <div class="brand">The Dungeon Desk <span class="brand-tag">GM Screen</span></div>
+  <div class="brand" style="min-width:140px;"></div>
 
   <div class="topbar-spacer"></div>
 
