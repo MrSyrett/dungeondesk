@@ -561,19 +561,17 @@ input[type="number"] { -moz-appearance: textfield; }
   /* Make sure cbt round display and next round button don't get hidden */
   .cbt-round-display { font-size: 11px; }
 
-  /* PDF viewer on mobile: give the entire pane chain a concrete height
-     so the iframe has real pixels to fill. The native PDF viewer inside
-     the iframe scrolls its own pages. */
+  /* PDF viewer on mobile: switch to overflow:auto on the pane so the
+     entire pane scrolls, and give the PDF object a tall fixed pixel height
+     so all pages are accessible by scrolling the pane. */
   .pane { flex: 1; min-height: 0; }
-  .pane-content { flex: 1; min-height: 0; overflow: hidden; }
-  .tool-instance { flex: 1; min-height: 0; }
-  .doc-body { flex: 1; min-height: 0; overflow: hidden; }
+  .pane-content { flex: 1; overflow-y: auto; min-height: 0; }
+  .tool-instance { min-height: 0; }
+  .doc-body { flex: none; }
   .doc-frame-wrap.pdf-mode {
-    flex: 1;
     padding: 0;
-    overflow: hidden;
-    align-items: stretch;
-    height: 100%;
+    overflow: visible;
+    height: 160vw; /* taller than screen — user scrolls the pane */
   }
   .doc-frame.pdf-frame {
     width: 100% !important;
@@ -1011,24 +1009,26 @@ function initDocTool(root) {
     if(ext === 'pdf') {
       mediaType = 'pdf';
       frameWrap.classList.add('pdf-mode');
-      const iframe = document.createElement('iframe');
-      iframe.className = 'doc-frame pdf-frame';
-      iframe.src = dataUrl;
-      frameWrap.appendChild(iframe);
-      // Mobile: iframe can't scroll multi-page PDFs on iOS — show an open button instead
-      const mobileOpen = document.createElement('div');
-      mobileOpen.className = 'pdf-mobile-open';
-      mobileOpen.innerHTML = `
-        <div class="pdf-mobile-open-icon">📄</div>
-        <div class="pdf-mobile-open-title">${fileName}</div>
-        <div class="pdf-mobile-open-sub">PDF scrolling is limited in embedded viewers on mobile</div>
-        <button class="pdf-mobile-open-btn">Open Full PDF ↗</button>
-      `;
-      mobileOpen.querySelector('.pdf-mobile-open-btn').addEventListener('click', () => {
-        window.open(dataUrl, '_blank');
-      });
-      frameWrap.appendChild(mobileOpen);
-      mediaEl = iframe;
+      // On mobile, use <object> which lets the browser's PDF viewer scroll naturally.
+      // On desktop, iframe fills the pane with the native viewer.
+      const isMobile = window.innerWidth <= 760;
+      let el;
+      if(isMobile) {
+        el = document.createElement('object');
+        el.type = 'application/pdf';
+        el.data = dataUrl;
+        el.className = 'doc-frame pdf-frame';
+        el.style.width = '100%';
+        el.style.height = '100%';
+        // Fallback text inside object tag
+        el.innerHTML = '<p style="color:#aaa;padding:16px;">PDF cannot be displayed. <a href="' + dataUrl + '" target="_blank" style="color:#e8c84a">Open PDF ↗</a></p>';
+      } else {
+        el = document.createElement('iframe');
+        el.className = 'doc-frame pdf-frame';
+        el.src = dataUrl;
+      }
+      frameWrap.appendChild(el);
+      mediaEl = el;
       zoomInBtn.style.display = 'none';
       zoomOutBtn.style.display = 'none';
       zoomLabel.textContent = 'Native zoom';
