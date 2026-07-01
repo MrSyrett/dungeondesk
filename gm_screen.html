@@ -249,13 +249,7 @@ input[type="number"] { -moz-appearance: textfield; }
 
 /* ═══ ADVENTURE / MAPS (document viewer) ═══ */
 .doc-filename {
-  font-family: 'Barlow Condensed', sans-serif;
-  font-size: 11px;
-  color: var(--mid);
-  letter-spacing: 0.03em;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: none !important;
   max-width: 240px;
 }
 .doc-controls { display: flex; align-items: center; gap: 6px; }
@@ -531,15 +525,16 @@ input[type="number"] { -moz-appearance: textfield; }
   .pane { border-right: none; border-bottom: 2px solid var(--border); }
 
   /* Pane header wraps on mobile so toolbar buttons stay visible */
-  .pane-header { flex-wrap: wrap; gap: 6px; }
-  .pane-select { flex: 1; min-width: 140px; }
-  .pane-toolbar-slot { flex-wrap: wrap; gap: 6px; }
+  .pane-header { flex-wrap: wrap; gap: 4px; padding: 4px 8px; }
+  .pane-select { flex: 0 1 auto; min-width: 0; font-size: 10px; padding: 3px 4px; max-width: 140px; }
+  .pane-toolbar-slot { flex-wrap: wrap; gap: 4px; }
   /* Make sure cbt round display and next round button don't get hidden */
   .cbt-round-display { font-size: 11px; }
 
-  /* PDF viewer: give it a fixed height on mobile so it scrolls properly */
-  .doc-frame-wrap.pdf-mode { height: 60vh; }
-  .doc-frame.pdf-frame { min-height: 60vh; }
+  /* PDF viewer: make the pane scrollable on mobile so all pages are reachable */
+  .doc-frame-wrap.pdf-mode { height: auto; overflow: visible; }
+  .doc-frame.pdf-frame { height: 85vh; min-height: 85vh; width: 100%; }
+  .doc-body { overflow-y: auto; }
 
   .toolrow { padding: 8px 10px; gap: 8px; }
   .doc-filename { max-width: 120px; font-size: 10px; }
@@ -616,7 +611,6 @@ input[type="number"] { -moz-appearance: textfield; }
         Load File
         <input type="file" class="doc-file-input" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif" style="display:none;">
       </label>
-      <span class="doc-filename">No document loaded</span>
       <div class="toolbar-spacer"></div>
       <div class="doc-controls" style="display:none;">
         <button class="btn small doc-zoom-out">−</button>
@@ -643,7 +637,6 @@ input[type="number"] { -moz-appearance: textfield; }
         Load File
         <input type="file" class="doc-file-input" accept=".pdf,.png,.jpg,.jpeg,.webp,.gif" style="display:none;">
       </label>
-      <span class="doc-filename">No map loaded</span>
       <div class="toolbar-spacer"></div>
       <div class="doc-controls" style="display:none;">
         <button class="btn small doc-zoom-out">−</button>
