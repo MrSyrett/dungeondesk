@@ -1007,11 +1007,11 @@ function importShadowdarklings(input) {
 
 function saveSheet(){
   const data = collectSheet();
-  // Don't store portrait in localStorage (too large)
   const toSave = {...data, _sheet: {...(data._sheet||{}), portrait: ''}};
-  localStorage.setItem('sd_sheet', JSON.stringify(toSave));
-  if(window.__ddSave) window.__ddSave();
-  addLog('Sheet Saved','💾','Saved to browser storage','normal');
+  const json = JSON.stringify(toSave);
+  try { localStorage.setItem('sd_sheet', json); } catch(e) {}
+  if(window.__ddSave) window.__ddSave({ sd_sheet: json });
+  addLog('Sheet Saved','💾','Saved','normal');
 }
 function exportSheet(){
   const data = collectSheet();
@@ -1050,7 +1050,12 @@ function newCharacter(){
 }
 
 function autoLoad(){
-  const saved = localStorage.getItem('sd_sheet');
+  var saved = null;
+  if(window.__ddState && window.__ddState['sd_sheet']) {
+    saved = window.__ddState['sd_sheet'];
+  } else {
+    saved = localStorage.getItem('sd_sheet');
+  }
   if(!saved) return;
   try {
     const data = JSON.parse(saved);
@@ -1059,7 +1064,7 @@ function autoLoad(){
     if(st) st.textContent = 'Loaded ✓';
   } catch(e) {
     var st = document.getElementById('dd-status');
-    if(st) st.textContent = 'Load error: ' + e.message;
+    if(st) st.textContent = 'Load err: ' + e.message;
   }
 }
 

@@ -1375,12 +1375,13 @@ function newCharacter() {
 
 function saveSheet() {
   const data = collectSheet();
-  // Strip portrait from localStorage to avoid quota issues (large base64)
   const toSave = {...data, portrait: data.portrait ? '__has_portrait__' : ''};
-  localStorage.setItem('dcc_sheet', JSON.stringify(toSave));
-  // Immediately push to server — don't rely on debounce or page-exit saves on mobile
-  if(window.__ddSave) window.__ddSave();
-  addLog('Sheet Saved', '💾', 'Saved to browser storage (portrait excluded — use Export to save portrait)', 'normal');
+  const json = JSON.stringify(toSave);
+  // Save to localStorage for offline fallback
+  try { localStorage.setItem('dcc_sheet', json); } catch(e) {}
+  // Save directly to server (primary path — doesn't rely on localStorage patch)
+  if(window.__ddSave) window.__ddSave({ dcc_sheet: json });
+  addLog('Sheet Saved', '💾', 'Saved', 'normal');
 }
 
 function exportSheet() {
@@ -1413,17 +1414,22 @@ function importSheet(input) {
 }
 
 function autoLoad() {
-  const saved = localStorage.getItem('dcc_sheet');
+  // Try server state first (injected by app), then fall back to localStorage
+  var saved = null;
+  if(window.__ddState && window.__ddState['dcc_sheet']) {
+    saved = window.__ddState['dcc_sheet'];
+  } else {
+    saved = localStorage.getItem('dcc_sheet');
+  }
   if(!saved) return;
   try {
     const data = JSON.parse(saved);
     applySheet(data);
-    // Update dd-status to confirm load success
     var st = document.getElementById('dd-status');
     if(st) st.textContent = 'Loaded ✓';
   } catch(e) {
     var st = document.getElementById('dd-status');
-    if(st) st.textContent = 'Load error: ' + e.message;
+    if(st) st.textContent = 'Load err: ' + e.message;
   }
 }
 
