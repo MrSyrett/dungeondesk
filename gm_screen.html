@@ -878,7 +878,7 @@ input[type="number"] { -moz-appearance: textfield; }
         <button class="gen-tab active" data-tab="npc">NPC</button>
         <button class="gen-tab" data-tab="rival">Rival Crawlers</button>
         <button class="gen-tab" data-tab="monster">Monster</button>
-        <button class="gen-tab" data-tab="dungeon">5-Room Dungeon</button>
+        <button class="gen-tab" data-tab="dungeon">Dungeon</button>
         <button class="gen-tab" data-tab="encounter">Encounter</button>
         <button class="gen-tab" data-tab="trap">Trap/Hazard</button>
         <button class="gen-tab" data-tab="shop">Shop/Tavern</button>
@@ -978,7 +978,7 @@ input[type="number"] { -moz-appearance: textfield; }
         </div>
       </div>
 
-      <!-- TRAP / HAZARD PANEL -->
+      <!-- DUNGEON PANEL -->
       <div class="gen-panel" data-panel="dungeon">
         <div class="gen-controls">
           <label class="gen-label">Level
@@ -992,18 +992,44 @@ input[type="number"] { -moz-appearance: textfield; }
           <label class="gen-label">Motif
             <select class="gen-select" id="gen-dun-motif">
               <option value="random">Random</option>
-              <option value="Abandoned">Abandoned</option>
-              <option value="Undead">Undead</option>
-              <option value="Aberrant">Aberrant</option>
-              <option value="Giant">Giant</option>
-              <option value="Vermin">Vermin</option>
-              <option value="Aquatic">Aquatic</option>
-              <option value="Desert">Desert</option>
-              <option value="Underdark">Underdark</option>
-              <option value="Arcane">Arcane</option>
-              <option value="Fire">Fire</option>
-              <option value="Cold">Cold</option>
-              <option value="Infernal">Infernal</option>
+              <optgroup label="── Classic ──">
+                <option value="Abandoned">Abandoned</option>
+                <option value="Undead">Undead</option>
+                <option value="Aberrant">Aberrant</option>
+                <option value="Giant">Giant</option>
+                <option value="Vermin">Vermin</option>
+                <option value="Aquatic">Aquatic</option>
+                <option value="Desert">Desert</option>
+                <option value="Underdark">Underdark</option>
+                <option value="Arcane">Arcane</option>
+                <option value="Fire">Fire</option>
+                <option value="Cold">Cold</option>
+                <option value="Infernal">Infernal</option>
+              </optgroup>
+              <optgroup label="── Locations ──">
+                <option value="Sewers">Sewers</option>
+                <option value="Mansion">Mansion</option>
+                <option value="Caves">Caves</option>
+                <option value="Crypts">Crypts</option>
+                <option value="Shipwreck">Shipwreck</option>
+                <option value="Prison">Prison</option>
+                <option value="Ruins">Ruins</option>
+                <option value="Vault">Vault</option>
+                <option value="Tower">Tower</option>
+                <option value="Dungeon">Dungeon</option>
+                <option value="City Building">City Building</option>
+                <option value="Wilderness">Wilderness</option>
+              </optgroup>
+            </select>
+          </label>
+          <label class="gen-label">Rooms
+            <select class="gen-select" id="gen-dun-rooms">
+              <option value="5" selected>5 (Classic)</option>
+              <option value="8">8</option>
+              <option value="10">10</option>
+              <option value="12">12</option>
+              <option value="15">15</option>
+              <option value="20">20</option>
             </select>
           </label>
         </div>
@@ -3662,7 +3688,9 @@ const DUN_NAMES_OF = ['the Abyss','the Ancients','the Betrayer','the Black Moon'
   'the Sealed God','the Shadow','the Slain','the Sleeping Terror','the Undying','the Void'];
 
 const DUN_MOTIFS = ['Abandoned','Undead','Aberrant','Giant','Vermin','Aquatic','Desert',
-  'Underdark','Arcane','Fire','Cold','Infernal'];
+  'Underdark','Arcane','Fire','Cold','Infernal',
+  'Sewers','Mansion','Caves','Crypts','Shipwreck','Prison','Ruins','Vault','Tower',
+  'Dungeon','City Building','Wilderness'];
 
 // Entrance / Room 1 — Guardian
 const DUN_R1 = {
@@ -3863,49 +3891,566 @@ const DUN_R5 = {
     'A sealed reliquary holding a trapped lesser devil. It will serve whoever breaks the seal — but service always has a cost.'],
 };
 
-function genDungeon(level, motif) {
+// ── New motif room content ─────────────────────────────────────────────────
+const NEW_MOTIF_R1 = {
+  Sewers: [
+    'The entrance is a drainage grate in a city alley, large enough to squeeze through. Below, rats the size of cats scatter from the lantern light. A troll has claimed the first junction.',
+    'A rusted iron door set into the canal wall, half-submerged at high tide. A gang of wererats patrols this stretch, demanding a toll in silence.',
+    'The sewer mouth is barricaded with debris. Something on the inside built it — and it doesn\'t want company. The sounds suggest it\'s large.'],
+  Mansion: [
+    'The grand entrance hall, once magnificent, now thick with tension. A butler — animated, porcelain-faced — politely informs the party they are not welcome and attacks.',
+    'Iron gates sealed by a magical lock. A pair of stone lions flanking the drive animate when the wards are crossed.',
+    'The servants\' entrance, unlocked. Inside, a housekeeper-turned-revenant still follows her old routine — and attacks anything that disrupts the schedule.'],
+  Caves: [
+    'The cave mouth is hung with territorial markings. A gnoll packmaster and scouts guard the entrance, having claimed the cave system as hunting territory.',
+    'A natural tunnel descends sharply. At the bottom, a cave bear has made its den directly blocking the only forward passage.',
+    'Bioluminescent fungi light the first chamber. A blind cave troll, relying entirely on smell and hearing, hunts here.'],
+  Crypts: [
+    'Carved stone doors sealed with holy symbols, now faded and cracked. Two mummified knights reanimate when the threshold is crossed.',
+    'The entrance crypt is a receiving chamber. Sarcophagi line the walls — most sealed, one open, the occupant missing.',
+    'A wight descends a grand staircase as the party enters, flanked by skeletal courtiers still dressed in burial finery.'],
+  Shipwreck: [
+    'The entry point is the hull breach, accessible only at low tide. Inside, a merrow warband has moved in and considers the wreck its territory.',
+    'The main deck is accessible via the broken mast. Stirges nest in the rigging overhead and attack anyone who boards.',
+    'The captain\'s cabin has been sealed from the inside. Something sealed it — and the thing that did it is still in there.'],
+  Prison: [
+    'The gatehouse is intact and still manned — by undead guards following their last orders to the letter.',
+    'The main gate is sealed with an arcane lock. The warden\'s animated skeleton patrols inside, keys still on its belt.',
+    'A prison riot froze mid-moment — prisoners and guards alike, frozen by magic. The source is deeper in. They will unfreeze when it ends.'],
+  Ruins: [
+    'Crumbling arches frame the entrance. A manticore has claimed the outer ruins as its lair and attacks immediately.',
+    'Vines cover the entrance plaza. Assassin vines animate when anyone steps between the two broken pillars marking the threshold.',
+    'The ruins\' outer gate still stands, sealed by old magic. An elemental spirit bound to the gate guards it still.'],
+  Vault: [
+    'The outer vault door is open — someone beat the party here. A construct guardian remains, unable to distinguish intruders from the original thieves.',
+    'The antechamber is a trap: a gravity reversal springs the moment all party members enter. The release switch is on the ceiling — now the floor.',
+    'A golem stands in the entry chamber. It will not attack unless the vault is entered without the proper authorization token.'],
+  Tower: [
+    'The tower door is sealed by a puzzle lock. Getting it wrong sets off a lightning ward that\'s been building charge for years.',
+    'The ground floor is a summoning chamber, mid-ritual. Three imps maintain the circle and attack anyone who disrupts it.',
+    'A stone golem guards the base of the interior staircase. It was built to stop anyone from reaching the upper floors — and it takes that mandate seriously.'],
+};
+
+const NEW_MOTIF_R2 = {
+  Sewers: [
+    'A goblin fence operates from a chamber here, trading information and stolen goods. She knows the layout of the whole system — for a price.',
+    'The passage splits into four identical tunnels. The correct one is determined by listening to the water flow — the sound changes at the junction.',
+    'A plague doctor\'s ghost haunts this section, reliving his final rounds. Answering his questions about symptoms and cures will earn his map of the lower sewers.'],
+  Mansion: [
+    'The library contains the information the party needs — locked behind a magical seal that requires a riddle to open. The answer is hidden in the portrait gallery outside.',
+    'A ghostly dinner party is in full swing. The guests don\'t know they\'re dead. One of them has the key to the inner sanctum; the puzzle is getting it without revealing the truth.',
+    'A magical music box plays constantly. While it plays, the mirror in this room shows events from the past. The puzzle: identify what happened here from the reflections.'],
+  Caves: [
+    'A deep gnome hermit has lived here for years, mapping every tunnel. He\'ll share the map for a specific mushroom that only grows deeper in.',
+    'A cave-in has blocked the direct route. The only other path runs through an underground lake. A river spirit will grant passage — in exchange for returning something stolen from its waters.',
+    'The cave walls here form a natural acoustic amplifier. Speaking certain words causes structural vibrations that open or seal passages.'],
+  Crypts: [
+    'A ghost refuses to rest until the party corrects an injustice — someone is buried in the wrong crypt, and the misidentification matters to the dead.',
+    'The genealogy room contains records the party needs, but a riddle carved above the door must be answered before it opens: "I have a face and hands but cannot see or touch."',
+    'An ancient priest, not quite dead, watches over this crypt. He will answer three questions truthfully — but every answer costs one hour of life from the questioner.'],
+  Shipwreck: [
+    'The ship\'s log contains the route to the final chamber — but the last pages are water-damaged. A ghost of the first mate appears only in mirrors and can supply what was lost.',
+    'The cargo hold is a puzzle in itself. Crates must be stacked in the correct order to reach the upper deck hatch, guided by the shipping manifest.',
+    'A water-breathing survivor from the original crew is trapped here, alive by magic. They know everything — but communicating requires solving the language barrier first.'],
+  Prison: [
+    'A prisoner in an isolated cell claims to know the location of the warden\'s master key — but they\'ll only share if the party agrees to take them out too.',
+    'The intake records are here. Finding the party\'s target in the logs means reading through decades of prisoners — and noticing that certain names appear twice.',
+    'The prison chaplain\'s ghost offers guidance. She speaks only in scripture references. Interpreting them correctly reveals the safe path through the remaining cells.'],
+  Ruins: [
+    'A scholar has been camped here for weeks, translating the ruins. She\'s found something alarming. She won\'t share it freely — she wants protection through the next section.',
+    'A mosaic floor depicts the ruins\' original layout. The current structure differs in three key ways; those differences mark the safe route through the next section.',
+    'A magical echo in this chamber repeats words spoken here decades ago. One of those echoes contains a password to the inner sanctum.'],
+  Vault: [
+    'A combination puzzle: three dials, each a different cryptographic system. The correct combination is encoded in the inventory ledger on the desk.',
+    'A magical audit system checks everyone who enters against a list of authorized personnel. Bypassing it requires forging a credential — the materials to do so are in this room.',
+    'A construct accountant still operates here, cross-referencing deposits and withdrawals. Convincing it that the party has a legitimate claim requires passing an audit.'],
+  Tower: [
+    'The wizard\'s study. Research notes fill the walls, but they\'re intentionally scrambled — a memory protection measure. Unscrambling the key equations reveals the access word for the upper floors.',
+    'A magical mirror on the second floor shows the floor above, in real time. The puzzle is using this information to time a safe crossing.',
+    'An apprentice — long dead, now a poltergeist — still waits for the master who never returned. Convincing it to stand down requires knowing something only the master would know.'],
+};
+
+const NEW_MOTIF_R3 = {
+  Sewers: [
+    'The party steps into a current faster and deeper than expected. The flow is increasing — something upstream was released deliberately.',
+    'A cave-in blocks the main passage. The only route around runs through a section controlled by a rival faction that the local guild has been at war with.',
+    'Sewer gas ignites when a torch passes a junction. The explosion is manageable — the structural collapse it causes is not.'],
+  Mansion: [
+    'The floor of the ballroom is a magical illusion over a 20-foot drop. Anyone who doesn\'t realize this in time has a bad evening.',
+    'A portrait gallery with a curse: anyone whose reflection appears in the paintings must make a WIS check or become compelled to stand and stare for 1d4 rounds.',
+    'A secret door leads here from outside — and it just opened. A second group of intruders has arrived, and they\'re not friendly.'],
+  Caves: [
+    'A rockfall trap separates the party. The two halves must navigate to a rendezvous point through different passages, neither of which is safe.',
+    'The cave floods seasonally — and this is that season. Water begins rising at 1 foot per round. The exit requires a swim check.',
+    'Tremorsense. Something large is beneath the floor, tracking movement. The party must cross 60 feet of loose stone without making vibrations.'],
+  Crypts: [
+    'A death curse activates when a specific tomb is opened. One party member begins aging at an accelerated rate until the curse is lifted or the crypt is resealed.',
+    'A necrotic fog pours from a cracked sarcophagus. Each round in the fog: DC 12 CON or -1 to maximum HP until a long rest.',
+    'The exits seal when someone reads aloud from the central obelisk. Unread, the text is harmless. The party must find the release mechanism while something stirs.'],
+  Shipwreck: [
+    'The ship shifts — tides, current, something pushing — and the entire structure tilts 30 degrees. Everything unsecured slides. Some doors are now floors.',
+    'The hull here is thin and the sea presses in through cracks. Every round without repair, water rises 6 inches. The party has 10 rounds.',
+    'A trap left by the original thieves: a weighted mechanism drops an iron portcullis, separating the group. Lifting it requires leverage the party may not have.'],
+  Prison: [
+    'The alarm system is still active. Whatever triggered it is already gone. The guards responding — undead, constructs — are not.',
+    'A prisoner\'s bargain: the most dangerous inmate in the facility has broken partially free and offers help — for a price that involves opening a cell the party really shouldn\'t open.',
+    'The party triggers a lockdown protocol. Every gate in the facility seals. Resetting it requires accessing the warden\'s console — in the most dangerous wing.'],
+  Ruins: [
+    'A structural failure. The floor gives way into a chamber below that wasn\'t on any map.',
+    'A magical ward, not yet expired, fills the room with blinding light for 1d6 rounds when crossed. Everything in the dungeon that can see notices.',
+    'A false passageway leads the party in a circle — identical markings, identical turns. The trick requires a successful Investigation check to identify and break.'],
+  Vault: [
+    'The emergency countermeasures activate: a gas fills the vault that suppresses magical abilities for 1 hour.',
+    'A failsafe destroys part of the vault contents if the wrong lock sequence is attempted. The party just watched something valuable disintegrate.',
+    'A construct security team deploys. They\'re slower than humanoids but tireless. They cannot be reasoned with and will follow the party until destroyed or escaped.'],
+  Tower: [
+    'The staircase reverses gravity mid-climb. One section requires walking upside-down — any armor heavier than leather requires a STR check each step.',
+    'The windows seal and the walls close in — slowly. The room is a compactor triggered by a pressure plate. The release is in the wall, disguised as a decorative element.',
+    'A temporal distortion on the fourth floor: the party experiences the next 2 minutes twice. They can use what they saw the first time — but the second pass has consequences.'],
+};
+
+const NEW_MOTIF_R4 = {
+  Sewers: [
+    'The sewer master — a wererat crime boss — holds court here in a repurposed cistern, surrounded by lieutenants and captives. She\'s been expecting someone to come eventually.',
+    'A black pudding of enormous size has colonized the final chamber, and it has been eating the dungeon\'s other inhabitants. There\'s little left of the original occupants.',
+    'An otyugh patriarch rules this section, intelligent and furious. It has been collecting tribute from the local gangs and considers this cistern its domain.'],
+  Mansion: [
+    'The master of the house — a vampire — sits in the grand study, genuinely surprised to see anyone make it this far. The conversation before the fight determines the difficulty.',
+    'The true owner of the mansion, a night hag, has been using the building as a hunting ground. She fights dirty, uses the environment, and has had centuries to prepare.',
+    'A banshee, the spirit of the original lady of the house, fills the ballroom. Her wail can be heard three rooms away. She will not leave — and she will not allow anyone else to either.'],
+  Caves: [
+    'The cave king — a massive cave troll with crude armor fashioned from previous adventurers — sits on a throne of bones at the deepest point of the system.',
+    'A purple worm has recently moved in, displacing whatever lived here before. It is enormous, hungry, and the cave system was built around a much smaller creature.',
+    'A medusa has made the deepest cave her home, surrounded by her collection of stone adventurers. Reflections work. There are a lot of reflective surfaces here.'],
+  Crypts: [
+    'The patriarch of the buried family, now a lich of diminished power, still considers this crypt his home and the party his uninvited guests.',
+    'A death knight in full burial armor commands the central crypt. It was bound here to protect the secrets of the family it served — and those secrets are the reason the party came.',
+    'An undead army commander, a mummy lord, has been building a force in this crypt for a century. The party has stumbled into the staging ground.'],
+  Shipwreck: [
+    'The captain, drowned and furious, haunts the bridge. A ghost of considerable power who can control water, weather, and the structure of the ship around him.',
+    'A drowned one — a humanoid transformed by dark sea magic — commands a small crew of similar creatures in the cargo hold. It remembers being human. That doesn\'t make it friendly.',
+    'A sea witch made the wreck her lair decades ago. She has had time to trap every approach, charm every creature in the wreck, and prepare for exactly this encounter.'],
+  Prison: [
+    'The warden — a chain devil who took the role literally — still commands the deepest section. It considers the party new inmates.',
+    'The prisoner in the most secure cell was never meant to be freed. Whatever it is, it got free when the prison fell. Now it\'s the one running things.',
+    'A golem warden, still functional, still following its last instructions: keep everyone in. It doesn\'t distinguish between prisoners and visitors.'],
+  Ruins: [
+    'The ruins\' original guardian — a stone colossus — has been dormant for centuries. The party\'s activity has woken it, and it is answering the last command it was given.',
+    'A bandit lord has fortified the deepest ruin as a base of operations. She has twenty fighters, a mage, and the tactical advantage of three years of familiarity with the terrain.',
+    'Something moved into the ruins when the original occupants left. It has been here long enough to change the ruins around it, and it will not leave.'],
+  Vault: [
+    'The vault\'s ultimate security measure: a golem constructed from the vault door itself, animated when the inner sanctum is breached.',
+    'The item the party came for is guarded by its original owner — a wizard\'s phylactery-bound spirit that has had centuries to prepare for exactly this attempt.',
+    'A retrieval construct, sent by a rival party, arrived first. It has secured the prize and will not give it up without a fight it was built to win.'],
+  Tower: [
+    'The tower\'s master — long dead, but present as a lich — occupies the top floor. It has watched the party\'s ascent via magical sensors and is ready.',
+    'An archmage\'s most ambitious experiment inhabits the penultimate floor: a sentient spell given form, with access to every spell its creator knew.',
+    'A simulacrum of the tower\'s original owner guards the pinnacle. It believes it is the real thing. It is wrong. That doesn\'t make it less dangerous.'],
+};
+
+const NEW_MOTIF_R5 = {
+  Sewers: [
+    'The crime boss\'s ledger — more valuable than any coin. Names, dates, transactions. The right people will pay enormously to own it, or to destroy it.',
+    'A cache of stolen goods, including items taken from people the party knows. Most can be fenced. Some need to be returned.',
+    'A sealed chamber beneath the cistern, undisturbed for decades. Whatever was hidden here was hidden well, by someone with resources and enemies.'],
+  Mansion: [
+    'The vault behind the master\'s study. The combination is written in the vampire\'s own hand, hidden in his correspondence. The contents are everything rumored and more.',
+    'The family\'s will, contested for generations. With it, the party holds the legal claim to the estate — and everything in it.',
+    'A hidden portrait room contains paintings of every person the creature of the house has encountered. One is of someone the party is looking for. They were here recently.'],
+  Caves: [
+    'The deepest cave holds a crystal formation that amplifies magical effects. Removing a shard requires care but the shard itself has remarkable properties.',
+    'The cave king\'s hoard — crude but substantial, accumulated over decades of tolls and tributes from travelers who didn\'t make it this far.',
+    'An underground spring at the cave\'s base feeds a hidden pool. The pool reflects moonlight even underground. What it shows in the reflection is not the cave.'],
+  Crypts: [
+    'The family vault, sealed for generations. The lich\'s destruction was the key. Inside: generational wealth and a sealed letter that was never meant to be opened.',
+    'A hidden reliquary beneath the main crypt. The relics inside are valuable to the church — and someone has been trying to steal them for years.',
+    'The true tomb — not the one shown on any map — lies behind a secret panel in the final chamber. Its occupant is at peace. The grave goods are extraordinary.'],
+  Shipwreck: [
+    'The cargo manifest lists items that should not have been on a merchant vessel. The cargo itself is in sealed crates in the hold, waterproofed, still intact.',
+    'The captain\'s private safe, behind a false panel in the cabin wall. The combination is tattooed on the captain\'s ghost\'s wrist — visible only after the encounter.',
+    'A message in a bottle, floating in the sealed air pocket at the ship\'s highest point. It was meant to be found. The contents change everything about why the ship sank.'],
+  Prison: [
+    'The warden\'s office contains records of every prisoner who passed through — including people who were never officially incarcerated. The information is explosive.',
+    'A prisoner who should not still be alive — by any measure — sits in the deepest cell, waiting. They have been waiting a very long time and have much to say.',
+    'The confiscated belongings of decades of prisoners, catalogued and sealed in the evidence vault. Most are mundane. Some are not. One belongs to someone important.'],
+  Ruins: [
+    'A time capsule, deliberately sealed by the ruins\' original inhabitants. They knew the end was coming and prepared something for whoever came after.',
+    'The original foundation contains a chamber that was never part of the ruin above — built by someone different, for a different purpose, much earlier.',
+    'A map carved into the innermost wall shows the original city of which these ruins are a fragment. The scale suggests something much larger remains undiscovered.'],
+  Vault: [
+    'The item the party came for. It\'s here, exactly as described. The problem: there are two of them, and only one is real.',
+    'The vault\'s main prize and something else entirely — something that was clearly not deposited voluntarily. Someone hid something here that was meant to stay hidden.',
+    'A ledger of vault contents going back two centuries. The party\'s prize is listed. So is something else that catches their eye — something valuable, described, and never claimed.'],
+  Tower: [
+    'The observatory at the top is still functional. The telescope shows something in the stars that shouldn\'t be there — and a journal explains what it means.',
+    'The wizard\'s spellbook, complete and intact, on the reading stand where it was left. Taking it will be noticed by someone, somewhere.',
+    'The top floor holds an ongoing experiment that has been running unsupervised for decades. It has produced a result. The result is extraordinary, unprecedented, and needs a decision made about it.'],
+};
+
+// Merge new motifs into existing tables
+Object.assign(DUN_R1, NEW_MOTIF_R1);
+Object.assign(DUN_R2, NEW_MOTIF_R2);
+Object.assign(DUN_R3, NEW_MOTIF_R3);
+Object.assign(DUN_R4, NEW_MOTIF_R4);
+Object.assign(DUN_R5, NEW_MOTIF_R5);
+
+// ── Three new motifs ──────────────────────────────────────────────────────
+Object.assign(DUN_R1, {
+  Dungeon: [
+    'The dungeon entrance is a gatehouse with two portcullises. A pair of ogre guards man the murder holes above, bored but dangerous.',
+    'A carved stone arch marks the threshold. Iron-barred doors stand open — something forced them. A skeleton patrol rounds the corner.',
+    'The outer dungeon block: bare stone, torches in iron rings, the smell of old fear. A duty sergeant — now undead — still calls roll at the entrance post.'],
+  'City Building': [
+    'The front door is barred from the inside. Breaking it down is easy; the noise it makes is not. Two guards are posted at the inner foyer.',
+    'The service entrance is unlocked but watched by a spy working for the building\'s master. They will alert someone unless dealt with first.',
+    'The loading dock at the rear is the weak point. Crates cover a tripwire; the dock guard is actually a shapeshifter.'],
+  Wilderness: [
+    'The trail narrows to a single file at the forest edge. A predator — wolf pack, owlbear, or worse — has been tracking the party since the last clearing.',
+    'A rope bridge over a ravine is the only crossing. It\'s been cut on the far side and rehung badly. Someone waits below the bridge.',
+    'The path enters a dense thicket with no clear trail. The druidic guardian of this wood does not welcome strangers and makes that clear immediately.'],
+});
+Object.assign(DUN_R2, {
+  Dungeon: [
+    'The torturer\'s record room: names, dates, confessions. The party\'s target appears in these records. So does information that someone in power would kill to suppress.',
+    'A prisoner in a cell here wasn\'t brought in through the main entrance. They arrived through a tunnel that the dungeon\'s current masters don\'t know about.',
+    'The barracks mess hall: a crude map of the dungeon is scratched into the table. It\'s accurate — except for three rooms that are conspicuously absent.'],
+  'City Building': [
+    'The accountant\'s office. The ledgers here tell a story the building\'s master would prefer untold. The puzzle is finding the false entries among the legitimate ones.',
+    'The staff quarters. A frightened servant knows something and wants out. Getting them to talk requires convincing them they\'ll be protected.',
+    'A concealed room behind a bookshelf. It was a safe house. The previous occupant left a message — but the message is in a personal cipher.'],
+  Wilderness: [
+    'A hermit\'s camp at the intersection of two trails. The hermit has lived here for decades and knows every path — but speaks only in riddles born of isolation.',
+    'A standing stone covered in carvings. The carvings form a map — but only readable at the right time of day, when the sun hits them at a specific angle.',
+    'An abandoned hunter\'s blind overlooking the trail ahead. Recent footprints. A note pinned to the wood: "Turn back." The handwriting is familiar.'],
+});
+Object.assign(DUN_R3, {
+  Dungeon: [
+    'An alarm bell — rigged to a tripwire — rings. Every guard in earshot responds. The party has three rounds before the corridor fills.',
+    'A spiked pit trap in the main passage. Falling in is survivable. Getting out before the patrol arrives is the real challenge.',
+    'The map the party has been using is wrong. This room doesn\'t match the layout at all — and the way marked "forward" leads to a deadfall.'],
+  'City Building': [
+    'The building\'s owner arrives unexpectedly. Staff scatter. The party must hide, bluff their way through, or fight — none of which are clean options.',
+    'A fire breaks out in an adjacent room — accident, arson, or distraction, impossible to tell. Ignoring it has consequences. Dealing with it costs time.',
+    'A trapped safe: the combination lock triggers a hidden alarm when the wrong sequence is entered. The right sequence is written in a code that took the previous thief three rooms to assemble.'],
+  Wilderness: [
+    'The weather turns. Visibility drops to near zero. The party must navigate by sound and memory for the next two encounters.',
+    'Quicksand — a wide patch that looks like solid ground. One character is already up to their waist before anyone reacts.',
+    'A forest fire, distant but closing. The smoke is already thick. The animals are moving away from it. The only clear path leads deeper into the dungeon\'s territory.'],
+});
+Object.assign(DUN_R4, {
+  Dungeon: [
+    'The dungeon master — not a creature but a person, a warden who has held this post for thirty years — waits in the control room. They have a crossbow, the keys, and no intention of losing their livelihood.',
+    'A flesh golem, the dungeon\'s ultimate containment measure for escaped prisoners, has been let loose in the final block. It was intended to stop something else.',
+    'The executioner: a creature of habit and considerable skill, still following the original contract. The party is on the list.'],
+  'City Building': [
+    'The master of the building — a crime lord, corrupt official, or merchant prince — is here in their sanctum. They are better prepared than the party anticipated.',
+    'A council meeting in progress. Interrupting it reveals who is behind everything — and puts the party in a room with seven people who all have reason to want them silenced.',
+    'The building\'s owner has already fled, leaving behind an elite bodyguard with one instruction: no witnesses.'],
+  Wilderness: [
+    'The apex predator of this region has been following the party\'s scent for an hour. This is its territory and it has chosen to act.',
+    'A warlord\'s hunting party — twenty riders — crosses the party\'s path. Their leader makes a decision in the first five seconds that determines how this goes.',
+    'The wilderness cult\'s high priest conducts a ceremony in the clearing ahead. Interrupting it is unavoidable. Surviving what follows is not guaranteed.'],
+});
+Object.assign(DUN_R5, {
+  Dungeon: [
+    'The evidence room: everything confiscated from prisoners over decades. Most of it is junk. Some of it is exactly what the party came for. One item has no record of how it got here.',
+    'The warden\'s private office. Behind the official desk: a personal safe, correspondence with people who should not be corresponding with a dungeon warden, and a key to a cell that isn\'t on any map.',
+    'The deepest cell, sealed and unmarked. Whatever is inside has been there long enough that the dungeon was built around it. It can leave now. The question is whether that\'s a good thing.'],
+  'City Building': [
+    'The private vault. The combination required four separate keys held by four separate people. Three of them are now unnecessary.',
+    'The owner\'s personal correspondence — political, financial, intimate. Each letter is a tool. Together they\'re a weapon. Someone else wants them too.',
+    'A hidden room behind the wine cellar. It has been used for meetings that were never recorded anywhere. The last meeting left something behind.'],
+  Wilderness: [
+    'The grove at the heart of the wilderness. Something ancient lives here, or has left something here, or was buried here deliberately. The forest protected it. Now the party has to decide what to do with it.',
+    'A hermit\'s hidden camp containing decades of observation notes on everything that has moved through this wilderness — including the people who don\'t want to be found.',
+    'The summit, the shore, the clearing — whatever the wilderness has been building toward. The view from here shows something that reframes everything the party has been doing.'],
+});
+
+// ── Room type/subtype taxonomy ──────────────────────────────────────────────
+// Maps each room role to [Type, Subtype]
+const ROOM_TAXONOMY = {
+  guardian:            ['Fight',     'Guardian'],
+  puzzle:              ['Challenge', 'Puzzle'],
+  setback:             ['Twist',     'Setback'],
+  boss:                ['Fight',     'Boss'],
+  reward:              ['Reward',    'Treasure'],
+  'Combat Encounter':  () => ['Fight', R(['Sentry','Mooks'])],
+  'Exploration Chamber': ['Scenic',  ''],
+  'Trap Room':         ['Challenge', 'Trap'],
+  'Treasure Cache':    ['Reward',    'Treasure'],
+  'Side Chamber':      ['Scenic',    ''],
+  'Barracks':          ['Fight',     'Mooks'],
+  'Storage Room':      ['Scenic',    ''],
+  'Secret Room':       ['Twist',     'Secret Area'],
+  'Sub-Boss Lair':     ['Fight',     'Sub-Boss'],
+  'Puzzle Room':       ['Challenge', 'Puzzle'],
+  'Shrine':            ['Reward',    'Sanctuary'],
+  'Laboratory':        ['Scenic',    ''],
+  'Prison Cells':      ['Challenge', 'Social'],
+  'Collapsed Section': ['Twist',     'Environmental'],
+  'Natural Cave':      ['Scenic',    ''],
+  'Guard Post':        ['Fight',     'Sentry'],
+  'Armory':            ['Reward',    'Treasure'],
+  'Ritual Chamber':    ['Challenge', 'Environmental'],
+};
+
+function roomLabel(num, roleKey) {
+  const tax = typeof ROOM_TAXONOMY[roleKey] === 'function'
+    ? ROOM_TAXONOMY[roleKey]()
+    : (ROOM_TAXONOMY[roleKey] || ['Scenic','']);
+  const [type, sub] = tax;
+  const subStr = sub ? ` - ${sub}` : '';
+  return `${num}. ${type}${subStr}`;
+}
+
+
+const DUN_ROOM_TYPES = [
+  'Combat Encounter','Exploration Chamber','Trap Room','Treasure Cache',
+  'Side Chamber','Barracks','Storage Room','Secret Room',
+  'Puzzle Room','Shrine','Laboratory','Prison Cells','Collapsed Section',
+  'Natural Cave','Guard Post','Armory','Ritual Chamber'
+];
+
+const DUN_ROOM_CONTENTS = {
+  'Combat Encounter': [
+    'A patrol of ${mot} creatures has set up an ambush here.',
+    'Two factions of monsters are mid-brawl — the party arrives in the chaos.',
+    'A lone elite creature guards a door on the far wall.',
+    'A small warband rests here after a recent skirmish. They are wounded but alert.',
+    'Three creatures sleep here. A fourth stands watch at the far end.',
+  ],
+  'Exploration Chamber': [
+    'Scattered debris from a collapsed section hides something beneath.',
+    'Old murals depict the dungeon\'s history — one panel shows the location of a secret door.',
+    'The floor has been worn smooth by years of foot traffic. Fresh tracks lead east.',
+    'Someone has been living here recently. Bedroll, food scraps, a hidden note.',
+    'A natural spring seeps through the wall. The water is clean. Something lives in the pool.',
+  ],
+  'Trap Room': [
+    'Pressure plates cover 60% of the floor. The safe path is marked by faint scratch marks.',
+    'A mechanical dart trap triggers when the center of the room is crossed.',
+    'The ceiling lowers slowly when anyone enters. The release valve is on the far side.',
+    'A false floor drops anyone who steps on it into a pit. The real path hugs the left wall.',
+    'A glyph of warding is painted in the doorway, invisible until someone passes through it.',
+  ],
+  'Treasure Cache': [
+    'A locked iron chest is bolted to the floor. It has a poison needle trap on the keyhole.',
+    'Loot from previous adventurers is stacked carelessly in the corner, half-looted already.',
+    'A hidden alcove behind a loose brick contains a small cache wrapped in oilcloth.',
+    'Three separate stashes are hidden around the room. Finding all three requires a search.',
+    'The cache is guarded by a magical ward that triggers if removed without the pass-phrase.',
+  ],
+  'Side Chamber': [
+    'A cramped side room connects to the main path. Something used this as a nest.',
+    'This chamber branches off unexpectedly. It was not on any map recovered so far.',
+    'A secondary passage leads here from the level above — an alternate entry point.',
+    'The room is a dead end, but the eastern wall sounds hollow.',
+    'Evidence of recent habitation: a fire pit, gnawed bones, a crude barricade.',
+  ],
+  'Barracks': [
+    'Rough sleeping pallets line the walls. Off-duty guards are here — some armed.',
+    'A barracks half-converted to a prison. Four cells on the east wall, two occupied.',
+    'Weapons racks, bedrolls, a duty roster written in the local dialect. The patrol is due back.',
+    'The barracks has been abandoned mid-meal. Whatever cleared it did so recently.',
+    'Two guards arm-wrestle at a table. Four more sleep. One sits alone sharpening a blade.',
+  ],
+  'Storage Room': [
+    'Crates of mundane supplies, some useful. One crate rattles — something is inside.',
+    'Shelves of provisions, tools, and rope. A map of the dungeon\'s upper level is pinned to the wall.',
+    'Empty barrels, rotting sacks. One shelf holds alchemical supplies, badly labeled.',
+    'A supply cache, recently restocked. Someone is maintaining this dungeon.',
+    'Stacked furniture from a ransacked room above. A fine chair here is oddly out of place.',
+  ],
+  'Secret Room': [
+    'A hidden chamber accessible only through a rotating wall panel. The trigger is a specific book on the shelf outside.',
+    'A crawl space above the ceiling tiles of the previous room leads here.',
+    'A blank stone wall, indistinguishable from the others, conceals this chamber. The seam is detectable only by touch.',
+    'The room exists behind a false back to a wardrobe. The contents were hidden deliberately.',
+    'Accessible only through water — a submerged passage leads up into a dry, air-filled vault.',
+  ],
+  'Sub-Boss Lair': [
+    'A lieutenant of the main boss has made this chamber its own. It has minor loot and major attitude.',
+    'A champion creature sleeps here atop a pile of defeated challengers\' equipment.',
+    'A powerful monster has claimed this chamber as territory. It is aware of the party.',
+    'A rival adventuring group\'s former leader — now in service to the dungeon\'s master — waits here.',
+    'An elite creature guards a door beyond which the sound of the main boss can be faintly heard.',
+  ],
+  'Puzzle Room': [
+    'Four levers on the wall, each controlling a different mechanism. The correct sequence opens the door.',
+    'A floor mosaic must be walked in the correct order — the pattern is hinted at by a mural overhead.',
+    'Three mirrors redirect a beam of light. Aligning them correctly unlocks a compartment.',
+    'A set of scales requires balancing specific objects. The right combination is described in a riddle carved above.',
+    'A wheel mechanism controls water flow through channels in the floor. The solution empties the room — or floods it.',
+  ],
+  'Shrine': [
+    'An altar to a forgotten deity. Offerings left here trigger a minor blessing — or curse.',
+    'A shrine desecrated by the dungeon\'s inhabitants. Restoring it earns divine favor.',
+    'A functional shrine tended by a fanatical acolyte who will not let anyone approach the altar.',
+    'Candles that never go out surround an idol with hollow eyes. Staring into them has an effect.',
+    'A shrine that radiates magical healing once per day — but only for those who make an offering.',
+  ],
+  'Laboratory': [
+    'Alchemical equipment, half-finished experiments, notes in a cramped hand. Someone was working on something dangerous.',
+    'A wizard\'s workbench covered in spell components and partially transcribed scrolls.',
+    'A taxidermy collection of dungeon creatures surrounds a central work table. Some specimens still move.',
+    'A brewing apparatus connected to a vat of unknown liquid. The fumes are unpleasant. The result is volatile.',
+    'Notebooks detail the dungeon owner\'s experiments. The most recent entries describe something that got out.',
+  ],
+  'Prison Cells': [
+    'Six cells, four occupied. The prisoners are starving but cooperative. One has crucial information.',
+    'A warden creature patrols between the cells. The prisoners signal the party to wait.',
+    'The cells are empty except one, holding a creature that should not be here at all.',
+    'Former dungeon guards are imprisoned here after a power shift. They\'ll help in exchange for freedom.',
+    'One prisoner is an illusion. One is a spy. One is genuinely trapped. Only one knows the way forward.',
+  ],
+  'Collapsed Section': [
+    'A cave-in has partially blocked the corridor. Clearing it takes 10 minutes and makes noise.',
+    'The floor has given way into a lower level. Ropes and pitons are needed to descend safely.',
+    'A partial collapse has created a crawl space. Only small characters fit without removing armor.',
+    'Rubble from an old cave-in has been deliberately stacked — someone was trying to block this passage.',
+    'The ceiling is unstable. Every loud sound requires a DC 10 check to avoid triggering another collapse.',
+  ],
+  'Natural Cave': [
+    'The worked stone gives way to natural cave. Stalactites hang overhead. Something lives in the dark above.',
+    'A subterranean fungal forest fills this cavern. Several species are hallucinogenic. One is medicinal.',
+    'The natural cave echoes unexpectedly — sound from here can be heard two rooms away.',
+    'Underground water has carved channels through this space. The flow intensifies during rain above.',
+    'Crystalline formations cover the walls. They are valuable. Removing them triggers a collapse.',
+  ],
+  'Guard Post': [
+    'A reinforced position with arrow slits and a barricade. The guards have been waiting.',
+    'A watchtower embedded in the dungeon wall overlooks the approach. Two guards, bored.',
+    'A checkpoint with a ledger. The guards record everyone who passes. They are thorough.',
+    'A guard post that was overrun — recently. Blood on the floor, door broken inward.',
+    'An unmanned post with a warning bell. Someone has been through here and did not ring it.',
+  ],
+  'Armory': [
+    'Weapon racks, mostly mundane but well-maintained. One rack holds something unusual.',
+    'An armory that was raided — doors hanging open, half the racks empty, a dead guard on the floor.',
+    'Locked weapon storage. The key is on a guard two rooms back. The lock can be picked.',
+    'An armory being actively restocked. A weaponsmith creature is here, unarmed but not helpless.',
+    'Rows of identical weapons. All are serviceable. One is magical — and there\'s no obvious way to tell which.',
+  ],
+  'Ritual Chamber': [
+    'A circle of glowing runes covers the floor. Entering breaks something that was sealed.',
+    'An ongoing ritual has been interrupted mid-completion. The participants are gone. The energy is still building.',
+    'Robed figures conduct a ceremony. Interrupting it has immediate consequences.',
+    'A ritual circle designed to bind something. Whatever it was binding has already escaped.',
+    'Altars at four cardinal points, connected by channels of dried blood. The ritual happens at midnight.',
+  ],
+};
+
+function genDungeon(level, motif, numRooms) {
+  numRooms = parseInt(numRooms) || 5;
   const mot = motif === 'random' ? R(DUN_MOTIFS) : motif;
+
   const nameStyle = Math.random();
   let name;
   if(nameStyle < 0.4) name = `The ${R(DUN_NAMES_ADJ)} ${R(DUN_NAMES_NOUN)}`;
   else if(nameStyle < 0.7) name = `${R(DUN_NAMES_ADJ)} ${R(DUN_NAMES_NOUN)} of ${R(DUN_NAMES_OF)}`;
   else name = `The ${R(DUN_NAMES_NOUN)} of ${R(DUN_NAMES_OF)}`;
 
-  const r1 = R(DUN_R1[mot] || DUN_R1.Abandoned);
-  const r2 = R(DUN_R2[mot] || DUN_R2.Abandoned);
-  const r3 = R(DUN_R3[mot] || DUN_R3.Abandoned);
-  const r4 = R(DUN_R4[mot] || DUN_R4.Abandoned);
-  const r5 = R(DUN_R5[mot] || DUN_R5.Abandoned);
-
   const el = document.createElement('div');
-  el.innerHTML = `
-    <div class="gen-card" style="border-color:var(--gold)">
-      <div class="gen-card-header">
-        <span class="gen-card-name" style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold)">${esc(name)}</span>
-        <span class="gen-card-tag">Level ${esc(level)} · ${esc(mot)}</span>
-      </div>
-    </div>
-    <div class="gen-card">
-      <div class="gen-card-header"><span class="gen-card-name">Room 1 — The Guardian</span><span class="gen-card-tag">Entrance</span></div>
-      <div class="gen-item-desc">${esc(r1)}</div>
-    </div>
-    <div class="gen-card">
-      <div class="gen-card-header"><span class="gen-card-name">Room 2 — The Puzzle</span><span class="gen-card-tag">Roleplay / Riddle</span></div>
-      <div class="gen-item-desc">${esc(r2)}</div>
-    </div>
-    <div class="gen-card">
-      <div class="gen-card-header"><span class="gen-card-name">Room 3 — The Setback</span><span class="gen-card-tag">Trick / Twist</span></div>
-      <div class="gen-item-desc">${esc(r3)}</div>
-    </div>
-    <div class="gen-card">
-      <div class="gen-card-header"><span class="gen-card-name">Room 4 — The Climax</span><span class="gen-card-tag">Boss / Conflict</span></div>
-      <div class="gen-item-desc">${esc(r4)}</div>
-    </div>
-    <div class="gen-card">
-      <div class="gen-card-header"><span class="gen-card-name">Room 5 — The Reward</span><span class="gen-card-tag">Resolution</span></div>
-      <div class="gen-item-desc">${esc(r5)}</div>
-    </div>
-  `;
+
+  // Header card
+  const hdr = document.createElement('div');
+  hdr.className = 'gen-card';
+  hdr.style.borderColor = 'var(--gold)';
+  hdr.innerHTML = `<div class="gen-card-header">
+    <span class="gen-card-name" style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold)">${esc(name)}</span>
+    <span class="gen-card-tag">Level ${esc(level)} · ${esc(mot)} · ${numRooms} rooms</span>
+  </div>`;
+  el.appendChild(hdr);
+
+  if(numRooms === 5) {
+    // Classic 5-room structure
+    const rooms = [
+      ['guardian', DUN_R1[mot]||DUN_R1.Abandoned],
+      ['puzzle',   DUN_R2[mot]||DUN_R2.Abandoned],
+      ['setback',  DUN_R3[mot]||DUN_R3.Abandoned],
+      ['boss',     DUN_R4[mot]||DUN_R4.Abandoned],
+      ['reward',   DUN_R5[mot]||DUN_R5.Abandoned],
+    ];
+    rooms.forEach(([roleKey, pool], i) => {
+      const c = document.createElement('div'); c.className = 'gen-card';
+      const label = roomLabel(i + 1, roleKey);
+      c.innerHTML = `<div class="gen-card-name" style="font-weight:700;margin-bottom:5px">${esc(label)}</div>
+        <div class="gen-item-desc">${esc(R(pool))}</div>`;
+      el.appendChild(c);
+    });
+  } else {
+    // Extended dungeon
+    const roomCards = [];
+
+    // Helper: get resolved [type, subtype] for a roleKey
+    function getTax(roleKey) {
+      const t = ROOM_TAXONOMY[roleKey];
+      return typeof t === 'function' ? t() : (t || ['Scenic','']);
+    }
+
+    // Room 1: entrance/guardian (always Fight - Guardian)
+    roomCards.push(['guardian', R(DUN_R1[mot]||DUN_R1.Abandoned)]);
+
+    // Build mid pool: mandatory (puzzle + setback + optional sub-boss) + random extras
+    const mandatory = [
+      ['puzzle',  R(DUN_R2[mot]||DUN_R2.Abandoned)],
+      ['setback', R(DUN_R3[mot]||DUN_R3.Abandoned)],
+    ];
+    if(numRooms >= 8) {
+      const subDesc = R(DUN_ROOM_CONTENTS['Sub-Boss Lair']).replace(/\$\{mot\}/g, mot);
+      mandatory.push(['Sub-Boss Lair', subDesc]);
+    }
+    const midCount = numRooms - 3; // entrance + boss + reward are fixed
+    const extraTypes = [...DUN_ROOM_TYPES].sort(() => Math.random() - 0.5);
+    const extras = [];
+    let typeIdx = 0;
+    for(let i = mandatory.length; i < midCount; i++) {
+      const t = extraTypes[typeIdx++ % extraTypes.length];
+      const pool = DUN_ROOM_CONTENTS[t] || DUN_ROOM_CONTENTS['Exploration Chamber'];
+      const desc = R(pool).replace(/\$\{mot\}/g, mot);
+      extras.push([t, desc]);
+    }
+
+    // Shuffle mid rooms
+    let allMid = [...mandatory, ...extras].sort(() => Math.random() - 0.5);
+
+    // Fix: no two consecutive rooms with same Type+Subtype
+    // Simple pass: if a room matches its predecessor, swap it with the next different one
+    for(let i = 1; i < allMid.length; i++) {
+      const [ta, sa] = getTax(allMid[i-1][0]);
+      const [tb, sb] = getTax(allMid[i][0]);
+      if(ta === tb && sa === sb) {
+        // Find the next room that differs and swap
+        let swapped = false;
+        for(let j = i+1; j < allMid.length; j++) {
+          const [tc, sc] = getTax(allMid[j][0]);
+          if(tc !== tb || sc !== sb) {
+            [allMid[i], allMid[j]] = [allMid[j], allMid[i]];
+            swapped = true; break;
+          }
+        }
+        // If no swap found, just leave it (edge case with very few room types)
+      }
+    }
+
+    allMid.forEach(r => roomCards.push(r));
+
+    // Boss is always last combat room before reward (guaranteed single boss)
+    roomCards.push(['boss',   R(DUN_R4[mot]||DUN_R4.Abandoned)]);
+    // Reward is always last
+    roomCards.push(['reward', R(DUN_R5[mot]||DUN_R5.Abandoned)]);
+
+    // Final check: boss and reward can't be consecutive same type (they can't be — different types)
+    // Render
+    roomCards.forEach(([roleKey, desc], i) => {
+      const c = document.createElement('div'); c.className = 'gen-card';
+      const label = roomLabel(i + 1, roleKey);
+      c.innerHTML = `<div class="gen-card-name" style="font-weight:700;margin-bottom:5px">${esc(label)}</div>
+        <div class="gen-item-desc">${esc(desc)}</div>`;
+      el.appendChild(c);
+    });
+  }
+
   return el;
 }
 
@@ -3973,8 +4518,9 @@ window.init_gen = function(root) {
     } else if(activeTab==='dungeon') {
       const level=root.querySelector('#gen-dun-level').value;
       const motif=root.querySelector('#gen-dun-motif').value;
+      const rooms=root.querySelector('#gen-dun-rooms').value;
       const res=root.querySelector('#gen-dun-results'); res.innerHTML='';
-      res.appendChild(genDungeon(level,motif));
+      res.appendChild(genDungeon(level,motif,rooms));
     }
   });
 
