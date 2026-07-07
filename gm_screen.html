@@ -860,7 +860,7 @@ input[type="number"] { -moz-appearance: textfield; }
       <button class="btn small ghost aud-tta" title="TabletopAudio">🎵 TTA</button>
       <button class="btn small ghost aud-sdl" title="Shadowdarklings">⚔ SDL</button>
       <button class="btn small ghost aud-dndb" title="D&D Beyond">🐉 DnDB</button>
-      <button class="btn small ghost aud-sdt" title="Shadowdark Tools">🛠 SDT</button>
+      <button class="btn small ghost aud-sdt" title="5 Room Dungeon Generator">🏰 5RD</button>
     </div>
     <div class="aud-body">
       <div class="aud-empty">
@@ -2632,7 +2632,7 @@ function init_audio(root) {
   ttaBtn.addEventListener('click', () => loadUrl('https://tabletopaudio.com/'));
   sdlBtn.addEventListener('click', () => loadUrl('https://shadowdarklings.net/#!'));
   dndbBtn.addEventListener('click', () => loadUrl('https://www.dndbeyond.com/'));
-  sdtBtn.addEventListener('click', () => loadUrl('https://www.shadowdarktools.com/tools'));
+  sdtBtn.addEventListener('click', () => loadUrl('https://donjon.bin.sh/fantasy/5_room/'));
   clearBtn.addEventListener('click', clear);
 
   root._getState = () => ({ url: frame.style.display !== 'none' ? frame.src : '' });
