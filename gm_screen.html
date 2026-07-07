@@ -859,6 +859,7 @@ input[type="number"] { -moz-appearance: textfield; }
       <button class="btn small ghost aud-dndb" title="D&D Beyond">🐉 DnDB</button>
       <button class="btn small ghost aud-npc" title="NPC Generator">👤 NPC</button>
       <button class="btn small ghost aud-wata" title="Watabou Generators">🗺 Wata</button>
+      <button class="btn small ghost aud-ds" title="DungeonScrawl">🏰 DS</button>
       <button class="btn small ghost aud-sdt" title="5 Room Dungeon Generator">🏰 5RD</button>
     </div>
     <div class="aud-body">
@@ -1035,6 +1036,11 @@ input[type="number"] { -moz-appearance: textfield; }
         </div>
         <div class="gen-results" id="gen-dun-results">
           <div class="gen-empty">Set options and press 🎲 Generate</div>
+        </div>
+        <div id="gen-dun-map-bar" style="display:none;padding:10px 14px 12px;background:var(--panel);border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;align-items:center">
+          <span id="gen-dun-seed-label" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--muted);letter-spacing:0.06em;flex:1"></span>
+          <button id="gen-dun-map-btn" class="btn small primary" style="white-space:nowrap">🗺 View Map</button>
+          <button id="gen-dun-regen-btn" class="btn small ghost" style="white-space:nowrap">↺ New Seed</button>
         </div>
       </div>
       <div class="gen-panel" data-panel="encounter">
@@ -1279,6 +1285,7 @@ function syncToolbar(slot, toolNode) {
     ['.aud-sdt',       '.aud-sdt'],
     ['.aud-npc',       '.aud-npc'],
     ['.aud-wata',      '.aud-wata'],
+    ['.aud-ds',        '.aud-ds'],
   ];
 
   pairs.forEach(([cloneSelector, liveSelector]) => {
@@ -4518,11 +4525,49 @@ window.init_gen = function(root) {
     } else if(activeTab==='dungeon') {
       const level=root.querySelector('#gen-dun-level').value;
       const motif=root.querySelector('#gen-dun-motif').value;
-      const rooms=root.querySelector('#gen-dun-rooms').value;
+      const rooms=parseInt(root.querySelector('#gen-dun-rooms').value)||5;
       const res=root.querySelector('#gen-dun-results'); res.innerHTML='';
       res.appendChild(genDungeon(level,motif,rooms));
+
+      // Generate watabou URL: map room count to size tag
+      const wataUrl = 'https://app.dungeonscrawl.com/';
+
+      // Store on root so regen button can use it
+      root._dunWataUrl = wataUrl;
+
+      const mapBar = root.querySelector('#gen-dun-map-bar');
+      const seedLabel = root.querySelector('#gen-dun-seed-label');
+      const mapBtn = root.querySelector('#gen-dun-map-btn');
+      const regenBtn = root.querySelector('#gen-dun-regen-btn');
+      if(mapBar) {
+        mapBar.style.display = 'flex';
+        seedLabel.textContent = 'DungeonScrawl Random Generator';
+      }
     }
   });
+
+  // Wire dungeon map and regen buttons once (they live in the panel, not the toolbar)
+  (function() {
+    const mapBtn = root.querySelector('#gen-dun-map-btn');
+    const regenBtn = root.querySelector('#gen-dun-regen-btn');
+    const seedLabel = root.querySelector('#gen-dun-seed-label');
+    if(mapBtn) {
+      mapBtn.addEventListener('click', () => {
+        const url = root._dunWataUrl;
+        if(!url) return;
+        // Find which pane number is showing the gen tool, switch it to browser
+        const paneNum = Object.keys(paneTools).find(k => paneTools[k] === 'gen') || 1;
+        setPaneTool(parseInt(paneNum), 'audio');
+        // Small delay for the pane to mount, then load URL
+        setTimeout(() => {
+          const audInst = instances['audio'];
+          if(audInst && audInst._loadUrl) audInst._loadUrl(url);
+          else window.open(url, '_blank');
+        }, 100);
+      });
+    }
+    if(regenBtn) regenBtn.style.display = 'none';
+  })();
 
   root._getState = () => ({});
   root._setState = () => {};
@@ -4549,6 +4594,7 @@ function init_audio(root) {
   const sdtBtn   = root.querySelector('.aud-sdt');
   const npcBtn   = root.querySelector('.aud-npc');
   const wataBtn  = root.querySelector('.aud-wata');
+  const dsBtn    = root.querySelector('.aud-ds');
 
   function loadUrl(url) {
     url = url.trim();
@@ -4577,8 +4623,10 @@ function init_audio(root) {
   sdtBtn.addEventListener('click', () => loadUrl('https://donjon.bin.sh/fantasy/5_room/'));
   npcBtn.addEventListener('click', () => loadUrl('https://www.npcgenerator.com/'));
   wataBtn.addEventListener('click', () => loadUrl('https://watabou.github.io/'));
+  dsBtn.addEventListener('click', () => loadUrl('https://app.dungeonscrawl.com/'));
   clearBtn.addEventListener('click', clear);
 
+  root._loadUrl = loadUrl; // expose for other tools (e.g. dungeon map button)
   root._getState = () => ({ url: frame.style.display !== 'none' ? frame.src : '' });
   root._setState = (s) => {
     if(s.url) { urlInput.value = s.url; loadUrl(s.url); }
