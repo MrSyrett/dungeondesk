@@ -884,6 +884,7 @@ input[type="number"] { -moz-appearance: textfield; }
         <button class="gen-tab" data-tab="trap">Trap/Hazard</button>
         <button class="gen-tab" data-tab="shop">Shop/Tavern</button>
         <button class="gen-tab" data-tab="loot">Treasure</button>
+        <button class="gen-tab" data-tab="mapgen">Map Generator</button>
       </div>
       <div class="toolbar-spacer"></div>
       <button class="btn small primary gen-roll">🎲 Generate</button>
@@ -1176,6 +1177,42 @@ input[type="number"] { -moz-appearance: textfield; }
       </div>
 
       <!-- SHOP / TAVERN PANEL -->
+
+      <!-- MAP GENERATOR PANEL -->
+      <div class="gen-panel" data-panel="mapgen">
+        <div class="gen-controls">
+          <label class="gen-label">Rooms
+            <select class="gen-select" id="gen-map-rooms">
+              <option value="5">5</option>
+              <option value="8">8</option>
+              <option value="10">10</option>
+              <option value="12">12</option>
+              <option value="15">15</option>
+              <option value="20">20</option>
+            </select>
+          </label>
+          <label class="gen-label">Style
+            <select class="gen-select" id="gen-map-style">
+              <option value="dungeon">Dungeon</option>
+              <option value="cave">Cave</option>
+              <option value="ruins">Ruins</option>
+            </select>
+          </label>
+          <label class="gen-label">Load to
+            <select class="gen-select" id="gen-map-target">
+              <option value="maps">Maps tab</option>
+              <option value="adventure">Adventure tab</option>
+            </select>
+          </label>
+        </div>
+        <div class="gen-results" id="gen-map-results" style="align-items:center;justify-content:center;">
+          <div class="gen-empty">Set options and press 🎲 Generate</div>
+        </div>
+        <div id="gen-map-action-bar" style="display:none;padding:10px 14px 12px;background:var(--panel);border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;align-items:center;">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--muted);letter-spacing:0.06em;flex:1" id="gen-map-info"></span>
+          <button class="btn small primary" id="gen-map-load-btn">📌 Load into Tab</button>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -1544,6 +1581,8 @@ function initDocTool(root) {
       filenameEl.textContent = s.fileTooLarge + ' (too large to auto-restore — reload manually)';
     }
   };
+  // Allow other tools to programmatically load an image into this doc viewer
+  root._loadDataUrl = (dataUrl, fileName) => loadFromDataUrl(dataUrl, fileName);
 }
 
 function init_adventure(root) { initDocTool(root); }
@@ -4461,6 +4500,173 @@ function genDungeon(level, motif, numRooms) {
   return el;
 }
 
+// ── Map Generator ──────────────────────────────────────────────────────────
+(function() {
+
+function generateDungeonMap(numRooms, style) {
+  const CELL = 48;          // px per grid cell
+  const COLS = 22, ROWS = 16;
+  const grid = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+
+  // Style palettes
+  const STYLES = {
+    dungeon: { wall:'#2a2a32', floor:'#c8c4b0', corridor:'#b0ac9a', text:'#1a1a22', stroke:'#1a1a22', roomStroke:'#3a3a44', title:'Dungeon' },
+    cave:    { wall:'#1e2420', floor:'#8a9e82', corridor:'#7a8e72', text:'#0e1410', stroke:'#0e1410', roomStroke:'#2a3a28', title:'Cave' },
+    ruins:   { wall:'#3a3020', floor:'#c4b48a', corridor:'#b0a07a', text:'#2a2010', stroke:'#2a2010', roomStroke:'#5a4a30', title:'Ruins' },
+  };
+  const S = STYLES[style] || STYLES.dungeon;
+
+  // ── Place rooms ──────────────────────────────────────────────────────────
+  const rooms = [];
+  const rng = () => Math.random();
+  const ri = (a,b) => Math.floor(rng()*(b-a+1))+a;
+
+  // Entrance is always top-left area
+  const entrance = { x: ri(1,3), y: ri(1,3), w: ri(3,5), h: ri(3,4), id:1, isEntrance:true };
+  rooms.push(entrance);
+  markRoom(entrance);
+
+  // Place remaining rooms
+  let attempts = 0;
+  while(rooms.length < numRooms && attempts < numRooms * 50) {
+    attempts++;
+    const w = ri(2,6), h = ri(2,5);
+    const x = ri(1, COLS-w-2), y = ri(1, ROWS-h-2);
+    if(!overlapsAny({x,y,w,h}, 1)) {
+      rooms.push({x,y,w,h,id:rooms.length+1});
+      markRoom({x,y,w,h});
+    }
+  }
+
+  function markRoom(r, val=2) {
+    for(let row=r.y; row<r.y+r.h; row++)
+      for(let col=r.x; col<r.x+r.w; col++)
+        if(row>=0&&row<ROWS&&col>=0&&col<COLS) grid[row][col]=val;
+  }
+  function overlapsAny(r, pad) {
+    for(const ex of rooms) {
+      if(r.x-pad < ex.x+ex.w+pad && r.x+r.w+pad > ex.x-pad &&
+         r.y-pad < ex.y+ex.h+pad && r.y+r.h+pad > ex.y-pad) return true;
+    }
+    return false;
+  }
+
+  // ── Connect rooms with corridors ─────────────────────────────────────────
+  const connected = new Set([0]);
+  const edges = [];
+  for(let i=1;i<rooms.length;i++) {
+    // Connect each room to nearest already-connected room
+    const a = rooms[i];
+    let best = 0, bestDist = Infinity;
+    for(const ci of connected) {
+      const b = rooms[ci];
+      const d = Math.abs(cx(a)-cx(b)) + Math.abs(cy(a)-cy(b));
+      if(d < bestDist) { bestDist=d; best=ci; }
+    }
+    connected.add(i);
+    edges.push([i, best]);
+    carve(rooms[i], rooms[best]);
+  }
+
+  function cx(r){ return Math.floor(r.x + r.w/2); }
+  function cy(r){ return Math.floor(r.y + r.h/2); }
+
+  function carve(a, b) {
+    let ax=cx(a), ay=cy(a), bx=cx(b), by=cy(b);
+    // L-shaped corridor: horizontal then vertical
+    const hFirst = rng() > 0.5;
+    if(hFirst) {
+      for(let x=Math.min(ax,bx); x<=Math.max(ax,bx); x++) setCorr(ay,x);
+      for(let y=Math.min(ay,by); y<=Math.max(ay,by); y++) setCorr(y,bx);
+    } else {
+      for(let y=Math.min(ay,by); y<=Math.max(ay,by); y++) setCorr(y,ax);
+      for(let x=Math.min(ax,bx); x<=Math.max(ax,bx); x++) setCorr(by,x);
+    }
+  }
+  function setCorr(r,c) {
+    if(r>=0&&r<ROWS&&c>=0&&c<COLS&&grid[r][c]===0) grid[r][c]=1;
+  }
+
+  // ── Build SVG ────────────────────────────────────────────────────────────
+  const W = COLS*CELL, H = ROWS*CELL;
+  const parts = [];
+
+  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`);
+
+  // Background (walls)
+  parts.push(`<rect width="${W}" height="${H}" fill="${S.wall}"/>`);
+
+  // Draw floor cells
+  for(let r=0; r<ROWS; r++) {
+    for(let c=0; c<COLS; c++) {
+      if(grid[r][c]===0) continue;
+      const fill = grid[r][c]===1 ? S.corridor : S.floor;
+      parts.push(`<rect x="${c*CELL}" y="${r*CELL}" width="${CELL}" height="${CELL}" fill="${fill}"/>`);
+    }
+  }
+
+  // Room outlines + style details
+  for(const room of rooms) {
+    const rx=room.x*CELL, ry=room.y*CELL, rw=room.w*CELL, rh=room.h*CELL;
+    // Stone texture lines for dungeon style
+    if(style==='dungeon') {
+      parts.push(`<rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" fill="none" stroke="${S.roomStroke}" stroke-width="2"/>`);
+      // Subtle interior lines
+      for(let lx=rx+CELL;lx<rx+rw;lx+=CELL)
+        parts.push(`<line x1="${lx}" y1="${ry}" x2="${lx}" y2="${ry+rh}" stroke="${S.roomStroke}" stroke-width="0.5" opacity="0.4"/>`);
+      for(let ly=ry+CELL;ly<ry+rh;ly+=CELL)
+        parts.push(`<line x1="${rx}" y1="${ly}" x2="${rx+rw}" y2="${ly}" stroke="${S.roomStroke}" stroke-width="0.5" opacity="0.4"/>`);
+    } else if(style==='cave') {
+      // Rough cave edges
+      parts.push(`<rect x="${rx+2}" y="${ry+2}" width="${rw-4}" height="${rh-4}" fill="none" stroke="${S.roomStroke}" stroke-width="1.5" rx="8"/>`);
+    } else {
+      // Ruins — broken outline
+      parts.push(`<rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" fill="none" stroke="${S.roomStroke}" stroke-width="2" stroke-dasharray="6,3"/>`);
+    }
+
+    // Room number
+    const numX = rx + rw/2, numY = ry + rh/2;
+    const circR = Math.min(rw,rh)*0.22;
+    parts.push(`<circle cx="${numX}" cy="${numY}" r="${circR}" fill="${S.wall}" opacity="0.7"/>`);
+    parts.push(`<text x="${numX}" y="${numY+1}" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="monospace" font-weight="bold" font-size="${Math.max(10,circR*1.1)}">${room.id}</text>`);
+
+    // Entrance marker
+    if(room.isEntrance) {
+      parts.push(`<text x="${rx+rw/2}" y="${ry+8}" text-anchor="middle" fill="${S.text}" font-family="sans-serif" font-size="9" font-weight="bold" opacity="0.8">ENTRANCE</text>`);
+    }
+  }
+
+  // Doors at corridor/room junctions
+  for(let r=0; r<ROWS; r++) {
+    for(let c=0; c<COLS; c++) {
+      if(grid[r][c]!==1) continue;
+      const x=c*CELL, y=r*CELL;
+      // Check if adjacent to a room cell
+      const adjRoom = (grid[r-1]&&grid[r-1][c]===2)||(grid[r+1]&&grid[r+1][c]===2)||
+                      (grid[r][c-1]===2)||(grid[r][c+1]===2);
+      if(adjRoom && rng()<0.4) {
+        const horiz = (grid[r][c-1]===2||grid[r][c+1]===2);
+        if(horiz) parts.push(`<rect x="${x+CELL*0.2}" y="${y+CELL*0.35}" width="${CELL*0.6}" height="${CELL*0.3}" fill="${S.wall}" rx="2"/>`);
+        else parts.push(`<rect x="${x+CELL*0.35}" y="${y+CELL*0.2}" width="${CELL*0.3}" height="${CELL*0.6}" fill="${S.wall}" rx="2"/>`);
+      }
+    }
+  }
+
+  // Legend
+  const legY = H - 18;
+  parts.push(`<rect x="0" y="${legY-4}" width="${W}" height="22" fill="${S.wall}" opacity="0.85"/>`);
+  parts.push(`<text x="8" y="${legY+10}" fill="white" font-family="monospace" font-size="11" opacity="0.9">${S.title} · ${rooms.length} rooms</text>`);
+  parts.push(`<text x="${W-8}" y="${legY+10}" text-anchor="end" fill="white" font-family="monospace" font-size="10" opacity="0.6">Generated by The Dungeon Desk</text>`);
+
+  parts.push('</svg>');
+  return { svg: parts.join(''), rooms: rooms.length };
+}
+
+// Expose to init_gen
+window._genDungeonMap = generateDungeonMap;
+
+})();
+
 window.init_gen = function(root) {
   const tabs   = root.querySelectorAll('.gen-tab');
   const panels = root.querySelectorAll('.gen-panel');
@@ -4522,6 +4728,27 @@ window.init_gen = function(root) {
       const res=root.querySelector('#gen-trap-results'); res.innerHTML='';
       res.appendChild(genTrap(type));
 
+    } else if(activeTab==='mapgen') {
+      const numRooms = parseInt(root.querySelector('#gen-map-rooms').value)||5;
+      const style    = root.querySelector('#gen-map-style').value;
+      const res      = root.querySelector('#gen-map-results');
+      const bar      = root.querySelector('#gen-map-action-bar');
+      const info     = root.querySelector('#gen-map-info');
+      res.innerHTML  = '';
+      if(!window._genDungeonMap) return;
+      const result = window._genDungeonMap(numRooms, style);
+      root._mapSvg  = result.svg;
+      root._mapTarget = root.querySelector('#gen-map-target').value;
+      // Preview in panel
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'width:100%;overflow:auto;display:flex;justify-content:center;padding:10px;';
+      wrap.innerHTML = result.svg;
+      const svgEl = wrap.querySelector('svg');
+      if(svgEl) { svgEl.style.maxWidth='100%'; svgEl.style.height='auto'; }
+      res.appendChild(wrap);
+      bar.style.display = 'flex';
+      info.textContent = `${result.rooms} rooms generated · click to load into tab`;
+
     } else if(activeTab==='dungeon') {
       const level=root.querySelector('#gen-dun-level').value;
       const motif=root.querySelector('#gen-dun-motif').value;
@@ -4545,6 +4772,42 @@ window.init_gen = function(root) {
       }
     }
   });
+
+  // Wire map generator load button
+  (function() {
+    const loadBtn = root.querySelector('#gen-map-load-btn');
+    const targetSel = root.querySelector('#gen-map-target');
+    if(!loadBtn) return;
+    loadBtn.addEventListener('click', () => {
+      const svg = root._mapSvg;
+      if(!svg) return;
+      const target = targetSel ? targetSel.value : 'maps';
+      // Convert SVG → PNG via canvas, then inject as data URL into the target doc tool
+      const blob = new Blob([svg], {type:'image/svg+xml'});
+      const url  = URL.createObjectURL(blob);
+      const img  = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || 1056;
+        canvas.height = img.naturalHeight || 768;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        URL.revokeObjectURL(url);
+        const dataUrl = canvas.toDataURL('image/png');
+        // Switch the pane showing gen to the target tool and load the image
+        const paneNum = parseInt(Object.keys(paneTools).find(k => paneTools[k] === 'gen') || 1);
+        setPaneTool(paneNum, target);
+        setTimeout(() => {
+          const inst = instances[target];
+          if(inst && inst._loadDataUrl) {
+            inst._loadDataUrl(dataUrl, 'dungeon-map.png');
+          }
+        }, 150);
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); alert('Could not render map — try a different browser.'); };
+      img.src = url;
+    });
+  })();
 
   // Wire dungeon map and regen buttons once (they live in the panel, not the toolbar)
   (function() {
