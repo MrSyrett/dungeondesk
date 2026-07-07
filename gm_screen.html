@@ -506,6 +506,88 @@ input[type="number"] { -moz-appearance: textfield; }
   .cbt-col { border-right: none; border-bottom: 1px solid var(--border); flex: none; }
 }
 
+/* ═══ GENERATORS TOOL ═══ */
+.gen-tabs { display: flex; gap: 2px; }
+.gen-tab {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 4px 10px; background: transparent; border: 1px solid var(--border);
+  color: var(--muted); cursor: pointer; transition: all 0.15s;
+}
+.gen-tab:hover { color: var(--white); border-color: var(--mid); }
+.gen-tab.active { background: var(--red); border-color: var(--red); color: white; }
+.gen-body { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+.gen-panel { display: none; flex: 1; flex-direction: column; min-height: 0; overflow: hidden; }
+.gen-panel.active { display: flex; }
+.gen-controls {
+  display: flex; flex-wrap: wrap; gap: 10px; padding: 12px 16px;
+  background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
+}
+.gen-label {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+  display: flex; flex-direction: column; gap: 4px;
+}
+.gen-select {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--white);
+  font-family: 'Barlow Condensed', sans-serif; font-size: 12px;
+  padding: 4px 8px; outline: none; cursor: pointer;
+}
+.gen-select:focus { border-color: var(--mid); }
+.gen-results {
+  flex: 1; overflow-y: auto; padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.gen-empty { color: var(--muted); font-size: 12px; font-style: italic; padding: 20px 0; }
+.gen-card {
+  background: var(--panel); border: 1px solid var(--border);
+  padding: 12px 14px; display: flex; flex-direction: column; gap: 6px;
+}
+.gen-card-header {
+  display: flex; align-items: baseline; gap: 8px; margin-bottom: 2px;
+}
+.gen-card-name {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700;
+  letter-spacing: 0.04em; color: var(--white);
+}
+.gen-card-tag {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold);
+}
+.gen-card-row {
+  font-size: 12px; color: var(--light); line-height: 1.5;
+  display: flex; gap: 6px;
+}
+.gen-card-row-label {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
+  letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted);
+  min-width: 64px; flex-shrink: 0; padding-top: 1px;
+}
+.gen-card-divider { border: none; border-top: 1px solid var(--border); margin: 4px 0; }
+.gen-item-name { font-weight: 700; color: var(--gold); font-size: 13px; margin-bottom: 2px; }
+.gen-item-desc { font-size: 12px; color: var(--light); line-height: 1.5; }
+
+/* ═══ AUDIO TOOL ═══ */
+.aud-url-input {
+  flex: 1; max-width: 260px; background: var(--panel-2); border: 1px solid var(--border);
+  color: var(--white); font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; padding: 4px 8px; outline: none; min-width: 0;
+}
+.aud-url-input:focus { border-color: var(--mid); }
+.aud-url-input::placeholder { color: var(--muted); }
+.aud-body { flex: 1; display: flex; flex-direction: column; min-height: 0; background: var(--black); }
+.aud-empty {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 10px; padding: 32px; text-align: center;
+}
+.aud-empty-icon { font-size: 40px; opacity: 0.4; }
+.aud-empty-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 14px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mid); }
+.aud-empty-sub { font-size: 12px; color: var(--muted); }
+.aud-empty-hint { font-size: 11px; color: var(--muted); line-height: 1.6; margin-top: 4px; }
+.aud-empty-hint strong { color: var(--mid); }
+.aud-frame { flex: 1; width: 100%; border: none; min-height: 0; }
+
 /* ═══ NOTES TOOL ═══ */
 .nts-saved-indicator { font-family: 'Barlow Condensed', sans-serif; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); opacity: 0; transition: opacity 0.3s; }
 .nts-saved-indicator.show { opacity: 1; color: var(--green-light); }
@@ -635,6 +717,8 @@ input[type="number"] { -moz-appearance: textfield; }
         <option value="maps">🗺 Maps</option>
         <option value="combat">⚔ Combat &amp; Trackers</option>
         <option value="notes">✎ Notes</option>
+        <option value="audio">🌐 Browser</option>
+        <option value="gen">🎲 Generators</option>
       </select>
       <div class="pane-toolbar-slot" id="pane-1-toolbar"></div>
     </div>
@@ -648,6 +732,8 @@ input[type="number"] { -moz-appearance: textfield; }
         <option value="maps">🗺 Maps</option>
         <option value="combat" selected>⚔ Combat &amp; Trackers</option>
         <option value="notes">✎ Notes</option>
+        <option value="audio">🌐 Browser</option>
+        <option value="gen">🎲 Generators</option>
       </select>
       <div class="pane-toolbar-slot" id="pane-2-toolbar"></div>
     </div>
@@ -765,6 +851,295 @@ input[type="number"] { -moz-appearance: textfield; }
   </div>
 </template>
 
+<template id="tpl-audio">
+  <div class="tool-instance aud-tool" data-tool="audio">
+    <div class="toolbar-tpl" style="display:none">
+      <input class="aud-url-input" type="text" placeholder="Enter URL…" spellcheck="false">
+      <button class="btn small primary aud-load">Go</button>
+      <button class="btn small ghost aud-clear">Clear</button>
+      <button class="btn small ghost aud-tta" title="TabletopAudio">🎵 TTA</button>
+      <button class="btn small ghost aud-sdl" title="Shadowdarklings">⚔ SDL</button>
+      <button class="btn small ghost aud-dndb" title="D&D Beyond">🐉 DnDB</button>
+      <button class="btn small ghost aud-sdt" title="Shadowdark Tools">🛠 SDT</button>
+    </div>
+    <div class="aud-body">
+      <div class="aud-empty">
+        <div class="aud-empty-icon">🌐</div>
+        <div class="aud-empty-title">Browser</div>
+        <div class="aud-empty-sub">Enter a URL above or use the 🎵 TTA shortcut to open TabletopAudio</div>
+      </div>
+      <iframe class="aud-frame" style="display:none;" allowtransparency="true" allow="autoplay" frameborder="0"></iframe>
+    </div>
+  </div>
+</template>
+
+
+<template id="tpl-gen">
+  <div class="tool-instance gen-tool" data-tool="gen">
+    <div class="toolbar-tpl" style="display:none">
+      <div class="gen-tabs">
+        <button class="gen-tab active" data-tab="npc">NPC</button>
+        <button class="gen-tab" data-tab="loot">Treasure</button>
+        <button class="gen-tab" data-tab="shop">Shop/Tavern</button>
+        <button class="gen-tab" data-tab="encounter">Encounter</button>
+        <button class="gen-tab" data-tab="rival">Rival Crawlers</button>
+        <button class="gen-tab" data-tab="monster">Monster</button>
+        <button class="gen-tab" data-tab="trap">Trap/Hazard</button>
+        <button class="gen-tab" data-tab="happens">Events</button>
+      </div>
+      <div class="toolbar-spacer"></div>
+      <button class="btn small primary gen-roll">🎲 Generate</button>
+    </div>
+    <div class="gen-body">
+
+      <!-- NPC PANEL -->
+      <div class="gen-panel active" data-panel="npc">
+        <div class="gen-controls">
+          <label class="gen-label">Ancestry
+            <select class="gen-select" id="gen-npc-ancestry">
+              <option value="random">Random</option>
+              <option value="Human">Human</option>
+              <option value="Dwarf">Dwarf</option>
+              <option value="Elf">Elf</option>
+              <option value="Halfling">Halfling</option>
+              <option value="Half-Orc">Half-Orc</option>
+              <option value="Goblin">Goblin</option>
+            </select>
+          </label>
+          <label class="gen-label">Wealth
+            <select class="gen-select" id="gen-npc-wealth">
+              <option value="random">Random</option>
+              <option value="Poor">Poor</option>
+              <option value="Standard">Standard</option>
+              <option value="Wealthy">Wealthy</option>
+            </select>
+          </label>
+          <label class="gen-label">Count
+            <select class="gen-select" id="gen-npc-count">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="5">5</option>
+            </select>
+          </label>
+        </div>
+        <div class="gen-results" id="gen-npc-results">
+          <div class="gen-empty">Set options and press 🎲 Generate</div>
+        </div>
+      </div>
+
+      <!-- TREASURE PANEL -->
+      <div class="gen-panel" data-panel="loot">
+        <div class="gen-controls">
+          <label class="gen-label">Monster HD / Party Level
+            <select class="gen-select" id="gen-treasure-tier">
+              <option value="1">1–3 HD (levels 1–3)</option>
+              <option value="4">4–6 HD (levels 4–6)</option>
+              <option value="7">7–9 HD (levels 7–9)</option>
+              <option value="10">10+ HD (levels 10+)</option>
+            </select>
+          </label>
+          <label class="gen-label">Type
+            <select class="gen-select" id="gen-loot-type">
+              <option value="random_all">Random (All Types)</option>
+              <option value="random">Random Magic Item</option>
+              <option value="Weapon">Weapon</option>
+              <option value="Armor">Armor</option>
+              <option value="Wand">Wand</option>
+              <option value="Ring">Ring</option>
+              <option value="Cloak">Cloak</option>
+              <option value="Boots">Boots</option>
+              <option value="Potion">Potion</option>
+              <option value="Scroll">Scroll</option>
+              <option value="table">Treasure Table Roll</option>
+              <option value="mundane">Mundane / Non-Magical Loot</option>
+              <option value="gem">Gemstone</option>
+              <option value="luxury">Luxury Item</option>
+            </select>
+          </label>
+          <label class="gen-label">Count
+            <select class="gen-select" id="gen-loot-count">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="5">5</option>
+            </select>
+          </label>
+        </div>
+        <div class="gen-results" id="gen-loot-results">
+          <div class="gen-empty">Set options and press 🎲 Generate</div>
+        </div>
+      </div>
+
+      <!-- SHOP / TAVERN PANEL -->
+      <div class="gen-panel" data-panel="shop">
+        <div class="gen-controls">
+          <label class="gen-label">Type
+            <select class="gen-select" id="gen-shop-type">
+              <option value="random">Random</option>
+              <option value="Shop">Shop</option>
+              <option value="Tavern">Tavern</option>
+            </select>
+          </label>
+          <label class="gen-label">Tier
+            <select class="gen-select" id="gen-shop-tier">
+              <option value="random">Random</option>
+              <option value="Poor">Poor</option>
+              <option value="Standard">Standard</option>
+              <option value="Wealthy">Wealthy</option>
+            </select>
+          </label>
+        </div>
+        <div class="gen-results" id="gen-shop-results">
+          <div class="gen-empty">Set options and press 🎲 Generate</div>
+        </div>
+      </div>
+
+      <!-- ENCOUNTER PANEL -->
+      <div class="gen-panel" data-panel="encounter">
+        <div class="gen-controls">
+          <label class="gen-label">Danger Level
+            <select class="gen-select" id="gen-enc-danger">
+              <option value="Unsafe">Unsafe (check/3 rounds)</option>
+              <option value="Risky">Risky (check/2 rounds)</option>
+              <option value="Deadly">Deadly (check/round)</option>
+            </select>
+          </label>
+          <label class="gen-label">CHA Modifier
+            <select class="gen-select" id="gen-enc-cha">
+              <option value="-4">-4</option>
+              <option value="-3">-3</option>
+              <option value="-2">-2</option>
+              <option value="-1">-1</option>
+              <option value="0" selected>+0</option>
+              <option value="1">+1</option>
+              <option value="2">+2</option>
+              <option value="3">+3</option>
+              <option value="4">+4</option>
+            </select>
+          </label>
+          <label class="gen-label">Biome (optional)
+            <select class="gen-select" id="gen-enc-biome">
+              <option value="none">None (generic)</option>
+              <option value="cave">Cave / Dungeon</option>
+              <option value="forest">Forest / Wilderness</option>
+              <option value="swamp">Swamp / Marshland</option>
+              <option value="arctic">Arctic / Tundra</option>
+              <option value="desert">Desert / Wasteland</option>
+              <option value="city">City / Urban</option>
+              <option value="sea">Sea / Coast</option>
+              <option value="shadowdark">The Shadowdark</option>
+            </select>
+          </label>
+        </div>
+        <div class="gen-results" id="gen-enc-results">
+          <div class="gen-empty">Set options and press 🎲 Generate</div>
+        </div>
+      </div>
+
+      <!-- RIVAL CRAWLERS PANEL -->
+      <div class="gen-panel" data-panel="rival">
+        <div class="gen-controls">
+          <label class="gen-label">Party Size
+            <select class="gen-select" id="gen-rival-size">
+              <option value="random">Random</option>
+              <option value="2">2 crawlers</option>
+              <option value="3">3 crawlers</option>
+              <option value="4">4 crawlers</option>
+              <option value="5">5 crawlers</option>
+            </select>
+          </label>
+          <label class="gen-label">Disposition
+            <select class="gen-select" id="gen-rival-disp">
+              <option value="random">Random</option>
+              <option value="Hostile">Hostile</option>
+              <option value="Wary">Wary</option>
+              <option value="Neutral">Neutral</option>
+              <option value="Friendly">Friendly</option>
+            </select>
+          </label>
+        </div>
+        <div class="gen-results" id="gen-rival-results">
+          <div class="gen-empty">Set options and press 🎲 Generate</div>
+        </div>
+      </div>
+
+      <!-- MONSTER PANEL -->
+      <div class="gen-panel" data-panel="monster">
+        <div class="gen-controls">
+          <label class="gen-label">Party Level (PL)
+            <select class="gen-select" id="gen-mon-pl">
+              <option value="1">1</option><option value="2">2</option>
+              <option value="3">3</option><option value="4">4</option>
+              <option value="5">5</option><option value="6">6</option>
+              <option value="7">7</option><option value="8">8</option>
+              <option value="9">9</option><option value="10">10</option>
+            </select>
+          </label>
+          <label class="gen-label">Mutations
+            <select class="gen-select" id="gen-mon-mut">
+              <option value="0">None</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+            </select>
+          </label>
+        </div>
+        <div class="gen-results" id="gen-mon-results">
+          <div class="gen-empty">Set options and press 🎲 Generate</div>
+        </div>
+      </div>
+
+      <!-- TRAP / HAZARD PANEL -->
+      <div class="gen-panel" data-panel="trap">
+        <div class="gen-controls">
+          <label class="gen-label">Type
+            <select class="gen-select" id="gen-trap-type">
+              <option value="random">Random</option>
+              <option value="trap">Trap</option>
+              <option value="hazard">Hazard</option>
+            </select>
+          </label>
+        </div>
+        <div class="gen-results" id="gen-trap-results">
+          <div class="gen-empty">Set options and press 🎲 Generate</div>
+        </div>
+      </div>
+
+      <!-- SOMETHING HAPPENS / EVENTS PANEL -->
+      <div class="gen-panel" data-panel="happens">
+        <div class="gen-controls">
+          <label class="gen-label">Table
+            <select class="gen-select" id="gen-hap-type">
+              <option value="happens">Something Happens! (d100)</option>
+              <option value="rumor">Rumor (d100)</option>
+              <option value="carousing">Carousing Outcome (d8+bonus)</option>
+              <option value="secret">Secret (2d12)</option>
+              <option value="blessing">Blessing (d12)</option>
+              <option value="oath">Oath (d8)</option>
+              <option value="luxury">Luxury Item (2d20)</option>
+            </select>
+          </label>
+          <label class="gen-label" id="gen-hap-bonus-label" style="display:none">Carousing Bonus
+            <select class="gen-select" id="gen-hap-bonus">
+              <option value="0">+0 (30 gp)</option>
+              <option value="1">+1 (100 gp)</option>
+              <option value="2">+2 (300 gp)</option>
+              <option value="3">+3 (600 gp)</option>
+              <option value="4">+4 (900 gp)</option>
+              <option value="5">+5 (1,200 gp)</option>
+              <option value="6">+6 (1,800 gp)</option>
+            </select>
+          </label>
+        </div>
+        <div class="gen-results" id="gen-hap-results">
+          <div class="gen-empty">Set options and press 🎲 Generate</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</template>
 
 <script>
 // ══════════════════════════════════════════
@@ -774,7 +1149,7 @@ input[type="number"] { -moz-appearance: textfield; }
 // This is what makes loaded files / typed content persist.
 // ══════════════════════════════════════════
 
-const TOOL_TYPES = ['adventure', 'maps', 'combat', 'notes'];
+const TOOL_TYPES = ['adventure', 'maps', 'combat', 'notes', 'audio', 'gen'];
 const instancePool = document.createElement('div');
 instancePool.style.cssText = 'position:fixed; top:0; left:-9999px; width:1px; height:1px; overflow:hidden;';
 document.body.appendChild(instancePool);
@@ -859,6 +1234,14 @@ function syncToolbar(slot, toolNode) {
     ['.nts-export',    '.nts-export'],
     ['.nts-clear',     '.nts-clear'],
     ['.nts-md-toggle', '.nts-md-toggle'],
+    // generators
+    ['.gen-tab',       '.gen-tab'],
+    ['.gen-roll',      '.gen-roll'],
+    ['.aud-clear',     '.aud-clear'],
+    ['.aud-tta',       '.aud-tta'],
+    ['.aud-sdl',       '.aud-sdl'],
+    ['.aud-dndb',      '.aud-dndb'],
+    ['.aud-sdt',       '.aud-sdt'],
   ];
 
   pairs.forEach(([cloneSelector, liveSelector]) => {
@@ -920,12 +1303,33 @@ function syncToolbar(slot, toolNode) {
   }
 
   // Notes import: cloned label click triggers live file input
+  // Generator tabs: wire each clone tab to its live counterpart by data-tab
+  slot.querySelectorAll('.gen-tab').forEach(cloneTab => {
+    const liveTab = toolNode.querySelector(`.gen-tab[data-tab="${cloneTab.dataset.tab}"]`);
+    if(!liveTab) return;
+    cloneTab.addEventListener('click', () => {
+      liveTab.click();
+      slot.querySelectorAll('.gen-tab').forEach(t => t.classList.remove('active'));
+      cloneTab.classList.add('active');
+    });
+  });
+
   const cloneImportLabel = slot.querySelector('label:has(.nts-import-input)');
   const liveImportInput = toolNode.querySelector('.nts-import-input');
   if(cloneImportLabel && liveImportInput) {
     cloneImportLabel.addEventListener('click', e => {
       e.preventDefault();
       liveImportInput.click();
+    });
+  }
+
+  // Audio URL input: sync typing clone→live, Enter triggers load
+  const cloneAudInput = slot.querySelector('.aud-url-input');
+  const liveAudInput = toolNode.querySelector('.aud-url-input');
+  if(cloneAudInput && liveAudInput) {
+    cloneAudInput.addEventListener('input', () => { liveAudInput.value = cloneAudInput.value; });
+    cloneAudInput.addEventListener('keydown', e => {
+      if(e.key === 'Enter') toolNode.querySelector('.aud-load')?.click();
     });
   }
 
@@ -1475,6 +1879,767 @@ function init_combat(root) {
     renderNpcs();
   };
 
+}
+</script>
+
+</script>
+
+<script>
+// ══════════════════════════════════════════
+// GENERATORS TOOL — Shadowdark Core Rules Tables
+// ══════════════════════════════════════════
+(function() {
+
+const R = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const D = (n) => Math.ceil(Math.random() * n);
+const D2 = (n) => Math.ceil(Math.random() * n) + Math.ceil(Math.random() * n);
+
+// ── Official SD NPC Names (Core Rules p.42, p.183) ────────────────────────
+const PC_NAMES = {
+  Human:    ['Hilde','Torbin','Marga','Bruno','Karina','Naugrim','Brenna','Darvin','Elga','Alric','Isolde','Gendry','Bruga','Junnor','Vidrid','Torson','Brielle','Ulfgar','Sarna','Grimm'],
+  Dwarf:    ['Hilde','Torbin','Marga','Bruno','Karina','Naugrim','Brenna','Darvin','Elga','Alric','Isolde','Gendry','Bruga','Junnor','Vidrid','Torson','Brielle','Ulfgar','Sarna','Grimm'],
+  Elf:      ['Eliara','Ryarn','Sariel','Tirolas','Galira','Varos','Daeniel','Axidor','Hiralia','Cyrwin','Lothiel','Zaphiel','Nayra','Ithior','Amriel','Elyon','Jirwyn','Natinel','Fiora','Ruhiel'],
+  Goblin:   ['Iggs','Tark','Nix','Lenk','Roke','Fitz','Tila','Riggs','Prim','Zeb','Finn','Borg','Yark','Deeg','Nibs','Brak','Fink','Rizzo','Squib','Grix'],
+  Halfling: ['Willow','Benny','Annie','Tucker','Marie','Hobb','Cora','Gordie','Rose','Ardo','Alma','Norbert','Jennie','Barvin','Tilly','Pike','Lydia','Marlow','Astrid','Jasper'],
+  'Half-Orc':['Vara','Gralk','Ranna','Korv','Zasha','Hrogar','Klara','Tragan','Brolga','Drago','Yelena','Krull','Ulara','Tulk','Shiraal','Wulf','Ivara','Hirok','Aja','Zoraan'],
+};
+const NPC_NAMES = {
+  Dwarf:    ['Hera','Torin','Ginny','Gant','Olga','Dendor','Ygrid','Pike','Sarda','Brigg','Zorlin','Yorin','Jorgen','Trogin','Riga','Barton','Katrina','Egrim','Elsa','Orgo'],
+  Elf:      ['Sarenia','Ravos','Imeria','Farond','Isolden','Kieren','Mirenel','Riarden','Allindra','Arlomas','Sylara','Tyr','Rinariel','Saramir','Vedana','Elindos','Ophelia','Cydaros','Tiramel','Varond'],
+  Goblin:   ['Kog','Dibbs','Fronk','Irv','Squag','Mort','Vig','Sticks','Gorb','Yogg','Plok','Zrak','Dent','Krik','Bort','Mizzo','Nabo','Hink','Kreeb','Bree'],
+  Halfling: ['Myrtle','Robby','Nora','Percy','Daisy','Jolly','Evelyn','Horace','Willie','Gertie','Peri','Carlsby','Nyx','Kellan','Fern','Harlow','Moira','Sage','Reenie','Wendry'],
+  'Half-Orc':['Boraal','Troga','Zoraal','Urgan','Krell','Scalgin','Voraga','Morak','Draga','Sorak','Ulgar','Varga','Kresh','Jala','Torvash','Zana','Gartak','Rokara','Ziraak','Iskana'],
+  Human:    ['Hesta','Matteo','Rosalin','Endric','Kiara','Yao','Corina','Rowan','Hariko','Ikam','Mariel','Jin','Hana','Lios','Indra','Remy','Nura','Vakesh','Una','Nabilo'],
+};
+
+const BUILDS    = ['stocky','lean','wiry','heavyset','lanky','muscular','slender','broad-shouldered'];
+const HAIR      = ['black','dark brown','chestnut','auburn','red','ash blonde','silver','white','bald'];
+const EYES      = ['brown','hazel','grey','green','blue','amber','dark','pale blue'];
+const FEATURES  = ['a scar across the cheek','a crooked nose','calloused hands','a missing finger','bright eyes','a guarded expression','an easy smile','deep-set eyes','prominent eyebrows','laugh lines','a weathered face'];
+const CLOTHING  = { Poor:['tattered rags','patched wool','worn leather','dirty linen','frayed homespun'], Standard:['sturdy wool','clean linen','simple leather','serviceable clothes','travelling gear'], Wealthy:['fine silk','embroidered cloth','well-tailored wool','polished leather','rich velvet'] };
+const DEMEANOR  = ['gruff','cheerful','nervous','suspicious','friendly','melancholy','boisterous','quiet','arrogant','humble','distracted','eager','wary','jovial'];
+const QUIRKS    = ['drums fingers when thinking','never makes eye contact','talks too loudly','laughs at inappropriate times','quotes old proverbs constantly','hums under their breath','picks at fingernails','checks behind them frequently','smells of pipe smoke','always chewing something'];
+const WANTS     = ['coin','information','protection','revenge','passage somewhere','a specific item','to be left alone','to impress someone','honest work','a hot meal'];
+const SECRETS   = ["owes a dangerous debt","witnessed something they shouldn't have","is wanted elsewhere","is not who they claim to be","hides a useful skill","carries something valuable","is being followed","has a score to settle"];
+const COIN      = { Poor:()=>`${D(6)} cp`, Standard:()=>`${D(6)} sp, ${D(6)} cp`, Wealthy:()=>`${D(6)*5} gp, ${D(6)} sp` };
+const OCCUPATIONS = ['farmer','blacksmith','merchant','innkeeper','guard','beggar','priest','healer','scholar','scribe','hunter','herbalist','sailor','soldier','thief','miner','carpenter','baker','shepherd','fisherman'];
+
+// ── Treasure Tables (Core Rules p.214–222) ────────────────────────────────
+const TREASURE_T1 = [
+  'P. Bent, tin fork (1 cp)','P. Muddy torch (2 cp)','P. Bag of smooth pebbles (2 cp)',
+  'P. 10 cp in a greasy pouch','P. Rusty lantern with shattered glass (1 gp)',
+  'P. Silver tooth (1 gp)','P. Dull dagger (1 gp)','P. Two empty, glass vials (6 gp)',
+  'P. 60 sp in a rotten boot','P. Small, handheld mirror (10 gp)','P. Chipped greataxe (10 gp)',
+  'N. 10 gp in a moldy, wood box','N. Chip of an emerald (10 gp)',
+  'N. Longbow and bundle of 40 arrows (10 gp)','N. Dusty, leather armor dyed black (10 gp)',
+  'N. Scuffed, heavy shield (10 gp)','N. Simple, well-made bastard sword (10 gp)',
+  'N. 12 gp in the pocket of a ripped cloak','N. Wavy-bladed greatsword (12 gp)',
+  'N. Pair of elf-forged shortswords (14 gp)','N. Golden bowl (15 gp)',
+  'N. Obsidian statuette of Shune the Vile (15 gp)','N. Undersized pearl (20 gp)',
+  'N. Jade-and-gold scarab pin (20 gp)','N. Bag of 10 silver spikes (2 gp each)',
+  'N. Mithril locket with a painting of a halfling (20 gp)','N. Two finely forged dwarven shields (20 gp)',
+  'N. Pair of silvered daggers (10 gp each)','N. Copper-and-gold mead tankard (20 gp)',
+  'N. Bundle of five red dragon scales (5 gp each)','N. Light, warm cloak woven of spidersilk (25 gp)',
+  'N. Fine set of ivory game pieces (25 gp)','N. Half-finished suit of chainmail (30 gp)',
+  'N. Matched trio of warhammers (10 gp each)','N. Fragment of a sapphire (30 gp)',
+  'N. Set of silk slippers and a robe (35 gp)','N. Silver-and-gold circlet (40 gp)',
+  'N. Radiant, polished pearl (40 gp)','N. Mithril shield etched with soaring dragons (40 gp)',
+  'F. Gold monkey idol with a ruby gripped in its teeth (60 gp)','F. Fine suit of chainmail (60 gp)',
+  'F. Cracked emerald (60 gp)','F. Two lustrous pearls (40 gp each)',
+  'F. 1st-tier spell scroll (80 gp)','F. Potion of Invisibility (80 gp)',
+  'F. Magic wand, 2nd-tier spell (100 gp)','F. Egg of The Cockatrice (100 gp)',
+  'L. +1 armor (benefit, curse) (150 gp)','L. Bag of Holding (virtue, flaw) (150 gp)',
+  'L. +1 magic weapon (benefit) (200 gp)',
+];
+
+// Higher tier tables derived from the book's XP scaling
+const TREASURE_T4 = [
+  'P. Cracked leather satchel of 40 cp','P. Bent iron coins (1 sp)',
+  'P. Tarnished belt buckle (2 sp)','P. Worn traveler\'s cloak (1 gp)',
+  'N. 20 gp in a carved oak box','N. Bone-handled hunting knife (20 gp)',
+  'N. Two jade gaming pieces (15 gp each)','N. Silver flask with hunting scene (30 gp)',
+  'N. Pair of matching longswords (25 gp each)','N. Dwarven battle-axe, finely edged (40 gp)',
+  'N. Set of chainmail, lightly dented (45 gp)','N. Crystal vial of rare perfume (50 gp)',
+  'N. Polished emerald fragment (60 gp)','N. Gilded box with lock (60 gp)',
+  'N. Three matched rubies (50 gp each)','N. Silk banner of a fallen house (80 gp)',
+  'N. Warhammer with silver inlay (80 gp)','N. Silver circlet with moonstone (90 gp)',
+  'F. Matched pair of sapphires (140 gp each)','F. +0 armor (benefit) (120 gp)',
+  'F. 2nd-tier spell scroll (150 gp)','F. Potion of Giant Strength (150 gp)',
+  'F. Diamond brooch (200 gp)','F. Wand with 3rd-tier spell (200 gp)',
+  'F. Immovable Rod (250 gp)','F. +1 weapon (benefit, curse) (250 gp)',
+  'L. Ring of Protection (300 gp)','L. +1 armor (2 benefits) (350 gp)',
+  'L. Helm of Telepathy (400 gp)','L. +2 magic weapon (500 gp)',
+];
+const TREASURE_T7 = [
+  'N. Masterwork longsword (80 gp)','N. Giant ruby (200 gp)','N. Set of plate armor (350 gp)',
+  'N. Sapphire amulet (280 gp)','N. Bag of 100 platinum coins',
+  'F. +1 weapon (2 benefits) (400 gp)','F. Ring of Invisibility (500 gp)',
+  'F. Wand of Fireballs (8 charges) (500 gp)','F. Diamond necklace (600 gp)',
+  'F. Potion of Invulnerability (500 gp)','F. +2 armor (benefit) (600 gp)',
+  'F. Amulet of Health (700 gp)','F. Staff of Thunder & Lightning (750 gp)',
+  'L. +2 weapon (2 benefits) (800 gp)','L. Ring of Three Wishes (1,000 gp)',
+  'L. Cloak of Displacement (900 gp)','L. Flying Carpet (1,000 gp)',
+  'L. Orb of Dragonkind (1,500 gp)','L. +3 armor (benefit) (1,200 gp)',
+  'L. The Eye of the Beholder (priceless)',
+];
+const TREASURE_T10 = [
+  'F. Giant diamond (720 gp)','F. Crown of the Ancient King (2,000 gp)',
+  'F. +2 armor (2 benefits) (1,500 gp)','F. Rod of Lordly Might (2,000 gp)',
+  'L. +3 weapon (benefit) (2,500 gp)','L. The Deck of Many Things',
+  'L. Staff of Power (3,000 gp)','L. Sphere of Annihilation (priceless)',
+  'L. Mirror of Life Trapping (4,000 gp)','L. The Staff of Ord (legendary)',
+  'L. Tome of Clear Thought (5,000 gp)','L. Manual of Bodily Health (5,000 gp)',
+  'L. Apparatus of the Crab (10,000 gp)','L. Well of Many Worlds (priceless)',
+  'L. Talisman of Pure Good (priceless)',
+];
+const TREASURE_TIERS = { '1': TREASURE_T1, '4': TREASURE_T4, '7': TREASURE_T7, '10': TREASURE_T10 };
+
+// ── Magic Items ─────────────────────────────────────────────────────────────
+const MAGIC_WEAPONS = [
+  {name:'Sword of Biting',desc:'+1 to hit and damage. Nat 20: +1d6 damage.'},
+  {name:'Dagger of Returning',desc:'Thrown weapon returns to hand after each throw.'},
+  {name:'Axe of Cleaving',desc:'+1 to hit. Once/day, hit 2 adjacent foes with one attack.'},
+  {name:'Spear of Seeking',desc:'+2 to hit. Never misses a visible target in range.'},
+  {name:'Mace of Disruption',desc:'+2 vs undead. Undead struck: DC 12 WIL or flee.'},
+  {name:'Bow of Swiftness',desc:'+1 to hit. Make one extra ranged attack per round.'},
+  {name:'Flail of Binding',desc:"On hit, target's move speed halved until end of their turn."},
+  {name:'Sword of Light',desc:'Glows on command (torch radius). +1 to hit in darkness.'},
+  {name:'War Hammer of Thunder',desc:'Once/day: smite for +2d6 thunder damage on a hit.'},
+  {name:'Club of Stunning',desc:'Nat 20: target stunned until end of next turn.'},
+];
+const MAGIC_ARMOR = [
+  {name:'Shield of Deflection',desc:'Once/round, negate one missile attack aimed at you.'},
+  {name:'Leather of Shadows',desc:'+1 AC. Advantage on DEX checks to hide.'},
+  {name:'Chain of Endurance',desc:'+1 AC. Advantage on CON checks vs exhaustion.'},
+  {name:'Plate of Warding',desc:'+2 AC. Immune to critical hits.'},
+  {name:'Helm of Awareness',desc:'Cannot be surprised. +1 to initiative.'},
+  {name:'Gauntlets of Ogre Power',desc:'STR counts as 18. +1 melee damage.'},
+  {name:'Boots of Speed',desc:'Move +10 ft. Dash as bonus action once/day.'},
+  {name:'Cloak of the Bat',desc:'Hang from ceilings. Once/day: become a bat for 1 hour.'},
+];
+const MAGIC_WANDS = [
+  {name:'Wand of Magic Missiles',desc:'9 charges. 1 charge: 1d4+1 force missiles, auto-hit.'},
+  {name:'Wand of Fear',desc:'5 charges. 1 charge: target DC 12 WIL or flee 1d4 rounds.'},
+  {name:'Wand of Paralysis',desc:'5 charges. 1 charge: DC 12 CON or paralyzed 1d4 rounds.'},
+  {name:'Wand of Fireballs',desc:'6 charges. 2 charges: 3d6 fire 20ft radius, DC 13 DEX halves.'},
+  {name:'Wand of Polymorph',desc:'4 charges. 2 charges: target becomes small animal, DC 12 WIL negates.'},
+  {name:'Wand of Web',desc:'6 charges. 1 charge: 10ft cube of webs, DEX 12 to move through.'},
+  {name:'Wand of Lightning',desc:'7 charges. 1 charge: 2d6 lightning in 5ft × 30ft line.'},
+  {name:'Wand of Wonder',desc:'Roll d8: 1=fireball, 2=slow, 3=petrify, 4=invisible, 5=grow, 6=levitate, 7=darkness, 8=prismatic spray.'},
+];
+const MAGIC_RINGS = [
+  {name:'Ring of Protection',desc:'+1 AC and +1 to all saving throws.'},
+  {name:'Ring of Invisibility',desc:'Invisible at will. Ends when you attack or cast.'},
+  {name:'Ring of Feather Falling',desc:'Fall at 60 ft/round. No fall damage.'},
+  {name:'Ring of Spell Storing',desc:'Stores up to 3 spell levels. Wearer can cast stored spells.'},
+  {name:'Ring of Regeneration',desc:'Regain 1 HP per turn out of combat.'},
+  {name:'Ring of Water Walking',desc:'Walk on any liquid surface as solid ground.'},
+  {name:'Ring of Fire Resistance',desc:'Immune to normal fire. Half damage from magical fire.'},
+  {name:'Ring of Mind Shielding',desc:'Immune to magical detection of thoughts or alignment.'},
+];
+const MAGIC_CLOAKS = [
+  {name:'Cloak of Displacement',desc:'Attackers have disadvantage on first attack each round.'},
+  {name:'Cloak of Protection',desc:'+1 AC. +1 to all saves.'},
+  {name:'Cloak of the Bat',desc:'Can hang from ceilings. Transform into a bat once/day for 1 hour.'},
+  {name:'Cloak of Resistance',desc:'Once/day, reduce any damage taken by 1d6.'},
+];
+const MAGIC_BOOTS = [
+  {name:'Boots of Elvenkind',desc:'Move silently. Advantage on DEX checks to avoid sound.'},
+  {name:'Boots of Levitation',desc:'Rise/descend 20 ft/round. Float while worn.'},
+  {name:'Boots of Striding',desc:'Move speed +10 ft. Cannot be slowed below base speed.'},
+  {name:'Boots of the Winterlands',desc:'Unaffected by cold terrain. Immune to cold environments.'},
+];
+const POTIONS = [
+  {name:'Potion of Healing',desc:'Restore 1d6+1 HP.'},
+  {name:'Potion of Greater Healing',desc:'Restore 2d8+4 HP.'},
+  {name:'Potion of Invisibility',desc:'Invisible for 1 hour or until you attack/cast.'},
+  {name:'Potion of Speed',desc:'Double move speed, +1 AC for 1 hour.'},
+  {name:'Potion of Strength',desc:'STR 20 for 1 hour.'},
+  {name:'Potion of Climbing',desc:'Spider climb speed for 1 hour.'},
+  {name:'Potion of Fire Breath',desc:'Once: exhale 30 ft cone, 4d6 fire, DC 13 DEX halves.'},
+  {name:'Potion of Vitality',desc:'Remove one disease or poison affecting you.'},
+  {name:'Potion of Diminution',desc:'Shrink to 6 inches for 1d4 hours. Advantage on stealth.'},
+  {name:'Potion of Treasure Finding',desc:'1 hour: sense nearest gold/gems within 60 ft.'},
+];
+const SCROLLS = [
+  {name:'Scroll of Magic Missile',desc:'3 missiles, 1d4+1 each, auto-hit.'},
+  {name:'Scroll of Cure Wounds',desc:'Restore 1d8+3 HP to one creature touched.'},
+  {name:'Scroll of Fireball',desc:'3d6 fire in 20 ft radius, DC 13 DEX halves.'},
+  {name:'Scroll of Hold Person',desc:'Target DC 13 WIL or paralyzed 1d4 rounds.'},
+  {name:'Scroll of Knock',desc:'One locked door, chest, or shackle opens.'},
+  {name:'Scroll of Invisibility',desc:'Target invisible for 1 hour or until attacking.'},
+  {name:'Scroll of Lightning Bolt',desc:'4d6 lightning, 5 ft wide × 60 ft long, DC 13 DEX halves.'},
+  {name:'Scroll of Confusion',desc:'15 ft radius: targets act randomly 1d4 rounds.'},
+  {name:'Scroll of Levitate',desc:'Rise 20 ft/round for 10 minutes.'},
+  {name:'Scroll of Detect Magic',desc:'Sense magic within 60 ft for 10 minutes.'},
+];
+const MAGIC_ITEM_POOLS = {Weapon:MAGIC_WEAPONS,Armor:MAGIC_ARMOR,Wand:MAGIC_WANDS,Ring:MAGIC_RINGS,Cloak:MAGIC_CLOAKS,Boots:MAGIC_BOOTS,Potion:POTIONS,Scroll:SCROLLS};
+const LOOT_TYPES = Object.keys(MAGIC_ITEM_POOLS);
+
+// ── Shop / Tavern ─────────────────────────────────────────────────────────
+const SHOP_NAMES = {Poor:['The Bent Nail','The Rusty Axe','Last Chance Goods','Cobweb Corner','The Broken Barrel'],Standard:["The Wanderer's Supply",'The Iron Ring',"Goodman's Provisions",'The Honest Deal',"The Trader's Post"],Wealthy:['Gilded Wares',"The Merchant's Pride",'Thornwood Fine Goods','The Amber Vault','Crescent House']};
+const TAVERN_NAMES = {Poor:['The Muddy Boot','The Cracked Cup',"The Rat's Rest",'The Straw Bed','Bones & Ale'],Standard:["The Wanderer's Rest",'The Copper Coin','The Sleeping Giant',"The Boar's Head","The Miller's Arms"],Wealthy:['The Golden Chalice','The Silver Star',"The Merchant's Hearth",'The Gilded Goose',"The Noble's Rest"]};
+const SHOP_STOCK = {Poor:['Rope (50 ft) — 1 gp','Torch ×10 — 1 sp','Rations (1 day) — 5 cp','Sack — 1 cp','Tinderbox — 5 sp','Blanket — 5 sp','Waterskin — 2 sp','Iron spikes ×10 — 1 sp','Crowbar — 2 gp','Crude dagger — 2 gp','Worn leather armor — 5 gp'],Standard:['Rope (50 ft) — 1 gp','Torch ×10 — 1 sp','Rations (3 days) — 3 sp','Lantern — 5 sp','Oil flask ×5 — 1 sp each','Healing herbs — 1 gp','Short sword — 10 gp','Shield — 10 gp','Chain shirt — 45 gp','Crossbow — 25 gp','Bolts ×20 — 1 gp','Backpack — 2 gp',"Thieves' tools — 25 gp",'Ink & quill — 10 gp'],Wealthy:['Masterwork longsword — 50 gp','Plate armor — 350 gp','Warhorse — 400 gp','Spyglass — 1,000 gp','Map of the region — 25 gp',"Healer's kit — 5 gp",'Magnifying glass — 100 gp','Fine clothing — 15 gp','Silk rope (50 ft) — 10 gp',"Alchemist's fire ×3 — 50 gp",'Holy water ×2 — 25 gp each']};
+const TAVERN_FOOD = {Poor:['Stale bread — 1 cp','Watery porridge — 1 cp','Boiled turnips — 1 cp','Weak ale — 2 cp','Well water — free'],Standard:['Beef stew & bread — 5 cp','Roasted chicken — 3 cp','Cheese & olives — 2 cp','Ale (pint) — 4 cp','Mead — 6 cp','Cider — 4 cp'],Wealthy:['Roasted boar with spiced sauce — 2 sp','Fresh fish in butter — 1 sp','Lamb & root vegetables — 1 sp','Fine wine (glass) — 1 sp','Aged brandy — 3 sp','Honeyed mead — 8 cp']};
+const TAVERN_RUMORS_EXTRA = ['A merchant was robbed on the east road. Bandits wore red scarves.','Strange lights seen over the old mill at night.','The tax collector went missing last week. Nobody seems upset.',"There's a bounty on wolves in the valley.","A wizard passed through asking about ruins to the north.",'The well ran red last month. The priest says it is nothing.','Travelers keep going missing on the forest road.','An old dwarf paid in platinum. Nobody knows where he came from.',"The blacksmith's apprentice says the forge speaks to him.",'A ship arrived at port with no crew and no cargo.'];
+
+// ── Encounter Tables (Core Rules p.114–115, p.183) ────────────────────────
+const ENC_DISTANCE  = [[1,'Close'],[4,'Near'],[6,'Far']];
+const ENC_ACTIVITY  = [[4,'Hunting'],[6,'Eating'],[8,'Building/nesting'],[10,'Socializing/playing'],[11,'Guarding'],[12,'Sleeping']];
+const ENC_REACTION  = (r) => r<=6?'Hostile':r<=8?'Suspicious':r===9?'Neutral':r<=11?'Curious':'Friendly';
+
+// ── Monster Generator (Core Rules p.192–193) ──────────────────────────────
+const MON_TABLE = [
+  {combat:'PL-3',quality:'Beastlike',strength:'Two attacks',weakness:'Cold'},
+  {combat:'PL-3',quality:'Avian',strength:'Absorbs magic',weakness:'Greedy'},
+  {combat:'PL-2',quality:'Amphibious',strength:'Swarm',weakness:'Light'},
+  {combat:'PL-2',quality:'Demonic',strength:'1d8 damage',weakness:'Salt'},
+  {combat:'PL-1',quality:'Arachnid',strength:'Poison sting',weakness:'Vain'},
+  {combat:'PL-1',quality:'Ooze',strength:'Confusing gaze',weakness:'Mirrors'},
+  {combat:'PL',  quality:'Insectoid',strength:'Eats metal',weakness:'Electricity'},
+  {combat:'PL',  quality:'Draconic',strength:'Ranged attacks',weakness:'Fragile body'},
+  {combat:'PL',  quality:'Plantlike',strength:'Highly intelligent',weakness:'Sunlight'},
+  {combat:'PL',  quality:'Elephantine',strength:'Crushing grasp',weakness:'Silver'},
+  {combat:'PL',  quality:'Undead',strength:'Psychic blast',weakness:'Fire'},
+  {combat:'PL',  quality:'Crystalline',strength:'Stealthy',weakness:'Food'},
+  {combat:'PL',  quality:'Humanoid',strength:'Petrifying gaze',weakness:'Acid'},
+  {combat:'PL+1',quality:'Angelic',strength:'1d10 damage',weakness:'Garlic'},
+  {combat:'PL+1',quality:'Spectral',strength:'Impersonation',weakness:'Iron'},
+  {combat:'PL+2',quality:'Stonecarved',strength:'Blinding aura',weakness:'Water'},
+  {combat:'PL+2',quality:'Serpentine',strength:'Turns invisible',weakness:'Its True Name'},
+  {combat:'PL+3',quality:'Elemental',strength:'2d6 damage',weakness:'Loud sounds'},
+  {combat:'PL+3',quality:'Piscine',strength:'Swallows whole',weakness:'Holy water'},
+  {combat:'PL+4',quality:'Reptilian',strength:'Three attacks',weakness:'Music'},
+];
+const MON_MUT_1 = ['Shapechanger','Fins and gills','Insulating fur','Ironlike scales','Extra limbs','Tentacles','Boneless','Gigantic','Flings spikes','Two heads','Burrows','Wings'];
+const MON_MUT_2 = ['Double damage','Breathes fire','Fast healing','Extra attack','+2 AC','Two extra hit dice','+1d6 damage','Life-draining touch','Very fast','Reflects spells','Electrified weapon','Acidic saliva'];
+const MON_MUT_3 = ['Speaks Common','Casts magic missile','Telepathic','Toxic spores','Sonic blasts','Can teleport in bursts','Paralytic touch','Genius intellect','Antimagic field','Blood-draining bite','Has swamp fever','Blessed by a god'];
+
+// ── Traps (Core Rules p.116) ───────────────────────────────────────────────
+const TRAPS = [
+  {trap:'Crossbow',trigger:'Tripwire',damage:'1d6'},
+  {trap:'Hail of needles',trigger:'Pressure plate',damage:'1d6 + sleep'},
+  {trap:'Toxic gas',trigger:'Opening a door',damage:'1d6 + paralyze'},
+  {trap:'Barbed net',trigger:'Switch or button',damage:'1d6 + blind'},
+  {trap:'Rolling boulder',trigger:'False step on stairs',damage:'2d8'},
+  {trap:'Slicing blade',trigger:'Closing a door',damage:'2d8 + sleep'},
+  {trap:'Spiked pit',trigger:'Breaking a light beam',damage:'2d8 + paralyze'},
+  {trap:'Javelin',trigger:'Pulling a lever',damage:'2d8 + confuse'},
+  {trap:'Magical glyph',trigger:'A word is spoken',damage:'3d10'},
+  {trap:'Blast of fire',trigger:'Hook on a thread',damage:'3d10 + sleep'},
+  {trap:'Falling block',trigger:'Removing an object',damage:'3d10 + paralyze'},
+  {trap:'Cursed statue',trigger:'Casting a spell',damage:'3d10 + petrify'},
+];
+
+// ── Hazards (Core Rules p.117) ─────────────────────────────────────────────
+const HAZARDS_MOV = ['Quicksand','Caltrops','Loose debris','Tar field','Grasping vines','Steep incline','Slippery ice','Rushing water','Sticky webs','Gale force wind','Greased floor','Illusory terrain'];
+const HAZARDS_DMG = ['Acid pools','Exploding rocks','Icy water','Lava','Pummeling hail','Steam vents','Toxic mold','Falling debris','Acid rain','Curtain of fire','Electrified field','Gravity flux'];
+const HAZARDS_WKN = ['Blinding smoke','Magnetic field','Exhausting runes','Antimagic zone','Snuffs light sources','Disorienting sound','Magical silence','Numbing cold','Sickening smell','Sleep-inducing spores','Confusing reflections','Memory-stealing'];
+
+// ── Something Happens! (Core Rules p.120–121) ──────────────────────────────
+const HAPPENS = ['The ground shakes violently and a massive fissure opens','An unseen foe leaps out of hiding at close range','A horrible buzzing fills the air, growing louder and louder','You catch the acrid smell of smoke and flame','A bright star appears in the sky, visible even at midday','You spot a half-open bag with gold coins glinting inside','A man slips a note and an odd potion into your hand','Someone observing you from afar steps out of sight','A dwarf in a red hat hands you a rose, bows, and leaves','A cowled stranger in a black cloak approaches you','Someone tries to pick your pocket','A strange ticking sound comes from inside your bag','A frothing, frantic horse with a saddle but no rider appears','A mound in the earth quickly burrows toward you','You sense you are being magically scryed upon','Someone tries to plant an object on your person','You are filled with a strong sense of dread and danger','A woman hands you a black cat and then runs away','A small, woodland creature jumps out of a backpack','You smell lilacs and hear faint, ghostly laughter','A note wrapped around a thin dagger lands next to you','A green-glowing meteor streaks through the sky','Someone nearby is staring at you and mouthing words','A pair of yellow eyes watches you from the darkness','An orc with an arrow in her back crashes through a door','You hear a beast cry out in pain just up ahead','A huge swarm of bats crashes over you and swirls away','A frail beggar whispers that he has a secret to tell you','An object falls from above and barely misses your head','A seagull lands on your head and coughs up an odd bottle','The smell of ozone rises and electricity crackles in the air','You spot a trail of tiny silver coins leading around a bend','A wild-eyed man approaches with a holy book held high','Every light source suddenly extinguishes','A stampede of wild animals bursts into view','An old woman points at you and yells, "There they are!"','A passing stranger presses an ancient coin into your hand','A chorus of howls echo in the distance','Two pinching and slapping goblins tumble into sight','You realize you are not alone; something is behind you','The sudden sound of rushing water crashes toward you','You hear an ear-splitting scream that nobody else hears','A man slaps you with a glove and throws it at your feet','A violent, windy storm kicks up without warning','Lightning strikes close and leaves a glowing object behind','A multicolored orb drifts up to you and then zips away','A runaway wagon crashes toward you','An NPC throws off their disguise, revealing an enemy','A demon appears to you and presents a tempting offer','A radiant being appears to you with a message of warning'];
+
+// ── Rumors (Core Rules p.122–123) ──────────────────────────────────────────
+const RUMORS = ['An armored beast the size of a ship is rampaging nearby','A team of assassins is on its way to kill your group','The local ruler has placed a 2,000 gp bounty on your heads','The cult of Shune is planning a fiery coup at midnight','An ancient, stone door has been found in the castle cellar','Lizardfolk have been raiding caravans near the swamp','Armored skeletons are roaming the misty graveyard','An earthquake uncovered a ruin inside a deep rift','A warband of orcs has taken over an abandoned keep','There is a hall of golden statues underneath the well','Those who survive the Trial of the Lotus gain a strange gift','A Captain of the Guard has been taken hostage by thugs','The Crystal Caves are home to a cult of psychic sorcerers','A crocodile dragged a richly-laden mule into the sewers','A fortune-telling witch speaks true omens and portents',"Every full moon, the Prancing Unicorn's larder is robbed","A famous group of crawlers hasn't returned from a delve",'A glowing meteor crashed deep inside the marshlands','Fire will not light or burn within sight of the Lion Fountain','The lost Jewel of Barbalt is hidden in the Howling Caves','A dwarven mining team has uncovered a tentacled statue','The Red Owl tavern has a trapdoor to the Shadowdark','Viperian warriors guard a shrine to a medusa in the jungle','Three thieves just pulled off a gemstone heist nearby','Harpies keep watch from the cliffs around Diridia\'s Tomb','A gorgon stalks the ruins of the Underhill Halls','Beneath the Red Abbey is the forgotten Barrow of Ur-Din','A dying sage is calling for a mighty group of heroes','A wizard accidentally let his trio of cockatrices escape','A local lord has somehow been stranded atop a high roof','Goblin spelunkers found an underground cathedral','Rare and valuable mushrooms grow inside an old crypt','The Church of St. Terragnis will pay for the return of a relic','A volcanic eruption revealed tunnels in the caldera\'s walls','The cyclopean ruins of Tal-Yool lie deep within the forest','Gravediggers found a chained coffin in an unmarked plot','An abandoned wizard\'s tower is full of clockwork creatures','The Thieves\' Guild is about to attack a rival merchant lord','Windstorms uncovered a stone monolith in the desert','A rival group of crawlers found the map to Jiraal\'s Hoard','A monstrosity called the Oracle lurks beneath the college','The Onyx Destrier is in Ekmara\'s Keep in the wasteland','The princess has been kidnapped by a group of sorcerers','A Chaos Knight\'s tomb has been found beneath a temple','The fabled Library of Gehemna appeared outside the city','The dragon Ixamir has awoken from her 200-year slumber'];
+
+// ── Carousing (Core Rules p.96-97) ────────────────────────────────────────
+const CAROUSING = [
+  {r:1, outcome:'You wake up blearily in your bed', benefit:'Gain 2 XP'},
+  {r:2, outcome:'Locked in stocks 1d4 days, fined all wealth for setting a building on fire', benefit:'Gain 2 XP'},
+  {r:3, outcome:'Wake in a gutter with 50% of your wealth missing', benefit:'Gain 3 XP'},
+  {r:4, outcome:'Hazily remember donating 40% of your wealth to a charming priest', benefit:'Gain 3 XP + cleric ally of a minor deity'},
+  {r:5, outcome:'Fined 30% of wealth after instigating a full-tavern brawl', benefit:'Gain 3 XP + barred from a tavern'},
+  {r:6, outcome:"The Thieves' Guild bilked you in a rigged bet for 20% of your wealth", benefit:'Gain 4 XP'},
+  {r:7, outcome:'Led an entire tavern in a wildly insulting song about a disliked noble', benefit:'Gain 4 XP + a famous bard ally'},
+  {r:8, outcome:'Survived a blindfolded knife-throwing demonstration unscathed', benefit:'Gain 4 XP + a luck token'},
+  {r:9, outcome:'By talent or trickery, beat a rival adventurer in an honor duel', benefit:'Gain 5 XP + a loyal new NPC ally'},
+  {r:10, outcome:'An angry wizard cast a deadly spell at you, but you reflected it off your cup', benefit:'Gain 5 XP + a luck token'},
+  {r:11, outcome:'You performed a humiliating prank on a despised, corrupt merchant', benefit:'Gain 5 XP + an ally in the City Watch'},
+  {r:12, outcome:'You defeated a noble in a highly wagered drinking contest', benefit:'Gain 5 XP + a debt owed by the noble'},
+  {r:13, outcome:"You pulled off an ill-advised heist inside a feared sorcerer's tower", benefit:"Gain a fabulous item and its XP from your level's treasure table"},
+  {r:14, outcome:"Wake up deep inside the local rulers' dwelling holding one of their priceless heirlooms. Footsteps approach.", benefit:"Gain a legendary item and its XP from your level's treasure table, if you escape"},
+];
+
+// ── Boons: Secrets, Blessings, Oaths (p.224–225) ─────────────────────────
+const OATHS = ['The duke will procure you an audience with the queen','The City Watch will pardon a crime you\'ve committed','A dryad will protect you while you\'re in her grove','A Thieves\' Guild member will get you into the gem vault','A unicorn will heal a grave wound or affliction','A dwarven forgemaster will make you a spectacular sword','A baron will grant you the title of knight or constable','The Circle of Mages will magically teleport you anywhere'];
+const SECRETS_D1 = ['The True Name of','The one manipulating','The killer of','The impersonator of','The horrifying plan of','The secret location of','The beloved of','Proof of the crimes by','The treasure hoard of','The weakness of','The secret identity of','The one blackmailing'];
+const SECRETS_D2 = ['the king','a powerful demon','a legendary swordmaster','the head of the church','a mighty sorcerer','a rival adventuring party','the Thieves\' Guild boss','a revered knight of St. Terragnis','a famous dragon-slayer','the settlement\'s leadership','a fearsome lich-queen','a cherished NPC'];
+const BLESSINGS = ['Wraithsight. You can see invisible and hidden creatures','Nine Lives. The next nine times you go to 0 HP, regain 1 HP','Demonskin. You are immune to damage from fire','Spiderwalk. You can crawl on walls and sheer surfaces','Merfolk\'s Kiss. You can breathe water as though it were air','Gede\'s Blessing. You can speak to and understand animals','Arcane Eye. Three times per day, advantage to cast a spell','Shune\'s Mark. When you kill a creature, heal 1d6 hit points','Ghostwalk. Once per day, turn incorporeal for 1d4 rounds','Death\'s Sting. You are immune to the effects of poison','Rite of Rage. Once per day, deal double damage','Divine Halo. Hostile spells that target you are DC 15 to cast'];
+
+// ── Luxury Items (p.222) ──────────────────────────────────────────────────
+const LUX_FEAT = ['Golden','Etched-copper','Dragonscaled','Gilded','Bone-carved','Amber-encased','Painting of','Silver','Jade','Tapestry of','White marble','Ivory','Crystal','Golden','Dragonbone','Holy relic','Meteorite','Masterwork','Silk-wrapped','Stained glass'];
+const LUX_ITEM_POOLS = [
+  ['Life-sized humanoid figure'],['tusk','horn','fang','skull'],
+  ['Altar to Memnon','Altar to Ord','Altar to Madeera'],['fox statuette','cat statuette','dog statuette','owl statuette'],
+  ['chest','table','lockbox','chair'],['Icon of Chaos','Icon of Neutrality','Icon of Law'],
+  ['Bust of a god','Bust of a ruler','Bust of a hero','Bust of a bard'],['dragon egg','basilisk egg','griffon egg'],
+  ['charm','amulet','locket','signet ring'],['crow mask','jester mask','thief mask','god mask'],
+  ['mirror','vase','pottery','ewer'],['chalice','plate','cutlery set','mug'],
+  ['circlet','ring','chain','torc'],['bottle of wine','bottle of grog','bottle of mead','bottle of ale'],
+  ['scroll case','ink pot','quill'],['shield','helm','bracers','greaves'],
+  ['lute','viol','harp','flute'],['urn','coffin','bier','sarcophagus'],
+  ['crown','scepter','orb','throne'],['golden beetle','golden butterfly','golden spider'],
+];
+
+// ── Mundane Loot ─────────────────────────────────────────────────────────
+const GEMS = [
+  {name:'Pearl',value:'40 gp'},{name:'Emerald',value:'120 gp'},
+  {name:'Ruby',value:'200 gp'},{name:'Sapphire',value:'280 gp'},
+  {name:'Diamond',value:'360 gp'},{name:'Giant Pearl',value:'80 gp'},
+  {name:'Giant Emerald',value:'240 gp'},{name:'Giant Ruby',value:'400 gp'},
+];
+const MUNDANE_LOOT = [
+  // Coins & currency
+  '1d6 × 10 cp in a leather pouch','2d6 × 5 sp in a drawstring bag',
+  '1d6 × 10 gp wrapped in oilcloth','A purse with 1d4 gp, 1d6 sp, 2d6 cp',
+  'A single platinum coin (10 gp)','1d4 silver trade bars (5 gp each)',
+  // Useful gear
+  'Torch (5 sp)','Oil flask (5 sp)','Rope, 60 ft (1 gp)',
+  'Crowbar (5 sp)','Iron spikes ×10 (1 sp)','Rations ×3 (15 sp)',
+  'Tinderbox (5 sp)','Blanket (5 sp)','Grappling hook (1 gp)',
+  'Lantern (5 gp)','Mirror, small (10 gp)','Pole, 10 ft (5 sp)',
+  // Trade goods
+  'Bolt of fine wool (8 gp)','Spice pouch — saffron (15 gp)',
+  'Jar of rare honey (3 gp)','Bottle of dwarven ale (2 gp)',
+  'Vial of ink and quill (10 gp)','Bundle of candles ×10 (2 sp)',
+  'Bar of soap ×3 (5 cp each)','Coil of wire — copper (1 gp)',
+  // Valuables
+  'Silver ring (5 gp)','Copper bracelet (1 gp)','Tin brooch (2 sp)',
+  'Small religious icon, bone (3 gp)','Carved ivory chess piece (5 gp)',
+  'Tarnished silver fork and spoon (4 gp)',
+  'Brass compass, needs repair (12 gp)','Folded map of local area (8 gp)',
+  // Weapons / armor (mundane)
+  'Dagger (1 gp)','Shortsword, nicked (7 gp)','Shortbow (6 gp)',
+  'Leather armor, worn (8 gp)','Shield, battered (8 gp)',
+  'Crossbow bolts ×20 (1 gp)','Arrows ×20 (1 gp)',
+  // Oddities
+  'A wanted poster (someone has a 50 gp bounty)','A child\'s rag doll',
+  'A sealed letter in an unknown script','A locket with a tiny portrait inside',
+  'A glass eye','A cracked hourglass','A set of loaded dice (thieves\' tool)',
+  'A vial of unknown liquid, faintly glowing',
+];
+
+// ── Biome Encounter Tables (monsters by environment) ─────────────────────
+const BIOME_CREATURES = {
+  cave: ['Giant Spider','Giant Rat','Skeleton','Gelatinous Cube','Troll','Orc warband',
+         'Weald Hag','Will-o\'-Wisp','Giant Leech','Animated Armor','Wight',
+         'Giant Snake','Cultist patrol','Ankheg','Stirge swarm'],
+  forest: ['Wolf pack','Brown Bear','Boar','Giant Spider','Weald Hag','Faerie',
+            'Giant Snake','Orc raiders','Bandit group','Moose','Unicorn',
+            'Werewolf','Snow Ape','Will-o\'-Wisp','Cultist grove'],
+  swamp: ['Crocodile','Giant Leech','Giant Snake','Troll','Swamp Dragon',
+           'Weald Hag','Will-o\'-Wisp','Giant Spider','Stirge swarm',
+           'Cultist band','Skeleton patrol','Wight'],
+  arctic: ['Snow Ape','Wolf pack','Brown Bear','Skeleton (frozen)',
+            'Cultist ice cult','Bandit ice raiders','Giant Snake (white)',
+            'Wight','Orc warband','Will-o\'-Wisp'],
+  desert: ['Bandit caravan raiders','Scorpion swarm (use Giant Spider stats)',
+            'Cultist sun cult','Orc warband','Giant Snake','Crocodile (oasis)',
+            'Skeleton patrol','Weald Hag','Villager refugees','Knight patrol'],
+  city: ['Bandit gang','Cultist cell','Villager mob','Knight patrol',
+          'Cleric Acolyte','Thieves\' Guild agents (use Bandit stats)',
+          'Animated Armor (guard)','Orc thug (use Orc stats)','Faerie trickster',
+          'Reaver mercenary','Wight (in sewers)','Giant Rat pack'],
+  sea: ['Bandit pirates','Crocodile','Giant Snake','Stirge swarm',
+         'Cultist sea cult','Swamp Dragon (coastal)','Giant Leech',
+         'Knight naval patrol','Villager fishers (possible ally)','Will-o\'-Wisp'],
+  shadowdark: ['Skeleton horde','Wight','Will-o\'-Wisp','Gelatinous Cube',
+                'Weald Hag','Cultist conclave','Animated Armor',
+                'Giant Leech','Troll','Aboleth (deep)',
+                'Werewolf','Giant Spider','Bandit tomb raiders'],
+};
+const BIOME_FEATURES = {
+  cave: ['collapsed tunnel ahead','phosphorescent fungi on the walls','an underground stream',
+         'a carved stone door, sealed','the smell of sulphur','bones of a previous expedition',
+         'a worked stone chamber with murals','an echo that repeats words'],
+  forest: ['a game trail heading north','an abandoned campfire, still warm',
+            'a clearing with standing stones','thick fog rolling in',
+            'a stream crossing with slippery stones','the sound of distant horns',
+            'a carved tree marking a boundary','a dead horse with full saddlebags'],
+  swamp: ['knee-deep brackish water','a rotting wooden bridge','will-o\'-wisp lights ahead',
+           'a sunken ruin visible through the murk','clouds of biting insects',
+           'a rusted iron cage half-submerged','an unnaturally silent zone'],
+  arctic: ['a howling blizzard reducing visibility','a crevasse hidden under snow',
+            'an ice cave glittering with crystals','a frozen corpse clutching a map',
+            'the aurora borealis — something stirs','a cairn of stacked stones'],
+  desert: ['a mirrage of an oasis','shifting sand hiding a pit trap',
+            'ruins of a buried city emerging from dunes','a scorching midday sun (CON check)',
+            'a dust devil that obscures vision','an ancient obelisk with carvings'],
+  city: ['a street market in full swing','city watch patrol (1d4 guards)',
+          'a shouting argument drawing a crowd','a burning building',
+          'a locked sewer grate','a noble\'s sedan chair blocking the road',
+          'a posting board with notices and bounties'],
+  sea: ['a fog bank rolling in fast','a reef that could wreck a ship',
+         'flotsam from a recent wreck','a lighthouse with no light burning',
+         'a sea cave at low tide','a merchant vessel flying unusual colors'],
+  shadowdark: ['absolute darkness — torches gutter and fail','whispers from no visible source',
+                'a door that wasn\'t there before','the floor is warm underfoot',
+                'a pool of black water that shows a different reflection',
+                'magical silence in a 30-ft sphere','glowing runes on the wall'],
+};
+
+// ── Rival Crawlers ────────────────────────────────────────────────────────
+const RC_NAMES = [
+  ...NPC_NAMES.Human,...NPC_NAMES.Dwarf,...NPC_NAMES.Elf,
+  ...NPC_NAMES.Goblin,...NPC_NAMES.Halfling,...NPC_NAMES['Half-Orc'],
+];
+const RC_CLASSES = ['Cleric','Fighter','Thief','Wizard'];
+const RC_ANCESTRY = ['Human','Human','Human','Dwarf','Elf','Halfling','Half-Orc','Goblin'];
+const RC_GOALS = [
+  'hunting the same monster the party is after',
+  'searching for a specific magic item',
+  'mapping the dungeon for a wealthy patron',
+  'fleeing something that killed two of their members',
+  'looking for a missing comrade',
+  'hired to retrieve a specific object',
+  'trying to beat the party to the treasure',
+  'in search of a legendary artifact',
+  'running from a debt to the Thieves\' Guild',
+  'on a holy mission for their deity',
+];
+const RC_QUIRKS = [
+  'over-confident and boastful','secretive about their past',
+  'clearly underprepared — out of torches','battle-scarred and wary',
+  'surprisingly well-equipped','arguing among themselves',
+  'nursing a recent wound','clearly lost','deceptively cheerful',
+  'professional and businesslike','visibly afraid of something nearby',
+];
+const RC_GEAR_HINTS = [
+  'well-stocked crawling kits','mostly improvised gear',
+  'quality weapons but light armor','heavy armor, slow moving',
+  'alchemist\'s fire and rope in abundance','a captured monster on a chain',
+  'a treasure map visible on one member','magical light sources (no torches)',
+  'someone is carrying something that clanks suspiciously',
+];
+const RC_DISPOSITION_DETAILS = {
+  Hostile:  ['draw weapons immediately','demand the party leave now','have already attacked and take no prisoners'],
+  Wary:     ['eye the party with suspicion','keep hands near weapons','ask sharp questions before talking'],
+  Neutral:  ['nod curtly and keep moving','exchange basic information if pressed','trade news of the dungeon'],
+  Friendly: ['share a rumor they picked up','offer to team up briefly','warn about a danger ahead'],
+};
+
+function rollD(max) { return Math.ceil(Math.random()*max); }
+function rollTable(tbl, val) { for(const [n,r] of tbl) if(val<=n) return r; return tbl[tbl.length-1][1]; }
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function card(html) { const d=document.createElement('div'); d.className='gen-card'; d.innerHTML=html; return d; }
+function row(label, val) { return `<div class="gen-card-row"><span class="gen-card-row-label">${label}</span><span>${esc(val)}</span></div>`; }
+function tag(t, v) { return `<span class="gen-card-tag">${esc(t)}: ${esc(v)}</span> `; }
+
+// ── Mundane Loot ──────────────────────────────────────────────────────────
+function genMundaneLoot(subtype) {
+  if(subtype==='gem') {
+    const gem = R(GEMS);
+    const isGiant = Math.random() < 0.15;
+    const name = isGiant ? 'Giant '+gem.name : gem.name;
+    const val  = gem.value.replace(/^(\d+)/, n => isGiant ? n*2 : n);
+    return card(`<div class="gen-item-name">${esc(name)}</div><div class="gen-item-desc">Value: ${esc(val)}</div>`);
+  }
+  if(subtype==='luxury') {
+    const feat = R(LUX_FEAT); const pool = R(LUX_ITEM_POOLS); const item = R(pool);
+    return card(`<div class="gen-item-name">Luxury Item</div><div class="gen-item-desc">${esc(feat)} ${esc(item)}</div>`);
+  }
+  return card(`<div class="gen-item-name">Mundane Loot</div><div class="gen-item-desc">${esc(R(MUNDANE_LOOT))}</div>`);
+}
+
+// ── Rival Crawlers ────────────────────────────────────────────────────────
+function genRivalCrawler(size, disp) {
+  const count = size==='random' ? (Math.ceil(Math.random()*4)+1) : parseInt(size);
+  const disposition = disp==='random' ? R(['Hostile','Wary','Neutral','Neutral','Friendly']) : disp;
+  const goal = R(RC_GOALS);
+  const quirk = R(RC_QUIRKS);
+  const gear = R(RC_GEAR_HINTS);
+  const dispDetail = R(RC_DISPOSITION_DETAILS[disposition]||RC_DISPOSITION_DETAILS.Neutral);
+  const members = [];
+  for(let i=0;i<count;i++) {
+    const anc = R(RC_ANCESTRY);
+    const cls = R(RC_CLASSES);
+    const name = R(NPC_NAMES[anc]||NPC_NAMES.Human);
+    members.push(`${name} (${anc} ${cls})`);
+  }
+  return card(`
+    <div class="gen-card-header"><span class="gen-card-name">Rival Crawlers</span>
+    <span class="gen-card-tag">${count} crawlers · ${esc(disposition)}</span></div>
+    <div class="gen-card-row"><span class="gen-card-row-label">Members</span>
+    <span>${members.map(esc).join('<br>')}</span></div>
+    <hr class="gen-card-divider">
+    ${row('Goal', goal)} ${row('Quirk', quirk)} ${row('Gear', gear)}
+    ${row('Behaviour', dispDetail)}
+  `);
+}
+
+// ── NPC ───────────────────────────────────────────────────────────────────
+function genNPC(ancestry, wealth) {
+  const anc  = ancestry==='random'?R(['Human','Human','Human','Dwarf','Elf','Halfling','Half-Orc','Goblin']):ancestry;
+  const wlth = wealth==='random'?R(['Poor','Poor','Standard','Standard','Standard','Wealthy']):wealth;
+  const pool = NPC_NAMES[anc]||NPC_NAMES.Human;
+  const name = R(pool);
+  const age  = anc==='Goblin'?`${rollD(20)+5}`:anc==='Elf'?`${rollD(400)+50}`:anc==='Dwarf'?`${rollD(200)+30}`:`${rollD(40)+15}`;
+  return card(`
+    <div class="gen-card-header"><span class="gen-card-name">${esc(name)}</span><span class="gen-card-tag">${esc(anc)} · ${esc(wlth)}</span></div>
+    ${row('Age',age)} ${row('Build',`${R(BUILDS)}, ${R(HAIR)} hair, ${R(EYES)} eyes`)}
+    ${row('Dress',R(CLOTHING[wlth]))} ${row('Feature',R(FEATURES))}
+    <hr class="gen-card-divider">
+    ${row('Occupation',R(OCCUPATIONS))} ${row('Demeanor',R(DEMEANOR))}
+    ${row('Quirk',R(QUIRKS))} ${row('Wants',R(WANTS))}
+    ${row('Secret',R(SECRETS))} ${row('Coin',COIN[wlth]())}
+  `);
+}
+
+// ── Treasure ─────────────────────────────────────────────────────────────
+function genTreasure(tierKey, type) {
+  if(type==='random_all') {
+    // Equal chance across all categories
+    type = R(['random','random','Weapon','Armor','Wand','Ring','Cloak','Boots',
+              'Potion','Scroll','table','mundane','gem','luxury']);
+  }
+  if(type==='table') {
+    const tier = TREASURE_TIERS[tierKey]||TREASURE_T1;
+    return card(`<div class="gen-item-name">Treasure Table Roll (Tier ${tierKey})</div><div class="gen-item-desc">${esc(R(tier))}</div>`);
+  }
+  if(type==='mundane' || type==='gem' || type==='luxury') return genMundaneLoot(type);
+  const pool = type==='random'?MAGIC_ITEM_POOLS[R(LOOT_TYPES)]:(MAGIC_ITEM_POOLS[type]||POTIONS);
+  const item = R(pool);
+  return card(`<div class="gen-item-name">${esc(item.name)}</div><div class="gen-item-desc">${esc(item.desc)}</div>`);
+}
+
+// ── Shop/Tavern ──────────────────────────────────────────────────────────
+function genShop(type, tier) {
+  const t = type==='random'?R(['Shop','Tavern']):type;
+  const t2 = tier==='random'?R(['Poor','Standard','Standard','Wealthy']):tier;
+  const isShop=t==='Shop';
+  const name = R(isShop?SHOP_NAMES[t2]:TAVERN_NAMES[t2]);
+  const prop = `${R(NPC_NAMES.Human)}, ${isShop?R(['Shopkeeper','Merchant','Trader']):R(['Innkeeper','Barkeep','Host'])}`;
+  if(isShop) {
+    const stock=[...SHOP_STOCK[t2]].sort(()=>Math.random()-.5).slice(0,6);
+    return card(`<div class="gen-card-header"><span class="gen-card-name">${esc(name)}</span><span class="gen-card-tag">Shop · ${esc(t2)}</span></div>${row('Proprietor',prop)}<hr class="gen-card-divider"><div class="gen-card-row"><span class="gen-card-row-label">Stock</span><span>${stock.map(esc).join('<br>')}</span></div>`);
+  } else {
+    const menu=[...TAVERN_FOOD[t2]].sort(()=>Math.random()-.5).slice(0,4);
+    const rooms=t2==='Poor'?'Shared floor (2 cp/night)':t2==='Wealthy'?'Private room (1 gp/night)':'Shared room (5 cp/night)';
+    return card(`<div class="gen-card-header"><span class="gen-card-name">${esc(name)}</span><span class="gen-card-tag">Tavern · ${esc(t2)}</span></div>${row('Proprietor',prop)}<hr class="gen-card-divider"><div class="gen-card-row"><span class="gen-card-row-label">Menu</span><span>${menu.map(esc).join('<br>')}</span></div>${row('Lodging',rooms)}<hr class="gen-card-divider">${row('Rumour',R(TAVERN_RUMORS_EXTRA))}`);
+  }
+}
+
+// ── Encounter ────────────────────────────────────────────────────────────
+function genEncounter(danger, chamod, biome) {
+  const distRoll = rollD(6);
+  const dist = rollTable(ENC_DISTANCE, distRoll);
+  const actRoll = rollD(6)+rollD(6);
+  const act = rollTable(ENC_ACTIVITY, actRoll);
+  const reacRoll = rollD(6)+rollD(6)+parseInt(chamod||0);
+  const reac = ENC_REACTION(reacRoll);
+  const hasTreasure = Math.random()>=0.5;
+  let biomeRows = '';
+  if(biome && biome !== 'none') {
+    const creatures = BIOME_CREATURES[biome]||[];
+    const features  = BIOME_FEATURES[biome]||[];
+    const biomeLabel = biome.charAt(0).toUpperCase()+biome.slice(1);
+    if(creatures.length) biomeRows += row('Creature', R(creatures));
+    if(features.length)  biomeRows += row('Feature',  R(features));
+  }
+  const biomeTag = (biome && biome!=='none') ? ' · '+(biome.charAt(0).toUpperCase()+biome.slice(1)) : '';
+  return card(`
+    <div class="gen-card-header"><span class="gen-card-name">Random Encounter</span>
+    <span class="gen-card-tag">${esc(danger)}${esc(biomeTag)}</span></div>
+    ${row('Distance',dist)} ${row('Activity',act)}
+    ${row('Reaction',`${reac} (rolled ${reacRoll})`)}
+    ${row('Treasure',hasTreasure?'Yes (roll on treasure table)':'None (50% chance — no treasure)')}
+    ${biomeRows}
+    <hr class="gen-card-divider">
+    <div class="gen-card-row"><span class="gen-card-row-label">Check</span>
+    <span>Roll 1d6 every ${danger==='Unsafe'?'3':danger==='Risky'?'2':'1'} round(s). Encounter on a 1.</span></div>
+  `);
+}
+
+// ── Monster Generator ─────────────────────────────────────────────────────
+function genMonster(pl, numMut) {
+  pl = parseInt(pl)||1;
+  const entry = MON_TABLE[rollD(20)-1];
+  const hd_adj = entry.combat==='PL'?0:entry.combat.includes('+')?(parseInt(entry.combat.replace('PL+',''))):(-parseInt(entry.combat.replace('PL-','')));
+  const hd = Math.max(1, pl+hd_adj);
+  const ac = pl+10;
+  const hp = hd*4+hd;
+  const atk = Math.min(hd, hd+1);
+  const muts = [];
+  for(let i=0;i<parseInt(numMut||0);i++) { muts.push(`${R(MON_MUT_1)} / ${R(MON_MUT_2)} / ${R(MON_MUT_3)}`); }
+  return card(`
+    <div class="gen-card-header"><span class="gen-card-name">${esc(entry.quality)} Creature</span><span class="gen-card-tag">HD ${hd} · PL ${pl}</span></div>
+    ${row('AC',`${ac}`)} ${row('HP',`${hp} (${hd}d8)`)} ${row('ATK',`+${atk}, 1d${hd<=3?6:hd<=6?8:10} dmg`)}
+    <hr class="gen-card-divider">
+    ${row('Strength',entry.strength)} ${row('Weakness',entry.weakness)}
+    ${muts.length?'<hr class="gen-card-divider">'+muts.map((m,i)=>`<div class="gen-card-row"><span class="gen-card-row-label">Mutation ${i+1}</span><span>${esc(m)}</span></div>`).join(''):''}
+    <hr class="gen-card-divider">
+    <div class="gen-card-row"><span class="gen-card-row-label">Treasure</span><span>Roll on Treasure ${hd<=3?'1-3':hd<=6?'4-6':hd<=9?'7-9':'10+'} table (50% chance if random encounter)</span></div>
+  `);
+}
+
+// ── Trap / Hazard ─────────────────────────────────────────────────────────
+function genTrap(type) {
+  const t = type==='random'?R(['trap','hazard']):type;
+  if(t==='trap') {
+    const trap = TRAPS[rollD(12)-1];
+    return card(`<div class="gen-card-header"><span class="gen-card-name">${esc(trap.trap)}</span><span class="gen-card-tag">Trap</span></div>${row('Trigger',trap.trigger)}${row('Damage/Effect',trap.damage)}`);
+  } else {
+    const mov = R(HAZARDS_MOV); const dmg = R(HAZARDS_DMG); const wkn = R(HAZARDS_WKN);
+    const types = []; if(Math.random()>.3) types.push(mov); if(Math.random()>.4) types.push(dmg); if(Math.random()>.5) types.push(wkn);
+    if(!types.length) types.push(mov);
+    return card(`<div class="gen-card-header"><span class="gen-card-name">Hazard</span><span class="gen-card-tag">${types.length>1?'Combined':'Single'}</span></div>${types.map((x,i)=>row(['Movement Restriction','Damage','Weakening'][i]||'Effect',x)).join('')}`);
+  }
+}
+
+// ── Events ────────────────────────────────────────────────────────────────
+function genHappens(type, bonus) {
+  if(type==='happens') return card(`<div class="gen-item-name">Something Happens!</div><div class="gen-item-desc">${esc(R(HAPPENS))}</div>`);
+  if(type==='rumor')   return card(`<div class="gen-item-name">Rumor</div><div class="gen-item-desc">${esc(R(RUMORS))}</div>`);
+  if(type==='oath')    return card(`<div class="gen-item-name">Oath Boon</div><div class="gen-item-desc">${esc(R(OATHS))}</div>`);
+  if(type==='blessing')return card(`<div class="gen-item-name">Blessing</div><div class="gen-item-desc">${esc(R(BLESSINGS))}</div>`);
+  if(type==='secret') {
+    return card(`<div class="gen-item-name">Secret</div><div class="gen-item-desc">${esc(R(SECRETS_D1))} ${esc(R(SECRETS_D2))}</div>`);
+  }
+  if(type==='luxury') {
+    const feat = R(LUX_FEAT); const pool = R(LUX_ITEM_POOLS); const item = R(pool);
+    return card(`<div class="gen-item-name">Luxury Item</div><div class="gen-item-desc">${esc(feat)} ${esc(item)}</div>`);
+  }
+  if(type==='carousing') {
+    const roll = rollD(8)+parseInt(bonus||0);
+    const entry = CAROUSING[Math.min(roll-1, CAROUSING.length-1)];
+    return card(`<div class="gen-card-header"><span class="gen-card-name">Carousing Outcome</span><span class="gen-card-tag">Rolled ${roll} (d8+${bonus})</span></div>${row('Outcome',entry.outcome)}${row('Benefit',entry.benefit)}`);
+  }
+  return card('<div class="gen-empty">Unknown table</div>');
+}
+
+// ── Main init ─────────────────────────────────────────────────────────────
+window.init_gen = function(root) {
+  const tabs   = root.querySelectorAll('.gen-tab');
+  const panels = root.querySelectorAll('.gen-panel');
+  const rollBtn = root.querySelector('.gen-roll');
+  let activeTab = 'npc';
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      activeTab = tab.dataset.tab;
+      tabs.forEach(t => t.classList.toggle('active', t===tab));
+      panels.forEach(p => p.classList.toggle('active', p.dataset.panel===activeTab));
+    });
+  });
+
+  // Show/hide carousing bonus selector
+  const hapType = root.querySelector('#gen-hap-type');
+  const hapBonusLabel = root.querySelector('#gen-hap-bonus-label');
+  if(hapType && hapBonusLabel) {
+    hapType.addEventListener('change', () => {
+      hapBonusLabel.style.display = hapType.value==='carousing'?'':'none';
+    });
+  }
+
+  rollBtn.addEventListener('click', () => {
+    if(activeTab==='npc') {
+      const anc=root.querySelector('#gen-npc-ancestry').value;
+      const wlth=root.querySelector('#gen-npc-wealth').value;
+      const count=parseInt(root.querySelector('#gen-npc-count').value)||1;
+      const res=root.querySelector('#gen-npc-results'); res.innerHTML='';
+      for(let i=0;i<count;i++) res.appendChild(genNPC(anc,wlth));
+
+    } else if(activeTab==='loot') {
+      const tier=root.querySelector('#gen-treasure-tier').value;
+      const type=root.querySelector('#gen-loot-type').value;
+      const count=parseInt(root.querySelector('#gen-loot-count').value)||1;
+      const res=root.querySelector('#gen-loot-results'); res.innerHTML='';
+      for(let i=0;i<count;i++) res.appendChild(genTreasure(tier,type,count));
+
+    } else if(activeTab==='shop') {
+      const type=root.querySelector('#gen-shop-type').value;
+      const tier=root.querySelector('#gen-shop-tier').value;
+      const res=root.querySelector('#gen-shop-results'); res.innerHTML='';
+      res.appendChild(genShop(type,tier));
+
+    } else if(activeTab==='encounter') {
+      const danger=root.querySelector('#gen-enc-danger').value;
+      const cha=root.querySelector('#gen-enc-cha').value;
+      const biome=root.querySelector('#gen-enc-biome').value;
+      const res=root.querySelector('#gen-enc-results'); res.innerHTML='';
+      res.appendChild(genEncounter(danger,cha,biome));
+
+    } else if(activeTab==='rival') {
+      const size=root.querySelector('#gen-rival-size').value;
+      const disp=root.querySelector('#gen-rival-disp').value;
+      const res=root.querySelector('#gen-rival-results'); res.innerHTML='';
+      res.appendChild(genRivalCrawler(size,disp));
+
+    } else if(activeTab==='monster') {
+      const pl=root.querySelector('#gen-mon-pl').value;
+      const mut=root.querySelector('#gen-mon-mut').value;
+      const res=root.querySelector('#gen-mon-results'); res.innerHTML='';
+      res.appendChild(genMonster(pl,mut));
+
+    } else if(activeTab==='trap') {
+      const type=root.querySelector('#gen-trap-type').value;
+      const res=root.querySelector('#gen-trap-results'); res.innerHTML='';
+      res.appendChild(genTrap(type));
+
+    } else if(activeTab==='happens') {
+      const type=root.querySelector('#gen-hap-type').value;
+      const bonus=root.querySelector('#gen-hap-bonus').value;
+      const res=root.querySelector('#gen-hap-results'); res.innerHTML='';
+      res.appendChild(genHappens(type,bonus));
+    }
+  });
+
+  root._getState = () => ({});
+  root._setState = () => {};
+};
+
+})();
+
+</script>
+
+<script>
+// ══════════════════════════════════════════
+// AUDIO TOOL — TabletopAudio iframe player
+// ══════════════════════════════════════════
+function init_audio(root) {
+  const urlInput = root.querySelector('.aud-url-input');
+  const loadBtn  = root.querySelector('.aud-load');
+  const clearBtn = root.querySelector('.aud-clear');
+  const frame    = root.querySelector('.aud-frame');
+  const empty    = root.querySelector('.aud-empty');
+
+  const ttaBtn   = root.querySelector('.aud-tta');
+  const sdlBtn   = root.querySelector('.aud-sdl');
+  const dndbBtn  = root.querySelector('.aud-dndb');
+  const sdtBtn   = root.querySelector('.aud-sdt');
+
+  function loadUrl(url) {
+    url = url.trim();
+    if(!url) return;
+    // Normalise to https
+    url = url.replace(/^http:\/\//i, 'https://');
+    if(!url.startsWith('https://')) url = 'https://tabletopaudio.com/' + url;
+    frame.src = url;
+    frame.style.display = 'block';
+    empty.style.display = 'none';
+    urlInput.value = url; // update input to show normalised URL
+  }
+
+  function clear() {
+    frame.src = 'about:blank';
+    frame.style.display = 'none';
+    empty.style.display = 'flex';
+    urlInput.value = '';
+  }
+
+  loadBtn.addEventListener('click', () => loadUrl(urlInput.value));
+  urlInput.addEventListener('keydown', e => { if(e.key === 'Enter') loadUrl(urlInput.value); });
+  ttaBtn.addEventListener('click', () => loadUrl('https://tabletopaudio.com/'));
+  sdlBtn.addEventListener('click', () => loadUrl('https://shadowdarklings.net/#!'));
+  dndbBtn.addEventListener('click', () => loadUrl('https://www.dndbeyond.com/'));
+  sdtBtn.addEventListener('click', () => loadUrl('https://www.shadowdarktools.com/tools'));
+  clearBtn.addEventListener('click', clear);
+
+  root._getState = () => ({ url: frame.style.display !== 'none' ? frame.src : '' });
+  root._setState = (s) => {
+    if(s.url) { urlInput.value = s.url; loadUrl(s.url); }
+    else clear();
+  };
 }
 </script>
 
