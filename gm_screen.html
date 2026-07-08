@@ -883,7 +883,6 @@ input[type="number"] { -moz-appearance: textfield; }
         <button class="gen-tab" data-tab="trap">Trap/Hazard</button>
         <button class="gen-tab" data-tab="shop">Shop/Tavern</button>
         <button class="gen-tab" data-tab="loot">Treasure</button>
-        <button class="gen-tab" data-tab="mapgen">Maps</button>
       </div>
       <div class="toolbar-spacer"></div>
       <button class="btn small primary gen-roll">🎲 Generate</button>
@@ -992,7 +991,8 @@ input[type="number"] { -moz-appearance: textfield; }
           </label>
           <label class="gen-label">Motif
             <select class="gen-select" id="gen-dun-motif">
-              <option value="random">Random</option>
+              <option value="none">None (Map Only)</option>
+              <option value="random" selected>Random</option>
               <optgroup label="── Classic ──">
                 <option value="Abandoned">Abandoned</option>
                 <option value="Undead">Undead</option>
@@ -1033,14 +1033,23 @@ input[type="number"] { -moz-appearance: textfield; }
               <option value="20">20</option>
             </select>
           </label>
+          <label class="gen-label">Map Style
+            <select class="gen-select" id="gen-dun-style">
+              <option value="nodes">Nodes</option>
+              <option value="hud">HUD</option>
+              <option value="parchment">Dungeon</option>
+              <option value="cave">Cave</option>
+              <option value="none">None (Rooms Only)</option>
+            </select>
+          </label>
         </div>
         <div class="gen-results" id="gen-dun-results">
           <div class="gen-empty">Set options and press 🎲 Generate</div>
         </div>
         <div id="gen-dun-map-bar" style="display:none;padding:10px 14px 12px;background:var(--panel);border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;align-items:center">
           <span id="gen-dun-seed-label" style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--muted);letter-spacing:0.06em;flex:1"></span>
+          <button id="gen-dun-maps-btn" class="btn small ghost" style="white-space:nowrap">📌 Load to Maps</button>
           <button id="gen-dun-map-btn" class="btn small primary" style="white-space:nowrap">📖 Load to Adventure</button>
-          <button id="gen-dun-regen-btn" class="btn small ghost" style="white-space:nowrap">↺ New Seed</button>
         </div>
       </div>
       <div class="gen-panel" data-panel="encounter">
@@ -1177,36 +1186,6 @@ input[type="number"] { -moz-appearance: textfield; }
 
       <!-- SHOP / TAVERN PANEL -->
 
-      <!-- MAP GENERATOR PANEL -->
-      <div class="gen-panel" data-panel="mapgen">
-        <div class="gen-controls">
-          <label class="gen-label">Rooms
-            <select class="gen-select" id="gen-map-rooms">
-              <option value="5">5</option>
-              <option value="8">8</option>
-              <option value="10">10</option>
-              <option value="12">12</option>
-              <option value="15">15</option>
-              <option value="20">20</option>
-            </select>
-          </label>
-          <label class="gen-label">Style
-            <select class="gen-select" id="gen-map-style">
-              <option value="hud">HUD</option>
-              <option value="parchment">Dungeon</option>
-              <option value="cave">Cave</option>
-              <option value="nodes">Nodes</option>
-            </select>
-          </label>
-        </div>
-        <div class="gen-results" id="gen-map-results" style="align-items:center;justify-content:center;">
-          <div class="gen-empty">Set options and press 🎲 Generate</div>
-        </div>
-        <div id="gen-map-action-bar" style="display:none;padding:10px 14px 12px;background:var(--panel);border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;align-items:center;">
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--muted);letter-spacing:0.06em;flex:1" id="gen-map-info"></span>
-          <button class="btn small primary" id="gen-map-load-btn">📌 Load to Maps</button>
-        </div>
-      </div>
 
     </div>
   </div>
@@ -4924,62 +4903,66 @@ window.init_gen = function(root) {
       const res=root.querySelector('#gen-trap-results'); res.innerHTML='';
       res.appendChild(genTrap(type));
 
-    } else if(activeTab==='mapgen') {
-      const numRooms = parseInt(root.querySelector('#gen-map-rooms').value)||5;
-      const style    = root.querySelector('#gen-map-style').value;
-      const res      = root.querySelector('#gen-map-results');
-      const bar      = root.querySelector('#gen-map-action-bar');
-      const info     = root.querySelector('#gen-map-info');
-      res.innerHTML  = '';
-      if(!window._genDungeonMap) return;
-      const result = window._genDungeonMap(numRooms, style);
-      root._mapSvg    = result.svg;
-      root._mapWidth  = result.width;
-      root._mapHeight = result.height;
-      // Preview in panel
-      const wrap = document.createElement('div');
-      wrap.style.cssText = 'width:100%;overflow:auto;display:flex;justify-content:center;padding:10px;';
-      wrap.innerHTML = result.svg;
-      const svgEl = wrap.querySelector('svg');
-      if(svgEl) { svgEl.style.maxWidth='100%'; svgEl.style.height='auto'; }
-      res.appendChild(wrap);
-      bar.style.display = 'flex';
-      info.textContent = `${result.rooms} rooms generated · click to load into tab`;
-
     } else if(activeTab==='dungeon') {
-      const level=root.querySelector('#gen-dun-level').value;
-      const motif=root.querySelector('#gen-dun-motif').value;
-      const rooms=parseInt(root.querySelector('#gen-dun-rooms').value)||5;
-      const res=root.querySelector('#gen-dun-results'); res.innerHTML='';
-      res.appendChild(genDungeon(level,motif,rooms));
-
-      // Generate watabou URL: map room count to size tag
-      const wataUrl = 'https://app.dungeonscrawl.com/';
-
-      // Store on root so regen button can use it
-      root._dunWataUrl = wataUrl;
-
+      const level  = root.querySelector('#gen-dun-level').value;
+      const motif  = root.querySelector('#gen-dun-motif').value;
+      const rooms  = parseInt(root.querySelector('#gen-dun-rooms').value)||5;
+      const style  = root.querySelector('#gen-dun-style').value;
+      const res    = root.querySelector('#gen-dun-results');
       const mapBar = root.querySelector('#gen-dun-map-bar');
-      const seedLabel = root.querySelector('#gen-dun-seed-label');
-      const mapBtn = root.querySelector('#gen-dun-map-btn');
-      const regenBtn = root.querySelector('#gen-dun-regen-btn');
+      res.innerHTML = '';
+
+      // Store params for export
+      root._dunRooms  = rooms;
+      root._dunStyle  = style;
+      root._dunMotif  = motif;
+      root._mapSvg    = null;
+      root._mapWidth  = null;
+      root._mapHeight = null;
+
+      // Generate dungeon rooms first (unless motif=none means map only)
+      if(motif !== 'none') {
+        const dungeonEl = genDungeon(level, motif, rooms);
+        res.appendChild(dungeonEl);
+      }
+
+      // Generate map below the rooms (unless style=none means rooms only)
+      if(style !== 'none' && window._genDungeonMap) {
+        const mapResult = window._genDungeonMap(rooms, style);
+        root._mapSvg    = mapResult.svg;
+        root._mapWidth  = mapResult.width;
+        root._mapHeight = mapResult.height;
+        // Show map preview below rooms
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'width:100%;overflow:auto;display:flex;justify-content:center;padding:10px;flex-shrink:0';
+        wrap.innerHTML = mapResult.svg;
+        const svgEl = wrap.querySelector('svg');
+        if(svgEl){ svgEl.style.maxWidth='100%'; svgEl.style.height='auto'; }
+        res.appendChild(wrap);
+      }
+
+      if(res.children.length === 0) {
+        res.innerHTML = '<div class="gen-empty">Nothing generated — select a Motif and/or Map Style.</div>';
+      }
+
+      // Show action bar, update Load to Maps button visibility
       if(mapBar) {
         mapBar.style.display = 'flex';
-        seedLabel.textContent = 'DungeonScrawl Random Generator';
+        const mapsBtn = root.querySelector('#gen-dun-maps-btn');
+        if(mapsBtn) mapsBtn.style.display = root._mapSvg ? '' : 'none';
       }
     }
   });
 
-  // Wire map generator load button
+  // Wire Load to Maps button
   (function() {
-    const loadBtn = root.querySelector('#gen-map-load-btn');
-    if(!loadBtn) return;
-    loadBtn.addEventListener('click', () => {
+    const mapsBtn = root.querySelector('#gen-dun-maps-btn');
+    if(!mapsBtn) return;
+    mapsBtn.addEventListener('click', () => {
       const svg = root._mapSvg;
       if(!svg) return;
-      // Encode SVG directly as a data URL — no canvas, no img.onload race condition
       const dataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
-      const paneNum = parseInt(Object.keys(paneTools).find(k => paneTools[k] === 'gen') || 1);
+      const paneNum = parseInt(Object.keys(paneTools).find(k => paneTools[k]==='gen') || 1);
       setPaneTool(paneNum, 'maps');
       setTimeout(() => {
         const inst = instances['maps'];
@@ -4988,120 +4971,129 @@ window.init_gen = function(root) {
     });
   })();
 
-  // Wire dungeon map and regen buttons once (they live in the panel, not the toolbar)
+  // Wire Load to Adventure button
   (function() {
     const mapBtn = root.querySelector('#gen-dun-map-btn');
     const regenBtn = root.querySelector('#gen-dun-regen-btn');
-    const seedLabel = root.querySelector('#gen-dun-seed-label');
-    if(mapBtn) {
-      mapBtn.addEventListener('click', () => {
-        // Export the generated dungeon rooms as a PNG text image and load to Adventure tab
-        const res = root.querySelector('#gen-dun-results');
-        if(!res || !res.textContent.trim() || res.querySelector('.gen-empty')) return;
-        // Convert dungeon text cards to a canvas PNG
+    if(!mapBtn) return;
+    mapBtn.addEventListener('click', () => {
+      const res = root.querySelector('#gen-dun-results');
+      if(!res || res.querySelector('.gen-empty')) return;
+
         const cards = res.querySelectorAll('.gen-card');
-        if(!cards.length) return;
-        // Layout constants — larger for readability
-        const CW = 1100;         // canvas logical width
+        const hasRooms = cards.length > 0 && Array.from(cards).some(c=>c.querySelector('.gen-item-desc'));
+        const hasSvg   = !!root._mapSvg;
+        if(!hasRooms && !hasSvg) return;
+
+        // Layout constants
+        const CW         = 1100;
         const CARD_PAD_X = 24;
-        const LABEL_SIZE = 18;   // room label font size
-        const DESC_SIZE  = 16;   // description font size
-        const LINE_H     = 24;   // line height for description
+        const LABEL_SIZE = 18;
+        const DESC_SIZE  = 16;
+        const LINE_H     = 24;
         const CARD_PAD_TOP = 24;
         const CARD_GAP   = 16;
 
-        // Pre-calculate card heights based on word-wrapped desc length
-        const canvas = document.createElement('canvas');
-        canvas.width = CW * 2;
-        canvas.height = 100; // temp, will resize
-        const ctx = canvas.getContext('2d');
-        ctx.scale(2,2);
+        // Pre-calc text layout
+        const tempC = document.createElement('canvas');
+        tempC.width = CW*2; tempC.height = 100;
+        const tctx = tempC.getContext('2d'); tctx.scale(2,2);
         const maxTextW = CW - CARD_PAD_X*2 - 16;
-
         function wrapLines(text, font) {
-          ctx.font = font;
-          const words = text.split(' ');
-          const lines = [];
-          let line = '';
-          for(const w of words) {
-            const test = line + (line?' ':'') + w;
-            if(ctx.measureText(test).width > maxTextW && line) { lines.push(line); line = w; }
-            else line = test;
+          tctx.font = font;
+          const words = text.split(' '), lines = []; let line='';
+          for(const w of words){
+            const t=line+(line?' ':'')+w;
+            if(tctx.measureText(t).width>maxTextW&&line){lines.push(line);line=w;}else line=t;
           }
-          if(line) lines.push(line);
-          return lines;
+          if(line)lines.push(line); return lines;
         }
 
-        // Calculate total height
         const titleEl = res.querySelector('.gen-card-name');
         const tagEl   = res.querySelector('.gen-card-tag');
-        let totalH = 80; // header area
+        // Header area: title (26px) + tag (16px) + breathing room
+        const HEADER_H = hasRooms ? 96 : 0;
+        let totalH = HEADER_H;
         const cardData = [];
-        cards.forEach(card => {
-          const nameEl = card.querySelector('.gen-card-name');
-          const descEl = card.querySelector('.gen-item-desc');
-          if(!descEl) return;
-          const label = nameEl ? nameEl.textContent : '';
-          const desc  = descEl ? descEl.textContent : '';
-          const descFont = `${DESC_SIZE}px sans-serif`;
-          const lines = wrapLines(desc, descFont);
-          const cardH = CARD_PAD_TOP + LABEL_SIZE + 10 + lines.length*LINE_H + CARD_PAD_TOP;
-          cardData.push({ label, lines, cardH });
-          totalH += cardH + CARD_GAP;
-        });
-        totalH += 24;
+        if(hasRooms) {
+          cards.forEach(card => {
+            const nameEl = card.querySelector('.gen-card-name');
+            const descEl = card.querySelector('.gen-item-desc');
+            if(!descEl) return;
+            const lines = wrapLines(descEl.textContent, `${DESC_SIZE}px sans-serif`);
+            const cardH = CARD_PAD_TOP + LABEL_SIZE + 10 + lines.length*LINE_H + CARD_PAD_TOP;
+            cardData.push({ label: nameEl?nameEl.textContent:'', lines, cardH });
+            totalH += cardH + CARD_GAP;
+          });
+          totalH += 24; // bottom padding before map
+        }
+        // Map goes at the bottom
+        const MAP_H = hasSvg ? 320 : 0;
+        const MAP_W = hasSvg ? Math.round(MAP_H * (root._mapWidth / root._mapHeight)) : 0;
+        if(hasSvg) totalH += MAP_H + 16;
 
-        // Resize canvas to fit
-        canvas.width  = CW * 2;
-        canvas.height = totalH * 2;
-        ctx.scale(2,2);
-
-        // Background
+        // Build canvas
+        const canvas = document.createElement('canvas');
+        canvas.width = CW*2; canvas.height = totalH*2;
+        const ctx = canvas.getContext('2d'); ctx.scale(2,2);
         ctx.fillStyle = '#1a1a24';
         ctx.fillRect(0, 0, CW, totalH);
 
-        // Header
-        ctx.fillStyle = '#c8a84a';
-        ctx.font = `bold 26px serif`;
-        ctx.fillText(titleEl ? titleEl.textContent : 'Dungeon', CARD_PAD_X, 36);
-        ctx.fillStyle = '#999';
-        ctx.font = `${DESC_SIZE}px monospace`;
-        ctx.fillText(tagEl ? tagEl.textContent : '', CARD_PAD_X, 62);
+        const drawMap = (startY) => {
+          if(!hasSvg) return;
+          const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(root._mapSvg)));
+          const img = new Image();
+          img.onload = () => {
+            const mapX = Math.round((CW-MAP_W)/2);
+            ctx.drawImage(img, mapX, startY, MAP_W, MAP_H);
+            const dataUrl = canvas.toDataURL('image/png');
+            const paneNum = parseInt(Object.keys(paneTools).find(k=>paneTools[k]==='gen')||1);
+            setPaneTool(paneNum, 'adventure');
+            setTimeout(()=>{ const inst=instances['adventure']; if(inst&&inst._loadDataUrl) inst._loadDataUrl(dataUrl,'dungeon.png'); }, 150);
+          };
+          img.onerror = () => {
+            const dataUrl = canvas.toDataURL('image/png');
+            const paneNum = parseInt(Object.keys(paneTools).find(k=>paneTools[k]==='gen')||1);
+            setPaneTool(paneNum, 'adventure');
+            setTimeout(()=>{ const inst=instances['adventure']; if(inst&&inst._loadDataUrl) inst._loadDataUrl(dataUrl,'dungeon.png'); }, 150);
+          };
+          img.src = svgDataUrl;
+        };
 
-        // Rooms
-        let y = 80;
-        for(const {label, lines, cardH} of cardData) {
-          // Card background
-          ctx.fillStyle = '#24243a';
-          ctx.beginPath();
-          ctx.roundRect(CARD_PAD_X, y, CW - CARD_PAD_X*2, cardH, 6);
-          ctx.fill();
-          // Left accent bar
-          ctx.fillStyle = '#c8a84a';
-          ctx.fillRect(CARD_PAD_X, y, 4, cardH);
-          // Room label
-          ctx.fillStyle = '#e8e4d8';
-          ctx.font = `bold ${LABEL_SIZE}px monospace`;
-          ctx.fillText(label, CARD_PAD_X + 16, y + CARD_PAD_TOP + LABEL_SIZE - 2);
-          // Description lines
-          ctx.fillStyle = '#c0bdb0';
-          ctx.font = `${DESC_SIZE}px sans-serif`;
-          let ly = y + CARD_PAD_TOP + LABEL_SIZE + 10 + LINE_H - 4;
-          for(const line of lines) {
-            ctx.fillText(line, CARD_PAD_X + 16, ly);
-            ly += LINE_H;
+        const drawText = () => {
+          if(hasRooms) {
+            ctx.fillStyle = '#c8a84a'; ctx.font = `bold 26px serif`;
+            ctx.fillText(titleEl?titleEl.textContent:'Dungeon', CARD_PAD_X, 34);
+            ctx.fillStyle = '#999'; ctx.font = `${DESC_SIZE}px monospace`;
+            ctx.fillText(tagEl?tagEl.textContent:'', CARD_PAD_X, 62);
           }
-          y += cardH + CARD_GAP;
-        }
-        const dataUrl = canvas.toDataURL('image/png');
-        const paneNum = parseInt(Object.keys(paneTools).find(k => paneTools[k] === 'gen') || 1);
-        setPaneTool(paneNum, 'adventure');
-        setTimeout(() => {
-          const inst = instances['adventure'];
-          if(inst && inst._loadDataUrl) inst._loadDataUrl(dataUrl, 'dungeon.png');
-        }, 150);
+          let y = HEADER_H;
+          for(const {label, lines, cardH} of cardData) {
+            ctx.fillStyle = '#24243a';
+            ctx.beginPath(); ctx.roundRect(CARD_PAD_X, y, CW-CARD_PAD_X*2, cardH, 6); ctx.fill();
+            ctx.fillStyle = '#c8a84a'; ctx.fillRect(CARD_PAD_X, y, 4, cardH);
+            ctx.fillStyle = '#e8e4d8'; ctx.font = `bold ${LABEL_SIZE}px monospace`;
+            ctx.fillText(label, CARD_PAD_X+16, y+CARD_PAD_TOP+LABEL_SIZE-2);
+            ctx.fillStyle = '#c0bdb0'; ctx.font = `${DESC_SIZE}px sans-serif`;
+            let ly = y+CARD_PAD_TOP+LABEL_SIZE+10+LINE_H-4;
+            for(const line of lines){ ctx.fillText(line, CARD_PAD_X+16, ly); ly+=LINE_H; }
+            y += cardH + CARD_GAP;
+          }
+          // Map goes after all room cards
+          const mapStartY = totalH - MAP_H - 8;
+          if(hasSvg) {
+            drawMap(mapStartY);
+          } else {
+            const dataUrl = canvas.toDataURL('image/png');
+            const paneNum = parseInt(Object.keys(paneTools).find(k=>paneTools[k]==='gen')||1);
+            setPaneTool(paneNum, 'adventure');
+            setTimeout(()=>{ const inst=instances['adventure']; if(inst&&inst._loadDataUrl) inst._loadDataUrl(dataUrl,'dungeon.png'); }, 150);
+          }
+        };
+
+        // Kick off rendering
+        drawText();
       });
-    }
     if(regenBtn) regenBtn.style.display = 'none';
   })();
 
