@@ -4556,6 +4556,40 @@ function generateDungeonMap(numRooms, style) {
       }
     }
 
+    // ── Renumber nodes in BFS order from entrance so IDs follow a natural path ──
+    // Build adjacency list from spanning tree edges only
+    const adj = Array.from({length:nodes.length}, ()=>[]);
+    for(const [ai,bi] of edges) {
+      // Only use spanning tree edges (those where one endpoint was newly connected)
+      adj[ai].push(bi);
+      adj[bi].push(ai);
+    }
+    // BFS from node 0 (entrance)
+    const visited = new Array(nodes.length).fill(false);
+    const queue = [0];
+    const bfsOrder = [];
+    visited[0] = true;
+    while(queue.length) {
+      const cur = queue.shift();
+      bfsOrder.push(cur);
+      // Sort neighbours by distance to entrance for consistent left-to-right feel
+      const neighbours = [...new Set(adj[cur])].filter(n=>!visited[n]);
+      neighbours.sort((a,b) => {
+        // Primary: clockwise angle from entrance
+        const en = nodes[0];
+        const angA = Math.atan2(nodes[a].y-en.y, nodes[a].x-en.x);
+        const angB = Math.atan2(nodes[b].y-en.y, nodes[b].x-en.x);
+        return angA - angB;
+      });
+      for(const n of neighbours) { visited[n]=true; queue.push(n); }
+    }
+    // Any nodes not reached (isolated, shouldn't happen) append at end
+    for(let i=0;i<nodes.length;i++) if(!visited[i]) bfsOrder.push(i);
+    // Apply sequential IDs in BFS order
+    const newId = new Array(nodes.length);
+    bfsOrder.forEach((origIdx, seq) => { newId[origIdx] = seq+1; });
+    nodes.forEach((n,i) => { n.id = newId[i]; });
+
     // ── Center the cluster in the viewport ───────────────────────────────────
     if(nodes.length > 0) {
       const minX = Math.min(...nodes.map(n=>n.x-n.r));
@@ -4682,6 +4716,7 @@ function generateDungeonMap(numRooms, style) {
   }
 
   const connected = new Set([0]);
+  const treeAdj = Array.from({length:rooms.length}, ()=>[]); // adjacency for BFS
   for(let i=1;i<rooms.length;i++) {
     const a = rooms[i];
     let best=0, bestD=Infinity;
@@ -4690,7 +4725,37 @@ function generateDungeonMap(numRooms, style) {
       if(d<bestD){bestD=d;best=ci;}
     }
     connected.add(i);
+    treeAdj[i].push(best);
+    treeAdj[best].push(i);
     carve(rooms[i], rooms[best]);
+  }
+
+  // ── Renumber rooms via BFS from entrance so IDs follow a natural path ────
+  {
+    const visited = new Array(rooms.length).fill(false);
+    const queue = [0];
+    const bfsOrder = [];
+    visited[0] = true;
+    while(queue.length) {
+      const cur = queue.shift();
+      bfsOrder.push(cur);
+      // Sort neighbours by distance from entrance room centre for consistent flow
+      const ecx = cx(rooms[0]), ecy = cy(rooms[0]);
+      const neighbours = treeAdj[cur].filter(n=>!visited[n]);
+      neighbours.sort((a,b)=>{
+        // Sort by angle from entrance centre so numbering sweeps predictably
+        const angA = Math.atan2(cy(rooms[a])-ecy, cx(rooms[a])-ecx);
+        const angB = Math.atan2(cy(rooms[b])-ecy, cx(rooms[b])-ecx);
+        return angA - angB;
+      });
+      for(const n of neighbours){ visited[n]=true; queue.push(n); }
+    }
+    // Any disconnected rooms appended last (shouldn't happen)
+    for(let i=0;i<rooms.length;i++) if(!visited[i]) bfsOrder.push(i);
+    // Apply sequential IDs in BFS order
+    const newId = new Array(rooms.length);
+    bfsOrder.forEach((origIdx, seq) => { newId[origIdx] = seq+1; });
+    rooms.forEach((r,i) => { r.id = newId[i]; });
   }
 
   // ── Find door positions: corridor cells touching room boundary ────────────
