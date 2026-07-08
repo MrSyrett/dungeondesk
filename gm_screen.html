@@ -1470,7 +1470,19 @@ function initDocTool(root) {
     savedFileName = fileName;
     savedDataUrl = dataUrl;
 
-    if(ext === 'pdf') {
+    if(ext === 'html' || ext === 'htm') {
+      mediaType = 'pdf'; // reuse pdf layout (full iframe, no zoom controls)
+      frameWrap.classList.add('pdf-mode');
+      const el = document.createElement('iframe');
+      el.className = 'doc-frame pdf-frame';
+      el.src = dataUrl;
+      el.style.border = 'none';
+      frameWrap.appendChild(el);
+      mediaEl = el;
+      zoomInBtn.style.display = 'none';
+      zoomOutBtn.style.display = 'none';
+      zoomLabel.textContent = 'Scrollable';
+    } else if(ext === 'pdf') {
       mediaType = 'pdf';
       frameWrap.classList.add('pdf-mode');
       // On mobile, use <object> which lets the browser's PDF viewer scroll naturally.
@@ -4980,120 +4992,73 @@ window.init_gen = function(root) {
       const res = root.querySelector('#gen-dun-results');
       if(!res || res.querySelector('.gen-empty')) return;
 
-        const cards = res.querySelectorAll('.gen-card');
-        const hasRooms = cards.length > 0 && Array.from(cards).some(c=>c.querySelector('.gen-item-desc'));
-        const hasSvg   = !!root._mapSvg;
-        if(!hasRooms && !hasSvg) return;
+      const cards    = res.querySelectorAll('.gen-card');
+      const hasRooms = Array.from(cards).some(c => c.querySelector('.gen-item-desc'));
+      const hasSvg   = !!root._mapSvg;
+      if(!hasRooms && !hasSvg) return;
 
-        // Layout constants
-        const CW         = 1100;
-        const CARD_PAD_X = 24;
-        const LABEL_SIZE = 18;
-        const DESC_SIZE  = 16;
-        const LINE_H     = 24;
-        const CARD_PAD_TOP = 24;
-        const CARD_GAP   = 16;
+      // Build room cards HTML
+      let cardsHtml = '';
+      if(hasRooms) {
+        cards.forEach(card => {
+          const nameEl = card.querySelector('.gen-card-name');
+          const descEl = card.querySelector('.gen-item-desc');
+          if(!descEl) return;
+          const label = nameEl ? nameEl.textContent : '';
+          const desc  = descEl.textContent;
+          cardsHtml += `<div class="card">
+            <div class="card-label">${label.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+            <div class="card-desc">${desc.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+          </div>`;
+        });
+      }
 
-        // Pre-calc text layout
-        const tempC = document.createElement('canvas');
-        tempC.width = CW*2; tempC.height = 100;
-        const tctx = tempC.getContext('2d'); tctx.scale(2,2);
-        const maxTextW = CW - CARD_PAD_X*2 - 16;
-        function wrapLines(text, font) {
-          tctx.font = font;
-          const words = text.split(' '), lines = []; let line='';
-          for(const w of words){
-            const t=line+(line?' ':'')+w;
-            if(tctx.measureText(t).width>maxTextW&&line){lines.push(line);line=w;}else line=t;
-          }
-          if(line)lines.push(line); return lines;
-        }
+      // Build map section
+      let mapHtml = '';
+      if(hasSvg) {
+        const svgB64 = btoa(unescape(encodeURIComponent(root._mapSvg)));
+        mapHtml = `<div class="map-wrap"><img src="data:image/svg+xml;base64,${svgB64}" alt="Dungeon Map" style="max-width:100%;height:auto;display:block;margin:0 auto;"></div>`;
+      }
 
-        const titleEl = res.querySelector('.gen-card-name');
-        const tagEl   = res.querySelector('.gen-card-tag');
-        // Header area: title (26px) + tag (16px) + breathing room
-        const HEADER_H = hasRooms ? 96 : 0;
-        let totalH = HEADER_H;
-        const cardData = [];
-        if(hasRooms) {
-          cards.forEach(card => {
-            const nameEl = card.querySelector('.gen-card-name');
-            const descEl = card.querySelector('.gen-item-desc');
-            if(!descEl) return;
-            const lines = wrapLines(descEl.textContent, `${DESC_SIZE}px sans-serif`);
-            const cardH = CARD_PAD_TOP + LABEL_SIZE + 10 + lines.length*LINE_H + CARD_PAD_TOP;
-            cardData.push({ label: nameEl?nameEl.textContent:'', lines, cardH });
-            totalH += cardH + CARD_GAP;
-          });
-          totalH += 24; // bottom padding before map
-        }
-        // Map goes at the bottom
-        const MAP_H = hasSvg ? 320 : 0;
-        const MAP_W = hasSvg ? Math.round(MAP_H * (root._mapWidth / root._mapHeight)) : 0;
-        if(hasSvg) totalH += MAP_H + 16;
+      // Title from first card header
+      const titleEl = res.querySelector('.gen-card-name');
+      const tagEl   = res.querySelector('.gen-card-tag');
+      const title   = titleEl ? titleEl.textContent : 'Dungeon';
+      const tag     = tagEl   ? tagEl.textContent   : '';
 
-        // Build canvas
-        const canvas = document.createElement('canvas');
-        canvas.width = CW*2; canvas.height = totalH*2;
-        const ctx = canvas.getContext('2d'); ctx.scale(2,2);
-        ctx.fillStyle = '#1a1a24';
-        ctx.fillRect(0, 0, CW, totalH);
+      // Compose full HTML document
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${title}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #161616; color: #ede9e1; font-family: sans-serif; padding: 20px; }
+  h1   { font-family: serif; font-size: 24px; color: #c8a020; margin-bottom: 4px; }
+  .tag { font-size: 13px; color: #888; margin-bottom: 20px; }
+  .card {
+    background: #161616; border: 1px solid #262626;
+    border-left: 3px solid #c8a020;
+    padding: 14px 16px; margin-bottom: 10px; border-radius: 4px;
+  }
+  .card-label { font-family: monospace; font-weight: bold; font-size: 15px; color: #ede9e1; margin-bottom: 6px; }
+  .card-desc  { font-size: 14px; color: #cccccc; line-height: 1.6; }
+  .map-wrap   { margin-top: 24px; }
+</style>
+</head><body>
+  <h1>${title}</h1>
+  <div class="tag">${tag}</div>
+  ${cardsHtml}
+  ${mapHtml}
+</body></html>`;
 
-        const drawMap = (startY) => {
-          if(!hasSvg) return;
-          const svgDataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(root._mapSvg)));
-          const img = new Image();
-          img.onload = () => {
-            const mapX = Math.round((CW-MAP_W)/2);
-            ctx.drawImage(img, mapX, startY, MAP_W, MAP_H);
-            const dataUrl = canvas.toDataURL('image/png');
-            const paneNum = parseInt(Object.keys(paneTools).find(k=>paneTools[k]==='gen')||1);
-            setPaneTool(paneNum, 'adventure');
-            setTimeout(()=>{ const inst=instances['adventure']; if(inst&&inst._loadDataUrl) inst._loadDataUrl(dataUrl,'dungeon.png'); }, 150);
-          };
-          img.onerror = () => {
-            const dataUrl = canvas.toDataURL('image/png');
-            const paneNum = parseInt(Object.keys(paneTools).find(k=>paneTools[k]==='gen')||1);
-            setPaneTool(paneNum, 'adventure');
-            setTimeout(()=>{ const inst=instances['adventure']; if(inst&&inst._loadDataUrl) inst._loadDataUrl(dataUrl,'dungeon.png'); }, 150);
-          };
-          img.src = svgDataUrl;
-        };
-
-        const drawText = () => {
-          if(hasRooms) {
-            ctx.fillStyle = '#c8a84a'; ctx.font = `bold 26px serif`;
-            ctx.fillText(titleEl?titleEl.textContent:'Dungeon', CARD_PAD_X, 34);
-            ctx.fillStyle = '#999'; ctx.font = `${DESC_SIZE}px monospace`;
-            ctx.fillText(tagEl?tagEl.textContent:'', CARD_PAD_X, 62);
-          }
-          let y = HEADER_H;
-          for(const {label, lines, cardH} of cardData) {
-            ctx.fillStyle = '#24243a';
-            ctx.beginPath(); ctx.roundRect(CARD_PAD_X, y, CW-CARD_PAD_X*2, cardH, 6); ctx.fill();
-            ctx.fillStyle = '#c8a84a'; ctx.fillRect(CARD_PAD_X, y, 4, cardH);
-            ctx.fillStyle = '#e8e4d8'; ctx.font = `bold ${LABEL_SIZE}px monospace`;
-            ctx.fillText(label, CARD_PAD_X+16, y+CARD_PAD_TOP+LABEL_SIZE-2);
-            ctx.fillStyle = '#c0bdb0'; ctx.font = `${DESC_SIZE}px sans-serif`;
-            let ly = y+CARD_PAD_TOP+LABEL_SIZE+10+LINE_H-4;
-            for(const line of lines){ ctx.fillText(line, CARD_PAD_X+16, ly); ly+=LINE_H; }
-            y += cardH + CARD_GAP;
-          }
-          // Map goes after all room cards
-          const mapStartY = totalH - MAP_H - 8;
-          if(hasSvg) {
-            drawMap(mapStartY);
-          } else {
-            const dataUrl = canvas.toDataURL('image/png');
-            const paneNum = parseInt(Object.keys(paneTools).find(k=>paneTools[k]==='gen')||1);
-            setPaneTool(paneNum, 'adventure');
-            setTimeout(()=>{ const inst=instances['adventure']; if(inst&&inst._loadDataUrl) inst._loadDataUrl(dataUrl,'dungeon.png'); }, 150);
-          }
-        };
-
-        // Kick off rendering
-        drawText();
-      });
+      const dataUrl = 'data:text/html;base64,' + btoa(unescape(encodeURIComponent(html)));
+      const paneNum = parseInt(Object.keys(paneTools).find(k => paneTools[k]==='gen') || 1);
+      setPaneTool(paneNum, 'adventure');
+      setTimeout(() => {
+        const inst = instances['adventure'];
+        if(inst && inst._loadDataUrl) inst._loadDataUrl(dataUrl, 'dungeon.html');
+      }, 150);
+    });
     if(regenBtn) regenBtn.style.display = 'none';
   })();
 
