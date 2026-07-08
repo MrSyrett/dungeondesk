@@ -5001,52 +5001,98 @@ window.init_gen = function(root) {
         // Convert dungeon text cards to a canvas PNG
         const cards = res.querySelectorAll('.gen-card');
         if(!cards.length) return;
+        // Layout constants — larger for readability
+        const CW = 1100;         // canvas logical width
+        const CARD_PAD_X = 24;
+        const LABEL_SIZE = 18;   // room label font size
+        const DESC_SIZE  = 16;   // description font size
+        const LINE_H     = 24;   // line height for description
+        const CARD_PAD_TOP = 24;
+        const CARD_GAP   = 16;
+
+        // Pre-calculate card heights based on word-wrapped desc length
         const canvas = document.createElement('canvas');
-        const scale = 2;
-        canvas.width = 900 * scale;
-        canvas.height = Math.max(400, cards.length * 110 + 80) * scale;
+        canvas.width = CW * 2;
+        canvas.height = 100; // temp, will resize
         const ctx = canvas.getContext('2d');
-        ctx.scale(scale, scale);
-        // Background
-        ctx.fillStyle = '#1a1a24';
-        ctx.fillRect(0, 0, canvas.width/scale, canvas.height/scale);
-        // Title (from first card header)
+        ctx.scale(2,2);
+        const maxTextW = CW - CARD_PAD_X*2 - 16;
+
+        function wrapLines(text, font) {
+          ctx.font = font;
+          const words = text.split(' ');
+          const lines = [];
+          let line = '';
+          for(const w of words) {
+            const test = line + (line?' ':'') + w;
+            if(ctx.measureText(test).width > maxTextW && line) { lines.push(line); line = w; }
+            else line = test;
+          }
+          if(line) lines.push(line);
+          return lines;
+        }
+
+        // Calculate total height
         const titleEl = res.querySelector('.gen-card-name');
-        const tagEl = res.querySelector('.gen-card-tag');
-        ctx.fillStyle = '#c8a84a';
-        ctx.font = 'bold 18px serif';
-        ctx.fillText(titleEl ? titleEl.textContent : 'Dungeon', 24, 36);
-        ctx.fillStyle = '#888';
-        ctx.font = '13px monospace';
-        ctx.fillText(tagEl ? tagEl.textContent : '', 24, 54);
-        // Rooms
-        let y = 72;
-        cards.forEach((card, i) => {
+        const tagEl   = res.querySelector('.gen-card-tag');
+        let totalH = 80; // header area
+        const cardData = [];
+        cards.forEach(card => {
           const nameEl = card.querySelector('.gen-card-name');
           const descEl = card.querySelector('.gen-item-desc');
-          if(!descEl) return; // skip header card (no description)
-          ctx.fillStyle = '#2a2a38';
-          ctx.fillRect(16, y, canvas.width/scale - 32, 96);
-          ctx.fillStyle = '#e0ddd0';
-          ctx.font = 'bold 13px monospace';
+          if(!descEl) return;
           const label = nameEl ? nameEl.textContent : '';
-          ctx.fillText(label, 28, y + 18);
-          ctx.fillStyle = '#b0ae9e';
-          ctx.font = '12px sans-serif';
-          // Word-wrap description
-          const desc = descEl ? descEl.textContent : '';
-          const maxW = canvas.width/scale - 60;
-          const words = desc.split(' ');
-          let line = '', ly = y + 36;
-          for(const word of words) {
-            const test = line + (line ? ' ' : '') + word;
-            if(ctx.measureText(test).width > maxW && line) {
-              ctx.fillText(line, 28, ly); ly += 16; line = word;
-            } else { line = test; }
-          }
-          if(line) ctx.fillText(line, 28, ly);
-          y += 108;
+          const desc  = descEl ? descEl.textContent : '';
+          const descFont = `${DESC_SIZE}px sans-serif`;
+          const lines = wrapLines(desc, descFont);
+          const cardH = CARD_PAD_TOP + LABEL_SIZE + 10 + lines.length*LINE_H + CARD_PAD_TOP;
+          cardData.push({ label, lines, cardH });
+          totalH += cardH + CARD_GAP;
         });
+        totalH += 24;
+
+        // Resize canvas to fit
+        canvas.width  = CW * 2;
+        canvas.height = totalH * 2;
+        ctx.scale(2,2);
+
+        // Background
+        ctx.fillStyle = '#1a1a24';
+        ctx.fillRect(0, 0, CW, totalH);
+
+        // Header
+        ctx.fillStyle = '#c8a84a';
+        ctx.font = `bold 26px serif`;
+        ctx.fillText(titleEl ? titleEl.textContent : 'Dungeon', CARD_PAD_X, 36);
+        ctx.fillStyle = '#999';
+        ctx.font = `${DESC_SIZE}px monospace`;
+        ctx.fillText(tagEl ? tagEl.textContent : '', CARD_PAD_X, 62);
+
+        // Rooms
+        let y = 80;
+        for(const {label, lines, cardH} of cardData) {
+          // Card background
+          ctx.fillStyle = '#24243a';
+          ctx.beginPath();
+          ctx.roundRect(CARD_PAD_X, y, CW - CARD_PAD_X*2, cardH, 6);
+          ctx.fill();
+          // Left accent bar
+          ctx.fillStyle = '#c8a84a';
+          ctx.fillRect(CARD_PAD_X, y, 4, cardH);
+          // Room label
+          ctx.fillStyle = '#e8e4d8';
+          ctx.font = `bold ${LABEL_SIZE}px monospace`;
+          ctx.fillText(label, CARD_PAD_X + 16, y + CARD_PAD_TOP + LABEL_SIZE - 2);
+          // Description lines
+          ctx.fillStyle = '#c0bdb0';
+          ctx.font = `${DESC_SIZE}px sans-serif`;
+          let ly = y + CARD_PAD_TOP + LABEL_SIZE + 10 + LINE_H - 4;
+          for(const line of lines) {
+            ctx.fillText(line, CARD_PAD_X + 16, ly);
+            ly += LINE_H;
+          }
+          y += cardH + CARD_GAP;
+        }
         const dataUrl = canvas.toDataURL('image/png');
         const paneNum = parseInt(Object.keys(paneTools).find(k => paneTools[k] === 'gen') || 1);
         setPaneTool(paneNum, 'adventure');
