@@ -880,7 +880,6 @@ input[type="number"] { -moz-appearance: textfield; }
         <button class="gen-tab" data-tab="monster">Monster</button>
         <button class="gen-tab" data-tab="dungeon">Dungeon</button>
         <button class="gen-tab" data-tab="encounter">Encounter</button>
-        <button class="gen-tab" data-tab="trap">Trap/Hazard</button>
         <button class="gen-tab" data-tab="shop">Shop/Tavern</button>
         <button class="gen-tab" data-tab="loot">Treasure</button>
       </div>
@@ -1061,6 +1060,8 @@ input[type="number"] { -moz-appearance: textfield; }
                 <option value="happens">Something Happens!</option>
                 <option value="rumor">Rumor</option>
                 <option value="secret">Secret</option>
+                <option value="trap">Trap</option>
+                <option value="hazard">Hazard</option>
               </optgroup>
               <optgroup label="── Biomes ──">
               <option value="Arctic">Arctic</option>
@@ -1102,20 +1103,7 @@ input[type="number"] { -moz-appearance: textfield; }
       </div>
 
       <!-- RIVAL CRAWLERS PANEL -->
-      <div class="gen-panel" data-panel="trap">
-        <div class="gen-controls">
-          <label class="gen-label">Type
-            <select class="gen-select" id="gen-trap-type">
-              <option value="random">Random</option>
-              <option value="trap">Trap</option>
-              <option value="hazard">Hazard</option>
-            </select>
-          </label>
-        </div>
-        <div class="gen-results" id="gen-trap-results">
-          <div class="gen-empty">Set options and press 🎲 Generate</div>
-        </div>
-      </div>
+
 
       <!-- 5-ROOM DUNGEON PANEL -->
       <div class="gen-panel" data-panel="shop">
@@ -1186,6 +1174,7 @@ input[type="number"] { -moz-appearance: textfield; }
 
       <!-- SHOP / TAVERN PANEL -->
 
+      <!-- ADVENTURE GENERATOR PANEL -->
 
     </div>
   </div>
@@ -3650,13 +3639,15 @@ function genEncounterItem(type) {
   if(type==='happens')  return card(`<div class="gen-item-name">Something Happens!</div><div class="gen-item-desc">${esc(R(HAPPENS))}</div>`);
   if(type==='rumor')    return card(`<div class="gen-item-name">Rumor</div><div class="gen-item-desc">${esc(R(RUMORS))}</div>`);
   if(type==='secret')   return card(`<div class="gen-item-name">Secret</div><div class="gen-item-desc">${esc(R(SECRETS_D1))} ${esc(R(SECRETS_D2))}</div>`);
+  if(type==='trap')     return genTrap('trap');
+  if(type==='hazard')   return genTrap('hazard');
   // Biome
   const pool = BIOME_ENC_TABLES[type];
   if(pool) return card(`<div class="gen-card-header"><span class="gen-card-name">${esc(type)} Encounter</span></div><div class="gen-item-desc">${esc(R(pool))}</div>`);
   return card(`<div class="gen-empty">Unknown type</div>`);
 }
 
-const ALL_ENC_TYPES = ['happens','rumor','secret',
+const ALL_ENC_TYPES = ['happens','rumor','secret','trap','hazard',
   'Arctic','Artisan District','Castle District','Cave','Deep Tunnels',
   'Desert','Forest','Grassland','High District','Jungle','Low District',
   'Market','Mountain','Ocean','River & Coast','Ruins','Slums','Swamp',
@@ -4854,6 +4845,11 @@ window._genDungeonMap = generateDungeonMap;
 
 })();
 
+// ── Adventure Generator ────────────────────────────────────────────────────
+(function(){
+
+})();
+
 window.init_gen = function(root) {
   const tabs   = root.querySelectorAll('.gen-tab');
   const panels = root.querySelectorAll('.gen-panel');
@@ -4883,6 +4879,8 @@ window.init_gen = function(root) {
       const res=root.querySelector('#gen-loot-results'); res.innerHTML='';
       for(let i=0;i<count;i++) res.appendChild(genTreasure(tier,type));
 
+
+
     } else if(activeTab==='shop') {
       const type=root.querySelector('#gen-shop-type').value;
       const tier=root.querySelector('#gen-shop-tier').value;
@@ -4909,11 +4907,6 @@ window.init_gen = function(root) {
       const mut=root.querySelector('#gen-mon-mut').value;
       const res=root.querySelector('#gen-mon-results'); res.innerHTML='';
       res.appendChild(genMonster(pl,mut));
-
-    } else if(activeTab==='trap') {
-      const type=root.querySelector('#gen-trap-type').value;
-      const res=root.querySelector('#gen-trap-results'); res.innerHTML='';
-      res.appendChild(genTrap(type));
 
     } else if(activeTab==='dungeon') {
       const level  = root.querySelector('#gen-dun-level').value;
@@ -4965,6 +4958,7 @@ window.init_gen = function(root) {
       }
     }
   });
+
 
   // Wire Load to Maps button
   (function() {
