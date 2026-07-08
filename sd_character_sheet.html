@@ -94,10 +94,10 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .hdr-fields-2{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:2px solid var(--border);}
 
 /* MAIN BODY */
-.main-body{display:flex;border-bottom:2px solid var(--border);}
+.main-body{display:grid;grid-template-columns:220px 1fr 230px;grid-template-rows:auto auto;border-bottom:2px solid var(--border);}
 
 /* LEFT — stats + info */
-.left-col{width:220px;flex-shrink:0;border-right:2px solid var(--border);}
+.left-col{grid-column:1;grid-row:1;border-right:2px solid var(--border);}
 
 /* STATS BLOCK */
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--rule);}
@@ -139,7 +139,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .coin-input{width:100%;border:none;border-bottom:1px solid var(--rule);background:transparent;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;text-align:center;color:var(--ink);outline:none;}
 
 /* CENTER — attacks + gear */
-.center-col{flex:1;display:flex;flex-direction:column;border-right:2px solid var(--border);}
+.center-col{grid-column:2;grid-row:1;display:flex;flex-direction:column;border-right:2px solid var(--border);}
 .attacks-section,.gear-section{display:flex;flex-direction:column;}
 .attacks-table,.gear-table{width:100%;border-collapse:collapse;}
 .attacks-table th,.gear-table th{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);padding:3px 6px;border-bottom:1px solid var(--rule);text-align:left;background:var(--bg);}
@@ -149,13 +149,15 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .atk-roll-btn:hover{background:var(--black);border-color:var(--black);color:white;}
 
 /* RIGHT — talents + spells */
-.right-col{width:230px;flex-shrink:0;}
+.right-col{grid-column:3;grid-row:1/3;border-left:2px solid var(--border);}
 .talents-section{padding:0;}
 .talents-area{min-height:120px;padding:6px 10px;border-bottom:1px solid var(--rule);}
 .talents-area textarea{width:100%;min-height:110px;border:none;background:transparent;resize:none;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);}
 .spells-list{padding:0;}
+.spells-bottom{grid-column:1/3;grid-row:2;border-top:2px solid var(--border);}
 /* Spell rows use grid for perfect column alignment */
-.spell-row{display:grid;grid-template-columns:16px 1fr 26px 20px 20px 24px;align-items:center;gap:2px;padding:1px 6px;border-bottom:1px solid var(--rule);}
+.spell-row{display:grid;grid-template-columns:16px 1fr 26px 20px 20px 24px;align-items:start;gap:2px;padding:1px 6px;border-bottom:1px solid var(--rule);}
+.spell-desc{border:none;background:transparent;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:500;outline:none;color:var(--muted);padding:1px 2px 3px;min-width:0;width:100%;resize:none;grid-column:2/7;height:auto;min-height:18px;}
 .spell-row.lost{opacity:.4;}
 .spell-row.lost .spell-input{text-decoration:line-through;color:var(--muted);}
 .spell-input{border:none;background:transparent;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);padding:3px 2px;min-width:0;}
@@ -278,12 +280,10 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
       </div>
 
       <!-- SPELLS -->
-      <div class="sl">Spells</div>
-      <div id="spells-list"></div>
 
     </div><!-- end left-col -->
 
-    <!-- CENTER: Attacks + Talents & Spells below -->
+    <!-- CENTER: Attacks + Talents below -->
     <div class="center-col">
       <div class="sl">Attacks</div>
       <table class="attacks-table">
@@ -302,11 +302,17 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
       <button onclick="addAttackRow()" style="margin:4px 8px;padding:3px 8px;background:var(--black);color:white;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;">+ Add</button>
 
       <!-- TALENTS & SPELLS below attacks -->
-      <div class="sl" style="margin-top:4px;">Talents &amp; Spells</div>
+      <div class="sl" style="margin-top:4px;">Talents</div>
       <div class="talents-area" style="flex:1;">
         <textarea id="talents-text" placeholder="List talents, features, and special abilities here..." style="width:100%;height:100%;min-height:160px;border:none;background:transparent;resize:none;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);padding:6px 10px;"></textarea>
       </div>
     </div><!-- end center-col -->
+
+    <!-- SPELLS: spans left + center columns -->
+    <div class="spells-bottom">
+      <div class="sl">Talents</div>
+      <div id="spells-list"></div>
+    </div><!-- end spells-bottom -->
 
     <!-- RIGHT: Gear + Free to Carry -->
     <div class="right-col">
@@ -456,14 +462,19 @@ function buildSpells() {
   // Header row
   const hdr = document.createElement('div');
   hdr.style.cssText = 'display:grid;grid-template-columns:16px 1fr 26px 20px 20px 24px;align-items:center;gap:2px;padding:2px 6px;border-bottom:2px solid var(--border);background:var(--box);';
-  hdr.innerHTML = '<span style="font-size:7px;font-weight:700;color:var(--muted);">#</span><span style="font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Spell</span><span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);text-align:center;">Lvl</span><span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Always Advantage">▲</span><span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Lost">✗</span><span style="font-size:7px;font-weight:700;color:var(--muted);">Roll</span>';
+  hdr.innerHTML = '<span style="font-size:7px;font-weight:700;color:var(--muted);">#</span><span style="font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Talent / Spell</span><span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);text-align:center;">Lvl</span><span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Always Advantage">▲</span><span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Lost">✗</span><span style="font-size:7px;font-weight:700;color:var(--muted);">Roll</span>';
   list.appendChild(hdr);
   for(let i=1;i<=20;i++) {
     const row = document.createElement('div');
     row.className = 'spell-row';
-    row.innerHTML = `<span class="spell-num">${i}.</span><input type="text" class="spell-input" placeholder=""><input type="text" class="spell-level" placeholder="1" title="Spell Level (DC = 10 + level)"><button class="spell-adv-btn" onclick="toggleSpellAdv(this)" title="Always roll with advantage">▲</button><button class="spell-lost-btn" onclick="toggleSpellLost(this)" title="Mark as lost until rest">✗</button><button class="spell-cast-btn" onclick="rollSpell(this)" title="Cast / Roll">✦</button>`;
+    row.innerHTML = `<span class="spell-num">${i}.</span><input type="text" class="spell-input" placeholder=""><input type="text" class="spell-level" placeholder="—" title="Spell Level (DC = 10 + level)"><button class="spell-adv-btn" onclick="toggleSpellAdv(this)" title="Always roll with advantage">▲</button><button class="spell-lost-btn" onclick="toggleSpellLost(this)" title="Mark as lost until rest">✗</button><button class="spell-cast-btn" onclick="rollSpell(this)" title="Cast / Roll">✦</button><textarea class="spell-desc" placeholder="Description..." rows="1" oninput="autoResizeDesc(this)"></textarea>`;
     list.appendChild(row);
   }
+}
+
+function autoResizeDesc(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
 }
 
 function toggleAtkAdv(btn) {
@@ -745,6 +756,7 @@ function collectSheet(){
     level: row.querySelector('.spell-level')?.value.trim() || '1',
     adv:   row.querySelector('.spell-adv-btn')?.classList.contains('on') || false,
     lost:  row.querySelector('.spell-lost-btn')?.classList.contains('on') || false,
+    desc:  row.querySelector('.spell-desc')?.value.trim() || '',
   }));
   const spellsList = spellData.filter(s => s.name).map(s => s.name);
   const spellsKnown = spellsList.join(', ');
@@ -917,12 +929,14 @@ function _applySDData(d){
     // Restore extra spell data from _sheet if available
     const sd = d._sheet?.spellData?.[i];
     if(sd) {
-      const lvlEl = row.querySelector('.spell-level');
+      const lvlEl  = row.querySelector('.spell-level');
       const advBtn = row.querySelector('.spell-adv-btn');
       const lostBtn = row.querySelector('.spell-lost-btn');
-      if(lvlEl) lvlEl.value = sd.level || '1';
+      const descEl = row.querySelector('.spell-desc');
+      if(lvlEl)  lvlEl.value = sd.level || '—';
       if(advBtn) { advBtn.classList.toggle('on', !!sd.adv); }
       if(lostBtn) { lostBtn.classList.toggle('on', !!sd.lost); row.classList.toggle('lost', !!sd.lost); }
+      if(descEl && sd.desc) { descEl.value = sd.desc; autoResizeDesc(descEl); }
     }
   });
 
@@ -1087,8 +1101,10 @@ autoLoad();
   .main-body{flex-direction:column;}
   .left-col{width:100%;border-right:none;border-bottom:2px solid var(--border);}
   .stats-grid{grid-template-columns:repeat(3,1fr);}
-  .right-col{width:100%;border-top:2px solid var(--border);}
-  .center-col{border-right:none;border-bottom:2px solid var(--border);}
+  .right-col{width:100%;border-top:2px solid var(--border);border-left:none;grid-column:1;grid-row:auto;}
+  .center-col{border-right:none;border-bottom:2px solid var(--border);grid-column:1;grid-row:auto;}
+  .left-col{grid-column:1;grid-row:auto;}
+  .spells-bottom{grid-column:1;grid-row:auto;}
   .hdr-fields,.hdr-fields-2{grid-template-columns:1fr 1fr;}
   .hdr-field:nth-child(2n){border-right:none;}
   .hdr-field:nth-child(3){border-right:1px solid var(--rule);}
