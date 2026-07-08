@@ -1350,12 +1350,17 @@ function renderPreview() {
       const tag=n.tag?n.tag.split('//')[0].trim().toUpperCase():n.type.toUpperCase();
       return `<div class="flow-node" style="background:${c.bg};">
         <div class="flow-label" style="color:${c.lbl}">${tag}</div>
-        <div class="flow-name" style="color:${c.txt}">${escH(n.name.substring(0,14))}</div>
       </div>${i<allNodes.length-1?'<div class="flow-arrow">→</div>':''}`;
     }).join('');
   };
   renderFlowchart('p-flowchart');
   renderFlowchart('p-flowchart-2');
+
+  // Hide pages 3 & 4 when no content
+  const _p3 = document.getElementById('page-three');
+  const _p4 = document.getElementById('page-four');
+  if(_p3) _p3.style.display = (state.maps||[]).length ? '' : 'none';
+  if(_p4) _p4.style.display = (state.statblocks||[]).length ? '' : 'none';
 
   // Maps - render each map on page 3
   const mapsContainer=document.getElementById('p-maps-container');
@@ -3338,17 +3343,17 @@ function randStrongOpen() {
 
 // ── Encounters ────────────────────────────────────────────────────────────
 const ENC_SUBTYPES = {
-  guardian: 'Fight - Guardian', puzzle: 'Challenge - Puzzle', setback: 'Twist - Setback',
-  climax: 'Fight - Boss', reward: 'Reward - Treasure',
-  'Combat Encounter': 'Fight - Mooks', 'Exploration Chamber': 'Scenic',
-  'Trap Room': 'Challenge - Trap', 'Treasure Cache': 'Reward - Treasure',
-  'Side Chamber': 'Scenic', 'Barracks': 'Fight - Mooks',
-  'Storage Room': 'Scenic', 'Secret Room': 'Twist - Secret Area',
-  'Sub-Boss Lair': 'Fight - Sub-Boss', 'Puzzle Room': 'Challenge - Puzzle',
-  'Shrine': 'Reward - Sanctuary', 'Laboratory': 'Scenic',
-  'Prison Cells': 'Challenge - Social', 'Collapsed Section': 'Twist - Environmental',
-  'Natural Cave': 'Scenic', 'Guard Post': 'Fight - Sentry',
-  'Armory': 'Reward - Treasure', 'Ritual Chamber': 'Challenge - Environmental',
+  guardian: 'Guardian', puzzle: 'Puzzle', setback: 'Setback',
+  climax: 'Boss', reward: 'Treasure',
+  'Combat Encounter': 'Mooks', 'Exploration Chamber': 'Scenic',
+  'Trap Room': 'Trap', 'Treasure Cache': 'Treasure',
+  'Side Chamber': 'Scenic', 'Barracks': 'Mooks',
+  'Storage Room': 'Scenic', 'Secret Room': 'Secret Area',
+  'Sub-Boss Lair': 'Sub-Boss', 'Puzzle Room': 'Puzzle',
+  'Shrine': 'Sanctuary', 'Laboratory': 'Scenic',
+  'Prison Cells': 'Social', 'Collapsed Section': 'Environmental',
+  'Natural Cave': 'Scenic', 'Guard Post': 'Sentry',
+  'Armory': 'Treasure', 'Ritual Chamber': 'Environmental',
 };
 const ROOM_POOL_LABELS = ['Guardian','Puzzle','Setback','Climax','Reward'];
 const ROOM_POOL_TYPES  = ['combat','npc','exploration','combat','exploration'];
@@ -3386,7 +3391,6 @@ function _addEnc(mot, poolIdx) {
   const biomePool = BIOME_ENC_TABLES[mot];
   const biomeEnc = biomePool ? '\n\n[' + mot + '] ' + _R(biomePool) : '';
   const label = labels[poolIdx];
-  const tag = mot + ' — ' + (ENC_SUBTYPES[label] || label);
   const subtype = ENC_SUBTYPES[label] || label;
   addLocation({ name: '', type: types[poolIdx], tag: subtype, readaloud: '', desc: desc + biomeEnc });
 }
