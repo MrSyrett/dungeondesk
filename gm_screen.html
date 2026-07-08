@@ -1197,6 +1197,7 @@ input[type="number"] { -moz-appearance: textfield; }
               <option value="hud">HUD</option>
               <option value="parchment">Dungeon</option>
               <option value="cave">Cave</option>
+              <option value="nodes">Nodes</option>
             </select>
           </label>
         </div>
@@ -4504,6 +4505,89 @@ function generateDungeonMap(numRooms, style) {
   const COLS = 22, ROWS = 16;
   const grid = Array.from({length: ROWS}, () => Array(COLS).fill(0));
   // grid values: 0=wall, 1=corridor, 2=room
+
+  // ── Nodes style: separate layout, early return ────────────────────────────
+  if(style === 'nodes') {
+    const W = COLS*CELL, H = ROWS*CELL;
+    const rng = () => Math.random();
+    const ri  = (a,b) => Math.floor(rng()*(b-a+1))+a;
+
+    // Place nodes (circles) with minimum spacing
+    const nodes = [];
+    const MIN_DIST = 80;
+    let attempts = 0;
+    // Entrance node — random position near any edge
+    const edgePad = 60;
+    const edge = ri(0,3);
+    const ex = edge===1 ? W-edgePad : edge===3 ? edgePad : ri(edgePad, W-edgePad);
+    const ey = edge===2 ? H-edgePad : edge===0 ? edgePad : ri(edgePad, H-edgePad);
+    nodes.push({ x:ex, y:ey, r:ri(28,42), id:1, isEntrance:true });
+
+    while(nodes.length < numRooms && attempts < numRooms*300) {
+      attempts++;
+      const x = ri(50, W-50), y = ri(50, H-50);
+      const r = ri(18, 38);
+      const tooClose = nodes.some(n => Math.hypot(n.x-x, n.y-y) < MIN_DIST);
+      if(!tooClose) nodes.push({ x, y, r, id:nodes.length+1 });
+    }
+
+    // Connect each node to its nearest already-connected neighbour (MST-ish)
+    const edges = [];
+    const connected = new Set([0]);
+    for(let i=1; i<nodes.length; i++) {
+      const a = nodes[i];
+      let best = 0, bestD = Infinity;
+      for(const ci of connected) {
+        const b = nodes[ci];
+        const d = Math.hypot(a.x-b.x, a.y-b.y);
+        if(d < bestD) { bestD=d; best=ci; }
+      }
+      connected.add(i);
+      edges.push([i, best]);
+    }
+    // Add ~30% extra cross-connections for loops
+    for(let i=0; i<nodes.length; i++) {
+      for(let j=i+2; j<nodes.length; j++) {
+        const d = Math.hypot(nodes[i].x-nodes[j].x, nodes[i].y-nodes[j].y);
+        if(d < 160 && rng() < 0.3) edges.push([i,j]);
+      }
+    }
+
+    // Build SVG
+    const parts = [];
+    parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`);
+    // Dark background
+    parts.push(`<rect width="${W}" height="${H}" fill="#12121a"/>`);
+
+    // Draw connecting lines first (behind nodes)
+    for(const [ai, bi] of edges) {
+      const a = nodes[ai], b = nodes[bi];
+      parts.push(`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#4a4a6a" stroke-width="2.5" stroke-linecap="round"/>`);
+    }
+
+    // Draw nodes
+    for(const node of nodes) {
+      const fill   = node.isEntrance ? '#c8a84a' : '#2a2a4a';
+      const stroke = node.isEntrance ? '#e8c86a' : '#6a6a9a';
+      parts.push(`<circle cx="${node.x}" cy="${node.y}" r="${node.r}" fill="${fill}" stroke="${stroke}" stroke-width="2"/>`);
+      parts.push(`<text x="${node.x}" y="${node.y+1}" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="monospace" font-weight="bold" font-size="${Math.max(9, node.r*0.55)}">${node.id}</text>`);
+    }
+
+    // Entrance marker — small open circle outside the entrance node
+    const en = nodes[0];
+    parts.push(`<circle cx="${en.x}" cy="${en.y}" r="${en.r+8}" fill="none" stroke="#e8c86a" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.7"/>`);
+
+    // Legend
+    const legY = H-18;
+    parts.push(`<rect x="0" y="${legY-4}" width="${W}" height="22" fill="#12121a" opacity="0.9"/>`);
+    parts.push(`<text x="8" y="${legY+10}" fill="white" font-family="monospace" font-size="11" opacity="0.9">Nodes · ${nodes.length} rooms</text>`);
+    parts.push(`<text x="${W-8}" y="${legY+10}" text-anchor="end" fill="white" font-family="monospace" font-size="10" opacity="0.6">The Dungeon Desk</text>`);
+    parts.push('</svg>');
+
+    return { svg:parts.join(''), rooms:nodes.length, width:W, height:H };
+  }
+
+  // ── Standard grid-based styles below ────────────────────────────────────
 
   // ── Style palettes ────────────────────────────────────────────────────────
   const STYLES = {
