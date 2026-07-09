@@ -1178,6 +1178,12 @@ function updateLocCardColor(radio) {
   radio.closest('.location-card').style.borderLeftColor=colors[radio.value]||colors.combat;
 }
 
+function monsterOptions() {
+  const sorted = SD_MONSTERS.slice().sort((a,b)=>a.name.localeCompare(b.name));
+  return '<option value="">\u2014 Select Shadowdark Monster \u2014</option>' +
+    sorted.map(m=>'<option value="'+m.name+'">'+m.name+' (LV '+m.lv+')</option>').join('');
+}
+
 function addStatBlock(data={}) {
   const list=document.getElementById('statblocks-list');
   const div=document.createElement('div'); div.className='entity-card';
@@ -1189,6 +1195,12 @@ function addStatBlock(data={}) {
     <div class="entity-card-header">
       <input class="entity-name-input sb-name-input" type="text" placeholder="Name" value="${escA(data.name||'')}" oninput="autosave()">
       <div style="display:flex;align-items:center;gap:0;flex-shrink:0;"><button class="btn-move" onclick="moveCard(this,-1)" title="Move up">↑</button><button class="btn-move" onclick="moveCard(this,1)" title="Move down">↓</button><button class="btn-remove" onclick="this.closest('.entity-card').remove();autosave()">✕</button></div>
+    </div>
+    <div class="field-group" style="margin-bottom:4px;">
+      <label class="field-label">Load Monster</label>
+      <select style="width:100%;background:var(--ui-bg);border:1px solid var(--ui-border);border-radius:3px;color:var(--ui-text);font-family:'Montserrat',sans-serif;font-size:11px;padding:5px 8px;outline:none;" onchange="fillMonster(this,this.closest('.entity-card'))">
+        ${monsterOptions()}
+      </select>
     </div>
     <div class="field-group">
       <label class="field-label">Type</label>
@@ -3603,5 +3615,128 @@ function randNPC() {
 
 </script>
 <button class="sidebar-pull-tab" id="sidebar-pull-tab" onclick="toggleSidebar()" title="Toggle sidebar">◀</button>
+
+<script>
+const SD_MONSTERS = [
+  {name:'Aboleth',         ac:'16', hp:'39',  atk:'2 tentacle +5 (1d8+curse) or 1 tail +5 (3d6)', mv:'near (swim)', lv:'8',  al:'C', s:'+4',d:'-1',c:'+3',i:'+4',w:'+2',ch:'+2', notes:'Curse: DC 15 CON or turn into deep one over 2d10 days. Enslave: DC 15 WIS or controlled 1d4 rounds. Telepathic within far.'},
+  {name:'Acolyte',         ac:'12', hp:'4',   atk:'1 mace +1 (1d6) or 1 spell +2',              mv:'near',          lv:'1',  al:'L', s:'+1',d:'-1',c:'+0',i:'-1',w:'+2',ch:'+0', notes:'Healing Touch (WIS DC 11): Heal 1d4 HP close.'},
+  {name:'Animated Armor',  ac:'15', hp:'11',  atk:'1 longsword +3 (1d8)',                        mv:'near',          lv:'2',  al:'C', s:'+3',d:'-1',c:'+2',i:'-1',w:'+1',ch:'+0', notes:'Statue: Looks like normal armor when still.'},
+  {name:'Ankheg',          ac:'14', hp:'14',  atk:'1 bite +4 (1d6) or 1 acid spray (near) +4 (2d6)', mv:'near (burrow)', lv:'3', al:'N', s:'+2',d:'+2',c:'+1',i:'-2',w:'+1',ch:'-2', notes:''},
+  {name:'Ape',             ac:'12', hp:'10',  atk:'1 fist +2 (1d6) or 1 rock (far) +2 (1d4)',   mv:'near (climb)',  lv:'2',  al:'N', s:'+2',d:'+2',c:'+1',i:'-2',w:'+1',ch:'+0', notes:''},
+  {name:'Ape, Snow',       ac:'13', hp:'19',  atk:'2 fist +4 (1d6) or 1 rock (far) +4 (2d6)',   mv:'near (climb)',  lv:'4',  al:'N', s:'+3',d:'+1',c:'+1',i:'-2',w:'+1',ch:'+0', notes:'Thick Fur: Cold immune.'},
+  {name:'Apprentice',      ac:'11', hp:'3',   atk:'1 dagger +1 (1d4) or 1 spell +2',             mv:'near',          lv:'1',  al:'N', s:'-1',d:'+1',c:'-1',i:'+2',w:'+0',ch:'+0', notes:'Beguile (INT DC 11): Stupify LV 2 or less in near. Magic Bolt (INT DC 11): 1d4 damage far.'},
+  {name:'Archangel',       ac:'18', hp:'76',  atk:'3 flaming greatsword +10 (2d12)',             mv:'double near (fly)', lv:'16', al:'L', s:'+5',d:'+2',c:'+4',i:'+4',w:'+5',ch:'+5', notes:'Command: DC 18 CHA to resist. Crown of Fire: Hostile spells are extreme (DC 18).'},
+  {name:'Archmage',        ac:'12', hp:'44',  atk:'2 spell +7',                                  mv:'near',          lv:'10', al:'L', s:'-1',d:'+2',c:'-1',i:'+4',w:'+2',ch:'+1', notes:'Death Bolt DC 15, Enervate DC 14, Fireblast 4d6 DC 14, Float DC 14, Mithralskin DC 14, Void Step DC 15.'},
+  {name:'Assassin',        ac:'15', hp:'38',  atk:'2 poisoned dagger +6 (2d4)',                  mv:'near (climb)',  lv:'8',  al:'C', s:'+2',d:'+4',c:'+2',i:'+2',w:'+3',ch:'+3', notes:'Execute: x3 damage vs surprised targets.'},
+  {name:'Azer',            ac:'15', hp:'15',  atk:'2 flaming warhammer +3 (1d10) or 1 crossbow (far) +0 (1d6)', mv:'near', lv:'3', al:'L', s:'+3',d:'+0',c:'+2',i:'+0',w:'+0',ch:'+0', notes:'Impervious: Fire immune.'},
+  {name:'Badger',          ac:'11', hp:'5',   atk:'2 claw +2 (1d4)',                             mv:'near (burrow)', lv:'1',  al:'N', s:'+2',d:'+0',c:'+1',i:'-3',w:'+1',ch:'-2', notes:'Rage 1/day: Immune to morale, +1d4 damage for 3 rounds.'},
+  {name:'Bandit',          ac:'13', hp:'4',   atk:'1 club +1 (1d4) or 1 shortbow (far) +0 (1d4)', mv:'near',        lv:'1',  al:'C', s:'+1',d:'+0',c:'+0',i:'-1',w:'+0',ch:'-1', notes:'Ambush: Extra die damage when undetected.'},
+  {name:'Basilisk',        ac:'14', hp:'25',  atk:'2 bite +4 (2d6+petrify)',                     mv:'near',          lv:'5',  al:'N', s:'+3',d:'+1',c:'+3',i:'-3',w:'+1',ch:'-3', notes:'Petrify: Touch or gaze, DC 15 CON or petrified.'},
+  {name:'Bat, Giant',      ac:'12', hp:'9',   atk:'1 bite +2 (1d6)',                             mv:'near (fly)',    lv:'2',  al:'N', s:'-1',d:'+2',c:'+0',i:'-3',w:'+1',ch:'-3', notes:''},
+  {name:'Bat, Swarm',      ac:'12', hp:'18',  atk:'3 bite +2 (1d6)',                             mv:'near (fly)',    lv:'4',  al:'N', s:'-3',d:'+2',c:'+0',i:'-3',w:'+1',ch:'-3', notes:''},
+  {name:'Bear, Brown',     ac:'13', hp:'25',  atk:'2 claw +4 (1d8)',                             mv:'near (climb)',  lv:'5',  al:'N', s:'+4',d:'+1',c:'+3',i:'-2',w:'+1',ch:'-2', notes:'Crush: Extra die if both claws hit same target.'},
+  {name:'Bear, Polar',     ac:'13', hp:'34',  atk:'2 claw +6 (2d6)',                             mv:'near (climb)',  lv:'7',  al:'N', s:'+4',d:'+1',c:'+3',i:'-2',w:'+1',ch:'-2', notes:'Crush: Extra die if both claws hit. Thick Fur: Cold immune.'},
+  {name:'Beastman',        ac:'12', hp:'5',   atk:'1 spear +2 (1d6+1)',                          mv:'near',          lv:'1',  al:'C', s:'+2',d:'+1',c:'+1',i:'-2',w:'+1',ch:'-1', notes:'Brutal: +1 melee damage (included).'},
+  {name:'Berserker',       ac:'12', hp:'10',  atk:'1 greataxe +2 (1d10) or 1 spear +2 (1d6)',   mv:'near',          lv:'2',  al:'N', s:'+2',d:'+1',c:'+1',i:'+0',w:'+1',ch:'+0', notes:'Rage 1/day: Immune to morale, +1d4 damage for 3 rounds.'},
+  {name:'Black Pudding',   ac:'9',  hp:'30',  atk:'3 tentacle +4 (2d6)',                         mv:'near (climb)',  lv:'6',  al:'N', s:'+2',d:'-1',c:'+3',i:'-4',w:'-3',ch:'-4', notes:'Impervious: Only damaged by fire. Corrosive: Metal/wood dissolves on d6 roll 1-3.'},
+  {name:'Boar',            ac:'12', hp:'14',  atk:'2 tusk +3 (1d6)',                             mv:'near',          lv:'3',  al:'N', s:'+3',d:'+0',c:'+1',i:'-2',w:'+1',ch:'-2', notes:'Gore: Extra die if both tusks hit same target.'},
+  {name:'Brain Eater',     ac:'14', hp:'36',  atk:'4 tentacle +5 (1d8+latch) or 1 mind blast or 1 mind control', mv:'near', lv:'8', al:'C', s:'+2',d:'+3',c:'+0',i:'+4',w:'+2',ch:'+4', notes:'Hear Thoughts within near. Latch: tentacles auto-hit next round. Mind Blast: DC 15 INT or 3d6 + paralyzed 1d4 rounds. Mind Control: DC 15 CHA or controlled 1d4 rounds.'},
+  {name:'Bugbear',         ac:'13', hp:'14',  atk:'2 spiked mace +3 (1d6)',                      mv:'near',          lv:'3',  al:'C', s:'+3',d:'+0',c:'+1',i:'-1',w:'+0',ch:'-2', notes:'Stealthy: ADV on sneak/hide.'},
+  {name:'Bulette',         ac:'17', hp:'40',  atk:'3 bite +5 (2d6) or 1 leap',                  mv:'near (burrow)', lv:'8',  al:'N', s:'+5',d:'+1',c:'+4',i:'-3',w:'+1',ch:'-2', notes:'Leap: Jump near high/double near distance, then 2 bite attacks.'},
+  {name:'Cave Brute',      ac:'14', hp:'28',  atk:'2 claw +5 (1d8) and 1 mandible +5 (1d10)',   mv:'near (burrow)', lv:'6',  al:'N', s:'+4',d:'+1',c:'+1',i:'-3',w:'+1',ch:'-3', notes:'Bewilder: DC 12 CHA or dazed and no action.'},
+  {name:'Cave Creeper',    ac:'12', hp:'18',  atk:'1 bite +3 (1d6) and 1 tentacles +3 (1d8+toxin)', mv:'near (climb)', lv:'4', al:'N', s:'+2',d:'+2',c:'+0',i:'-3',w:'+1',ch:'-3', notes:'Toxin: DC 12 CON or paralyzed 1d4 rounds.'},
+  {name:'Goblin',          ac:'13', hp:'4',   atk:'1 scimitar +1 (1d6) or 1 shortbow (far) +1 (1d4)', mv:'near',    lv:'1',  al:'C', s:'+0',d:'+1',c:'+0',i:'-1',w:'+0',ch:'-1', notes:'Crafty: +1 to attack rolls against larger creatures.'},
+  {name:'Hobgoblin',       ac:'15', hp:'11',  atk:'1 longsword +2 (1d8) or 1 longbow (far) +2 (1d6)', mv:'near',   lv:'2',  al:'C', s:'+2',d:'+1',c:'+1',i:'+0',w:'+1',ch:'+0', notes:'Phalanx: +1 attack and AC when adjacent to another hobgoblin.'},
+  {name:'Kobold',          ac:'13', hp:'3',   atk:'1 spear +1 (1d6) or 1 sling (near) +1 (1d4)', mv:'near',         lv:'0',  al:'C', s:'-1',d:'+2',c:'+0',i:'+0',w:'+0',ch:'-1', notes:'Pack Fighter: +1 attack when adjacent to another kobold.'},
+  {name:'Orc',             ac:'13', hp:'9',   atk:'1 greataxe +2 (1d10) or 1 javelin (near) +2 (1d6)', mv:'near',   lv:'1',  al:'C', s:'+3',d:'+0',c:'+1',i:'-1',w:'+0',ch:'-1', notes:'Ferocity: 1/day, stay at 1 HP instead of dropping to 0.'},
+  {name:'Orc Warchief',    ac:'16', hp:'38',  atk:'2 battle-axe +5 (1d10) or 1 javelin (near) +5 (1d6)', mv:'near', lv:'5',  al:'C', s:'+4',d:'+1',c:'+2',i:'+0',w:'+1',ch:'+2', notes:'Warcry: Allies within near gain +1 to attacks for 3 rounds.'},
+  {name:'Skeleton',        ac:'12', hp:'8',   atk:'1 shortsword +2 (1d6) or 1 shortbow (far) +2 (1d4)', mv:'near',  lv:'1',  al:'C', s:'+1',d:'+2',c:'+0',i:'-3',w:'-2',ch:'-3', notes:'Undead: Immune to sleep, charm, poison, disease.'},
+  {name:'Zombie',          ac:'9',  hp:'16',  atk:'1 slam +2 (1d6)',                             mv:'near (slow)',   lv:'2',  al:'C', s:'+3',d:'-2',c:'+2',i:'-4',w:'-3',ch:'-4', notes:'Undead: Immune to sleep, charm, poison. Mindless: Cannot be morale-checked.'},
+  {name:'Ghoul',           ac:'13', hp:'16',  atk:'2 claw +2 (1d4+paralyze) and 1 bite +2 (1d8)', mv:'near',       lv:'3',  al:'C', s:'+1',d:'+2',c:'+0',i:'-2',w:'+0',ch:'-2', notes:'Paralyze: DC 12 CON or paralyzed 1d4 rounds. Undead: Immune to sleep, charm, poison.'},
+  {name:'Wight',           ac:'14', hp:'32',  atk:'2 life drain +4 (1d6+drain)',                 mv:'near',          lv:'5',  al:'C', s:'+3',d:'+0',c:'+2',i:'+0',w:'+1',ch:'-2', notes:'Life Drain: Target loses 1 max HP until rest. Undead immunities.'},
+  {name:'Vampire',         ac:'16', hp:'50',  atk:'2 claw +6 (1d8) or 1 blood drain +6 (2d6)',  mv:'double near',   lv:'9',  al:'C', s:'+4',d:'+3',c:'+3',i:'+3',w:'+2',ch:'+4', notes:'Charm: DC 15 CHA or charmed. Regenerate: 10 HP/round unless in sunlight. Stake kills. Gaseous form at 0 HP.'},
+  {name:'Lich',            ac:'17', hp:'89',  atk:'1 rot touch +8 (1d10+necrosis) and 3 spell +8', mv:'near',       lv:'16', al:'C', s:'+1',d:'+2',c:'+2',i:'+5',w:'+4',ch:'+3', notes:'Necrosis: DC 15 CON or max HP reduced by damage dealt. Phylactery: Returns in 1d10 days unless phylactery destroyed. Undead immunities.'},
+  {name:'Troll',           ac:'13', hp:'45',  atk:'2 claw +5 (1d6) and 1 bite +5 (1d8)',        mv:'near',          lv:'7',  al:'C', s:'+4',d:'+0',c:'+4',i:'-2',w:'+0',ch:'-2', notes:'Regenerate: 5 HP/round unless damaged by fire or acid. If at 0 HP and no fire/acid damage, rises in 1d4 rounds.'},
+  {name:'Giant, Hill',     ac:'13', hp:'57',  atk:'3 stomp +7 (2d8) or 1 boulder (far) +5 (2d6)', mv:'double near', lv:'8',  al:'C', s:'+5',d:'+0',c:'+4',i:'-2',w:'+0',ch:'-2', notes:''},
+  {name:'Giant, Stone',    ac:'14', hp:'60',  atk:'3 slam +8 (2d8) or 1 boulder (far) +7 (2d10)', mv:'double near', lv:'9',  al:'N', s:'+5',d:'+1',c:'+4',i:'-1',w:'+1',ch:'+0', notes:'Stone Hide: Half damage from non-magical weapons.'},
+  {name:'Dragon, Young',   ac:'16', hp:'43',  atk:'2 claw +6 (1d8) and 1 bite +6 (2d8) or 1 breath', mv:'double near (fly)', lv:'8', al:'C', s:'+4',d:'+1',c:'+3',i:'+2',w:'+1',ch:'+3', notes:'Breath: Near cone, 4d8 damage DC 15 DEX half.'},
+  {name:'Dragon, Adult',   ac:'18', hp:'75',  atk:'3 claw +8 (2d8) and 1 bite +8 (2d12) or 1 breath', mv:'double near (fly)', lv:'12', al:'C', s:'+5',d:'+2',c:'+4',i:'+3',w:'+2',ch:'+4', notes:'Breath: Near cone, 8d8 damage DC 18 DEX half. Legendary Resistance 3/day.'},
+  {name:'Werewolf',        ac:'13', hp:'30',  atk:'2 claw +4 (1d8) or 1 bite +4 (2d6+lycanthropy)', mv:'near',      lv:'5',  al:'C', s:'+3',d:'+2',c:'+2',i:'+0',w:'+1',ch:'-1', notes:'Lycanthropy: DC 15 CON or infected. Impervious: Only hurt by silver or magic.'},
+  {name:'Mimic',           ac:'13', hp:'30',  atk:'2 pseudopod +4 (1d8+adhesive)',               mv:'near',          lv:'5',  al:'N', s:'+3',d:'+1',c:'+2',i:'-2',w:'+1',ch:'-1', notes:'Adhesive: DC 12 STR to detach. Shape: Appears as chest or door.'},
+  {name:'Minotaur',        ac:'14', hp:'38',  atk:'1 greataxe +5 (2d6) and 1 gore +5 (1d8)',    mv:'near',          lv:'6',  al:'C', s:'+4',d:'+0',c:'+3',i:'-2',w:'+0',ch:'-1', notes:'Charge: Bonus gore attack if moved near distance before attacking.'},
+  {name:'Harpy',           ac:'12', hp:'20',  atk:'2 talon +3 (1d6) or 1 luring song',          mv:'near (fly)',    lv:'4',  al:'C', s:'+1',d:'+2',c:'+1',i:'+0',w:'+0',ch:'+3', notes:'Luring Song: DC 12 WIS or move toward harpy. Immune if ears plugged.'},
+  {name:'Medusa',          ac:'15', hp:'25',  atk:'2 snake bite +4 (1d4+poison) or 1 gaze',     mv:'near',          lv:'6',  al:'C', s:'+1',d:'+3',c:'+1',i:'+2',w:'+2',ch:'+3', notes:'Petrifying Gaze: DC 15 CON or petrified. Poison: DC 12 CON or 1d6/round for 3 rounds.'},
+  {name:'Manticore',       ac:'14', hp:'29',  atk:'2 claw +4 (1d6) and 1 bite +4 (2d6) or 3 spike (far) +4 (1d8)', mv:'near (fly)', lv:'6', al:'C', s:'+3',d:'+1',c:'+2',i:'-1',w:'+1',ch:'-1', notes:''},
+  {name:'Owlbear',         ac:'14', hp:'25',  atk:'2 claw +4 (1d6) and 1 beak +4 (1d8)',        mv:'near',          lv:'5',  al:'N', s:'+4',d:'+0',c:'+2',i:'-3',w:'+1',ch:'-2', notes:'Keen Senses: Can\'t be surprised.'},
+  {name:'Gargoyle',        ac:'15', hp:'28',  atk:'2 claw +4 (1d6) and 1 bite +4 (1d4)',        mv:'near (fly)',    lv:'5',  al:'C', s:'+3',d:'+0',c:'+3',i:'-3',w:'+0',ch:'-3', notes:'Stone: Looks like statue when still. Impervious: Only hurt by magical weapons.'},
+  {name:'Beholder',        ac:'17', hp:'85',  atk:'2d4 eyestalk rays',                           mv:'near (fly)',    lv:'13', al:'C', s:'+4',d:'+5',c:'+4',i:'+5',w:'+4',ch:'+3', notes:'Central Eye: Anti-magic cone. Eyestalks: Various ray effects (charm, slow, sleep, disintegrate, death, etc.).'},
+  {name:'Banshee',         ac:'13', hp:'47',  atk:'3 rot touch +8',                              mv:'near (fly)',    lv:'7',  al:'C', s:'+0',d:'+3',c:'+0',i:'+3',w:'+3',ch:'+3', notes:'Wail: DC 15 CON or drop to 0 HP. Impervious: Only hurt by magical weapons. Undead immunities.'},
+  {name:'Ogre',            ac:'11', hp:'30',  atk:'2 greatclub +6 (2d6)',                        mv:'near',          lv:'5',  al:'C', s:'+4',d:'-1',c:'+3',i:'-2',w:'+0',ch:'-2', notes:''},
+  {name:'Mind Flayer',     ac:'14', hp:'44',  atk:'4 tentacle +5 (1d6+latch) or 1 mind blast',  mv:'near',          lv:'8',  al:'C', s:'+0',d:'+3',c:'+0',i:'+5',w:'+3',ch:'+4', notes:'Mind Blast: Near cone, DC 15 INT or stunned 1d4 rounds. Brain Extraction: Latched 4 rounds = death. Psionic Shield.'},
+  {name:'Rust Monster',    ac:'14', hp:'20',  atk:'1 antennae touch +2',                         mv:'near',          lv:'3',  al:'N', s:'+1',d:'+3',c:'+1',i:'-3',w:'+1',ch:'-3', notes:'Corrode: Metal touching antenna rusts and crumbles. Lure: Attracted to metal odors.'},
+  {name:'Phase Spider',    ac:'14', hp:'22',  atk:'1 bite +4 (1d10+poison)',                     mv:'near',          lv:'5',  al:'N', s:'+2',d:'+3',c:'+1',i:'-2',w:'+1',ch:'-3', notes:'Phase: 1/round can shift to ethereal. Poison: DC 15 CON or paralyzed 1d6 rounds.'},
+  {name:'Gelatinous Cube', ac:'9',  hp:'35',  atk:'3 slam +3 (1d8+engulf)',                      mv:'near',          lv:'4',  al:'N', s:'+2',d:'-4',c:'+3',i:'-4',w:'-3',ch:'-4', notes:'Engulf: Engulfed creatures take 3d6/round and are paralyzed. Invisible at rest.'},
+  {name:'Hydra',           ac:'13', hp:'45',  atk:'1 bite per head +3 (1d8)',                    mv:'near (swim)',   lv:'6',  al:'N', s:'+4',d:'+0',c:'+3',i:'-3',w:'+0',ch:'-3', notes:'Heads: 5 heads, each LV 2 AC 13. Severed head regrows 2 next round unless cauterized.'},
+  {name:'Cockatrice',      ac:'11', hp:'9',   atk:'1 beak +2 (1d4+petrify)',                     mv:'near (fly)',    lv:'2',  al:'N', s:'-1',d:'+2',c:'+0',i:'-3',w:'+1',ch:'-3', notes:'Petrify: DC 12 CON or petrified in stone.'},
+  {name:'Griffon',         ac:'13', hp:'25',  atk:'2 talon +4 (2d4) and 1 beak +4 (1d8)',       mv:'double near (fly)', lv:'5', al:'N', s:'+4',d:'+2',c:'+2',i:'-2',w:'+1',ch:'+0', notes:''},
+  {name:'Hippogriff',      ac:'11', hp:'19',  atk:'2 talon +3 (1d6) and 1 bite +3 (1d4)',       mv:'double near (fly)', lv:'3', al:'N', s:'+3',d:'+2',c:'+1',i:'-3',w:'+1',ch:'+0', notes:''},
+  {name:'Wyvern',          ac:'14', hp:'40',  atk:'1 bite +6 (2d8) and 1 stinger +6 (1d8+poison)', mv:'double near (fly)', lv:'7', al:'N', s:'+4',d:'+2',c:'+2',i:'-2',w:'+1',ch:'-1', notes:'Poison: DC 15 CON or 3d6 damage.'},
+  {name:'Imp',             ac:'12', hp:'10',  atk:'1 sting +2 (1d4+poison)',                     mv:'near (fly)',    lv:'2',  al:'C', s:'-1',d:'+3',c:'+0',i:'+1',w:'+1',ch:'+1', notes:'Poison: DC 12 CON or 1d4 damage next round. Shapechanger: Takes animal forms.'},
+  {name:'Hell Hound',      ac:'14', hp:'22',  atk:'2 bite +4 (1d6+1d6 fire)',                   mv:'near',          lv:'4',  al:'C', s:'+3',d:'+1',c:'+2',i:'-2',w:'+1',ch:'-1', notes:'Fire Breath 1/round: Near cone, 2d6 fire DC 13 DEX half. Impervious: Fire immune.'},
+  {name:'Sprite',          ac:'14', hp:'3',   atk:'1 short sword +2 (1d4+poison)',               mv:'near (fly)',    lv:'1',  al:'N', s:'-3',d:'+4',c:'+0',i:'+1',w:'+2',ch:'+1', notes:'Poison: DC 12 CON or sleep 1d4 rounds. Invisibility 1/day.'},
+  {name:'Treant',          ac:'16', hp:'60',  atk:'2 slam +7 (3d6)',                             mv:'near',          lv:'9',  al:'L', s:'+5',d:'-1',c:'+4',i:'+2',w:'+3',ch:'+2', notes:'Vulnerable to fire. Animate Trees: 2 trees/minute, treat as treant LV 6.'},
+  {name:'Giant Spider',    ac:'13', hp:'11',  atk:'1 bite +2 (1d8+poison)',                      mv:'near (climb)',  lv:'2',  al:'N', s:'+1',d:'+3',c:'+0',i:'-3',w:'+1',ch:'-4', notes:'Poison: DC 12 CON or 1d6 damage and slowed. Web: Near range, DC 12 STR or restrained.'},
+  {name:'Wraith',          ac:'15', hp:'32',  atk:'2 life drain +5 (1d8)',                       mv:'near (fly)',    lv:'6',  al:'C', s:'+0',d:'+3',c:'+0',i:'+1',w:'+2',ch:'+2', notes:'Life Drain: Reduce max HP by damage dealt until rest. Impervious: Only hurt by magical weapons. Sunlight vulnerability.'},
+  {name:'Specter',         ac:'12', hp:'20',  atk:'1 touch +3 (1d6+drain)',                      mv:'near (fly)',    lv:'4',  al:'C', s:'+0',d:'+2',c:'+0',i:'+0',w:'+1',ch:'+1', notes:'Drain: DC 12 CON or lose 1 max HP. Incorporeal: Half damage from non-magical weapons.'},
+  {name:'Soldier',         ac:'15', hp:'11',  atk:'1 longsword +2 (1d8) or 1 spear +2 (1d6)',   mv:'near',          lv:'2',  al:'L', s:'+2',d:'+1',c:'+1',i:'+0',w:'+1',ch:'+0', notes:'Formation: +1 attack and AC in groups of 3+.'},
+  {name:'Knight',          ac:'17', hp:'28',  atk:'2 longsword +5 (1d8) or 1 lance (near) +5 (1d12)', mv:'near',   lv:'4',  al:'L', s:'+3',d:'+0',c:'+2',i:'+1',w:'+2',ch:'+2', notes:'Mounted Charge: Double damage with lance on first attack when mounted.'},
+  {name:'Priest, High',    ac:'16', hp:'30',  atk:'1 mace +3 (1d6) or 2 spell +6',              mv:'near',          lv:'6',  al:'L', s:'+1',d:'+0',c:'+1',i:'+2',w:'+4',ch:'+3', notes:'Turn Undead DC 16. Healing, Smite, Command spells.'},
+  {name:'Mage',            ac:'12', hp:'25',  atk:'2 spell +5',                                  mv:'near',          lv:'6',  al:'N', s:'-1',d:'+2',c:'+0',i:'+4',w:'+2',ch:'+1', notes:'Fireball, Lightning Bolt, Magic Missile, Shield.'},
+  {name:'Thug',            ac:'12', hp:'7',   atk:'1 club +2 (1d4) or 1 dagger +2 (1d4)',       mv:'near',          lv:'1',  al:'C', s:'+2',d:'+1',c:'+1',i:'+0',w:'+0',ch:'-1', notes:'Mob: When 3 or more attack same target, +1 damage each.'},
+  {name:'Dire Wolf',       ac:'13', hp:'19',  atk:'2 bite +4 (1d8)',                             mv:'near',          lv:'3',  al:'N', s:'+3',d:'+2',c:'+2',i:'-3',w:'+1',ch:'-2', notes:'Pack Tactics: ADV on attacks if ally adjacent to target.'},
+  {name:'Giant Eagle',     ac:'13', hp:'13',  atk:'2 talon +3 (1d6) and 1 beak +3 (1d4)',       mv:'double near (fly)', lv:'2', al:'N', s:'+3',d:'+3',c:'+1',i:'-2',w:'+2',ch:'+1', notes:'Keen Sight: ADV on perception involving sight.'},
+  {name:'Crocodile',       ac:'13', hp:'16',  atk:'1 bite +4 (2d6)',                             mv:'near (swim)',   lv:'3',  al:'N', s:'+4',d:'+1',c:'+2',i:'-4',w:'+1',ch:'-3', notes:'Stealth in water. Grab: DC 12 STR on bite hit or grappled.'},
+  {name:'Mummy',           ac:'13', hp:'38',  atk:'2 fist +4 (1d6+rot)',                         mv:'near',          lv:'6',  al:'C', s:'+3',d:'-1',c:'+2',i:'-2',w:'+0',ch:'-2', notes:'Rot: DC 15 CON or HP max reduced by damage until remove curse. Fire vulnerability. Undead immunities.'},
+];
+
+
+function fillMonster(sel, card) {
+  const name = sel.value;
+  if(!name) return;
+  const m = SD_MONSTERS.find(x=>x.name===name);
+  if(!m) return;
+  const g = (cls) => card.querySelector('.'+cls);
+  const si = g('sb-name-input');   if(si) si.value = m.name;
+  const fi = g('sb-flavor-input'); if(fi) fi.value = 'LV ' + m.lv + ' | AL ' + m.al + ' | MV ' + m.mv;
+  const ac = g('sb-hp-val');       if(ac) ac.value = m.ac;
+  const hp = g('sb-hp-count');     if(hp) hp.value = m.hp;
+  // Movement: map to nearest option
+  const mv = g('sb-move');
+  if(mv) {
+    const mvStr = m.mv.toLowerCase();
+    if(mvStr.includes('double')) mv.value = 'Far';
+    else if(mvStr.includes('far')) mv.value = 'Far';
+    else if(mvStr.includes('near')) mv.value = 'Near';
+    else mv.value = 'Close';
+  }
+  const str = g('sb-str');   if(str) str.value = m.s;
+  const dex = g('sb-dex');   if(dex) dex.value = m.d;
+  const con = g('sb-con');   if(con) con.value = m.c;
+  const int = g('sb-int');   if(int) int.value = m.i;
+  const wis = g('sb-evade'); if(wis) wis.value = m.w;
+  const cha = g('sb-cha');   if(cha) cha.value = m.ch;
+  const abl = g('sb-abilities-input');
+  if(abl) abl.value = 'ATK: ' + m.atk + (m.notes ? '\n\n' + m.notes : '');
+  // Set type radio based on LV
+  const lv = parseInt(m.lv) || 0;
+  const typeVal = lv >= 7 ? 'boss' : lv >= 4 ? 'boss' : 'mob';
+  const radio = card.querySelector('.sb-type-radio[value="'+typeVal+'"]');
+  if(radio) { radio.checked = true; updateSbCardColor(radio); }
+  sel.value = '';
+  autosave();
+}
+
+</script>
+
 </body>
 </html>
