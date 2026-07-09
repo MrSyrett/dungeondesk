@@ -245,22 +245,59 @@
   .page-cont .page-inner { overflow: hidden; flex: 1; min-height: 0; padding: 20px 36px 16px; }
 
 @media (max-width: 768px) {
-  body { flex-direction: column; height: auto; overflow: auto; }
+  /* Stack layout */
+  body { flex-direction: column; height: 100vh; overflow: hidden; }
+
+  /* Sidebar: full-screen overlay when open */
   .sidebar {
-    width: 100% !important; min-width: 100% !important;
-    max-height: 55vh; overflow-y: auto;
-    transition: max-height 0.25s, opacity 0.25s;
-    border-right: none; border-bottom: 1px solid var(--ui-border);
+    position: fixed !important;
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100vw !important; min-width: 100vw !important;
+    height: 100vh !important;
+    z-index: 200;
+    border-right: none;
+    transform: translateY(0);
+    transition: transform 0.25s ease;
+    overflow-y: auto;
   }
-  .sidebar.collapsed { max-height: 0 !important; overflow: hidden; }
-  .preview-area { width: 100%; overflow-x: auto; padding: 10px; align-items: flex-start; }
+  .sidebar.collapsed {
+    transform: translateY(-100%) !important;
+    width: 100vw !important; min-width: 100vw !important;
+  }
+
+  /* Preview: fills the whole screen when sidebar is collapsed */
+  .preview-area {
+    flex: 1;
+    width: 100%;
+    overflow: auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Pages: scale down to fit mobile screen width */
+  .page {
+    transform: scale(0.42);
+    transform-origin: top center;
+    margin-bottom: calc((1056px * 0.42) - 1056px) !important;
+  }
+
+  /* Pull-tab on mobile: small pill, always visible, JS moves it */
   .sidebar-pull-tab {
     position: fixed !important;
-    top: auto !important; bottom: 0 !important;
-    left: 50% !important; transform: translateX(-50%) !important;
-    width: 60px !important; height: 22px !important;
-    border-radius: 6px 6px 0 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 80px !important;
+    height: 28px !important;
+    border-radius: 14px !important;
+    z-index: 400 !important;
+    font-size: 14px !important;
+    /* top/bottom set by JS */
+    transition: top 0.25s ease, bottom 0.25s ease !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
   }
+
   .sidebar-footer { flex-wrap: wrap; }
   .btn-add, .btn-primary, .btn-secondary { min-height: 40px; font-size: 12px !important; }
 }
@@ -276,7 +313,6 @@
         <div class="sidebar-title" style="white-space:nowrap;visibility:hidden;">Session Prep Builder</div>
         <div class="sidebar-sub" style="visibility:hidden;">Shadowdark RPG</div>
       </div>
-      <button class="sidebar-pull-tab" id="sidebar-pull-tab" onclick="toggleSidebar()" title="Toggle sidebar">◀</button>
     </div>
     <div class="toggle-row">
       <span class="toggle-label">Dark Mode</span>
@@ -1641,13 +1677,44 @@ function toggleSidebar() {
   const isMobile  = window.innerWidth <= 768;
   const collapsed = sidebar.classList.toggle('collapsed');
   if(pullTab) {
-    pullTab.textContent = collapsed ? '▶' : '◀';
+    pullTab.textContent = collapsed ? '▼' : '▲';
     pullTab.title = collapsed ? 'Show controls' : 'Hide controls';
-    if(!isMobile) {
+    if(isMobile) {
+      setPullTabMobile(pullTab, collapsed);
+      pullTab.textContent = collapsed ? '▼' : '▲';
+    } else {
       pullTab.style.left = collapsed ? '0px' : '320px';
     }
   }
 }
+
+function setPullTabMobile(pt, collapsed) {
+  if(collapsed) {
+    pt.style.bottom = 'auto';
+    pt.style.top    = '8px';   /* top of screen when collapsed */
+  } else {
+    pt.style.top    = 'auto';
+    pt.style.bottom = '8px';   /* above bottom edge when open */
+  }
+}
+
+// Update pull-tab position on resize
+window.addEventListener('resize', function() {
+  const sidebar = document.querySelector('.sidebar');
+  const pullTab = document.getElementById('sidebar-pull-tab');
+  if(!pullTab || !sidebar) return;
+  const isMobile  = window.innerWidth <= 768;
+  const collapsed = sidebar.classList.contains('collapsed');
+  if(isMobile) {
+    setPullTabMobile(pullTab, collapsed);
+    pullTab.textContent = collapsed ? '▼' : '▲';
+  } else {
+    pullTab.style.top    = '';
+    pullTab.style.bottom = '';
+    pullTab.style.left   = collapsed ? '0px' : '320px';
+    pullTab.textContent  = collapsed ? '▶' : '◀';
+  }
+});
 
 function toggleDarkMode(cb) {
   document.querySelectorAll('.preview-area .page').forEach(p=>{
@@ -1675,8 +1742,14 @@ loadState();buildSidebarFromState();renderPreview();
 // Init pull-tab position
 (function(){
   const pt = document.getElementById('sidebar-pull-tab');
-  const sb = document.querySelector('.sidebar');
-  if(pt) pt.style.left = '320px';
+  if(!pt) return;
+  if(window.innerWidth <= 768) {
+    pt.style.top    = 'auto';
+    pt.style.bottom = '8px';
+    pt.textContent  = '▲';
+  } else {
+    pt.style.left = '320px';
+  }
 })();
 </script>
 
@@ -3529,5 +3602,6 @@ function randNPC() {
 }
 
 </script>
+<button class="sidebar-pull-tab" id="sidebar-pull-tab" onclick="toggleSidebar()" title="Toggle sidebar">◀</button>
 </body>
 </html>
