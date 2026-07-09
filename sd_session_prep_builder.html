@@ -256,7 +256,6 @@
         <div class="sidebar-sub" style="visibility:hidden;">Shadowdark RPG</div>
       </div>
       <button class="sidebar-pull-tab" id="sidebar-pull-tab" onclick="toggleSidebar()" title="Toggle sidebar">◀</button>
-      <button class="collapse-btn" id="collapse-btn" onclick="toggleSidebar()" title="Hide controls">◀</button>
     </div>
     <div class="toggle-row">
       <span class="toggle-label">Dark Mode</span>
@@ -1616,15 +1615,14 @@ function savePDF() {
 }
 
 function toggleSidebar() {
-  const sidebar  = document.querySelector('.sidebar');
-  const btn      = document.getElementById('collapse-btn');
-  const pullTab  = document.getElementById('sidebar-pull-tab');
+  const sidebar   = document.querySelector('.sidebar');
+  const pullTab   = document.getElementById('sidebar-pull-tab');
   const collapsed = sidebar.classList.toggle('collapsed');
-  if(btn) { btn.textContent = collapsed ? '▶' : '◀'; btn.title = collapsed ? 'Show controls' : 'Hide controls'; }
   if(pullTab) {
     pullTab.textContent = collapsed ? '▶' : '◀';
-    const sidebarW = collapsed ? 0 : (sidebar.offsetWidth || 320);
-    pullTab.style.left = sidebarW + 'px';
+    pullTab.title = collapsed ? 'Show controls' : 'Hide controls';
+    // Use fixed width constant — offsetWidth unreliable during CSS transition
+    pullTab.style.left = collapsed ? '0px' : '320px';
   }
 }
 
@@ -1655,7 +1653,7 @@ loadState();buildSidebarFromState();renderPreview();
 (function(){
   const pt = document.getElementById('sidebar-pull-tab');
   const sb = document.querySelector('.sidebar');
-  if(pt && sb) pt.style.left = (sb.offsetWidth || 320) + 'px';
+  if(pt) pt.style.left = '320px';
 })();
 </script>
 
