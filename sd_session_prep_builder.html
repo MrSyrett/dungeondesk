@@ -465,7 +465,23 @@
     <div class="tab-panel" id="tab-maps">
       <div class="section-divider">Maps</div>
       <div id="maps-list" class="entity-list"></div>
-      <button class="btn-add" onclick="addMap()">+ Add Map</button>
+      <div style="display:flex;gap:6px;margin-bottom:6px;">
+        <select id="mapgen-rooms" style="flex:1;background:#141414;border:1px solid #2a2a2a;border-radius:3px;color:#ccc;font-family:'Montserrat',sans-serif;font-size:10px;padding:4px 6px;outline:none;">
+          <option value="5" selected>5 Rooms</option>
+          <option value="8">8 Rooms</option>
+          <option value="10">10 Rooms</option>
+          <option value="12">12 Rooms</option>
+          <option value="15">15 Rooms</option>
+          <option value="20">20 Rooms</option>
+        </select>
+        <select id="mapgen-style" style="flex:1;background:#141414;border:1px solid #2a2a2a;border-radius:3px;color:#ccc;font-family:'Montserrat',sans-serif;font-size:10px;padding:4px 6px;outline:none;">
+          <option value="parchment">Dungeon</option>
+          <option value="nodes">Nodes</option>
+          <option value="cave">Cave</option>
+          <option value="hud">HUD</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:6px;"><button class="btn-add" style="flex:1" onclick="addMap()">+ Add Map</button><button class="btn-add" style="flex:1;border-color:#e8c84a;color:#e8c84a;" onclick="randMap()">🎲 Generate</button></div>
     </div>
 
     <!-- MONSTERS/NPCS -->
@@ -1190,6 +1206,384 @@ function handleMapFileUpload(input) {
     saveState();
   };
   reader.readAsDataURL(file);
+}
+
+
+function generateDungeonMap(numRooms, style) {
+  const CELL = 48;
+  const COLS = 22, ROWS = 16;
+  const grid = Array.from({length: ROWS}, () => Array(COLS).fill(0));
+  // grid values: 0=wall, 1=corridor, 2=room
+
+  // ── Nodes style: separate layout, early return ────────────────────────────
+  if(style === 'nodes') {
+    const W = COLS*CELL, H = ROWS*CELL;
+    const rng = () => Math.random();
+    const ri  = (a,b) => Math.floor(rng()*(b-a+1))+a;
+
+    // Place nodes with tighter spacing in a cluster
+    const nodes = [];
+    const MIN_DIST = 90;   // minimum centre-to-centre distance
+    const SPREAD = 280;    // how far from centre nodes can appear
+    const cx = W/2, cy = H/2;
+
+    // Entrance node near a random edge of the cluster
+    const angle0 = rng() * Math.PI * 2;
+    const ex = Math.round(cx + Math.cos(angle0) * (SPREAD * 0.7));
+    const ey = Math.round(cy + Math.sin(angle0) * (SPREAD * 0.7));
+    nodes.push({ x:ex, y:ey, r:ri(36,54), id:1, isEntrance:true });
+
+    let attempts = 0;
+    while(nodes.length < numRooms && attempts < numRooms*400) {
+      attempts++;
+      // Bias positions toward cluster centre
+      const angle = rng() * Math.PI * 2;
+      const dist  = rng() * SPREAD;
+      const x = Math.round(cx + Math.cos(angle) * dist);
+      const y = Math.round(cy + Math.sin(angle) * dist);
+      const r = ri(24, 50);
+      // Keep within canvas bounds
+      if(x-r<10||x+r>W-10||y-r<10||y+r>H-10) continue;
+      const tooClose = nodes.some(n => Math.hypot(n.x-x, n.y-y) < MIN_DIST);
+      if(!tooClose) nodes.push({ x, y, r, id:nodes.length+1 });
+    }
+
+    // Build spanning tree connections
+    const edges = [];
+    const connected = new Set([0]);
+    for(let i=1; i<nodes.length; i++) {
+      const a = nodes[i];
+      let best=0, bestD=Infinity;
+      for(const ci of connected) {
+        const b=nodes[ci], d=Math.hypot(a.x-b.x, a.y-b.y);
+        if(d<bestD){bestD=d;best=ci;}
+      }
+      connected.add(i);
+      edges.push([i, best]);
+    }
+    // Extra cross-connections between nearby nodes (~35% chance)
+    for(let i=0; i<nodes.length; i++) {
+      for(let j=i+2; j<nodes.length; j++) {
+        const d=Math.hypot(nodes[i].x-nodes[j].x, nodes[i].y-nodes[j].y);
+        if(d < MIN_DIST*2 && rng()<0.35) edges.push([i,j]);
+      }
+    }
+
+    // ── Renumber nodes in BFS order from entrance so IDs follow a natural path ──
+    // Build adjacency list from spanning tree edges only
+    const adj = Array.from({length:nodes.length}, ()=>[]);
+    for(const [ai,bi] of edges) {
+      // Only use spanning tree edges (those where one endpoint was newly connected)
+      adj[ai].push(bi);
+      adj[bi].push(ai);
+    }
+    // BFS from node 0 (entrance)
+    const visited = new Array(nodes.length).fill(false);
+    const queue = [0];
+    const bfsOrder = [];
+    visited[0] = true;
+    while(queue.length) {
+      const cur = queue.shift();
+      bfsOrder.push(cur);
+      // Sort neighbours by distance to entrance for consistent left-to-right feel
+      const neighbours = [...new Set(adj[cur])].filter(n=>!visited[n]);
+      neighbours.sort((a,b) => {
+        // Primary: clockwise angle from entrance
+        const en = nodes[0];
+        const angA = Math.atan2(nodes[a].y-en.y, nodes[a].x-en.x);
+        const angB = Math.atan2(nodes[b].y-en.y, nodes[b].x-en.x);
+        return angA - angB;
+      });
+      for(const n of neighbours) { visited[n]=true; queue.push(n); }
+    }
+    // Any nodes not reached (isolated, shouldn't happen) append at end
+    for(let i=0;i<nodes.length;i++) if(!visited[i]) bfsOrder.push(i);
+    // Apply sequential IDs in BFS order
+    const newId = new Array(nodes.length);
+    bfsOrder.forEach((origIdx, seq) => { newId[origIdx] = seq+1; });
+    nodes.forEach((n,i) => { n.id = newId[i]; });
+
+    // ── Center the cluster in the viewport ───────────────────────────────────
+    if(nodes.length > 0) {
+      const minX = Math.min(...nodes.map(n=>n.x-n.r));
+      const maxX = Math.max(...nodes.map(n=>n.x+n.r));
+      const minY = Math.min(...nodes.map(n=>n.y-n.r));
+      const maxY = Math.max(...nodes.map(n=>n.y+n.r));
+      const pad = 40;
+      const offX = (W/2) - (minX+maxX)/2;
+      const offY = (H/2) - (minY+maxY)/2;
+      // Clamp so nothing goes out of bounds
+      const clampX = Math.max(pad-minX-offX, Math.min(W-maxX-offX-pad, offX));
+      const clampY = Math.max(pad-minY-offY, Math.min(H-maxY-offY-pad, offY));
+      for(const n of nodes){ n.x+=clampX; n.y+=clampY; }
+    }
+
+    // Build SVG
+    const parts = [];
+    parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`);
+    parts.push(`<rect width="${W}" height="${H}" fill="#12121a"/>`);
+
+    // Connecting lines behind nodes
+    for(const [ai,bi] of edges) {
+      const a=nodes[ai], b=nodes[bi];
+      parts.push(`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#4a4a6a" stroke-width="2.5" stroke-linecap="round"/>`);
+    }
+
+    // Nodes
+    for(const node of nodes) {
+      const fill   = node.isEntrance ? '#c8a84a' : '#2a2a4a';
+      const stroke = node.isEntrance ? '#e8c86a' : '#6a6a9a';
+      parts.push(`<circle cx="${node.x}" cy="${node.y}" r="${node.r}" fill="${fill}" stroke="${stroke}" stroke-width="2.5"/>`);
+      parts.push(`<text x="${node.x}" y="${node.y+1}" text-anchor="middle" dominant-baseline="middle" fill="white" font-family="monospace" font-weight="bold" font-size="${Math.max(10, node.r*0.55)}">${node.id}</text>`);
+    }
+
+    // Entrance dashed ring
+    const en=nodes[0];
+    parts.push(`<circle cx="${en.x}" cy="${en.y}" r="${en.r+10}" fill="none" stroke="#e8c86a" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.7"/>`);
+
+    // Legend
+    const legY=H-18;
+    parts.push(`<rect x="0" y="${legY-4}" width="${W}" height="22" fill="#12121a" opacity="0.9"/>`);
+    parts.push(`<text x="8" y="${legY+10}" fill="white" font-family="monospace" font-size="11" opacity="0.9">Nodes · ${nodes.length} rooms</text>`);
+    parts.push(`<text x="${W-8}" y="${legY+10}" text-anchor="end" fill="white" font-family="monospace" font-size="10" opacity="0.6">The Dungeon Desk</text>`);
+    parts.push('</svg>');
+
+    return { svg:parts.join(''), rooms:nodes.length, width:W, height:H };
+  }
+
+  // ── Standard grid-based styles below ────────────────────────────────────
+
+  // ── Style palettes ────────────────────────────────────────────────────────
+  const STYLES = {
+    hud:       { wall:'#2a2a32', floor:'#c8c4b0', corridor:'#b0ac9a',
+                 roomStroke:'#3a3a44', doorFill:'#1a1a22',
+                 numBg:'rgba(26,26,34,0.75)', numFg:'#fff', title:'HUD' },
+    parchment: { wall:'#888888', floor:'#EDE4D0', corridor:'#D5C9B0',
+                 roomStroke:'#000000', doorFill:'#000000',
+                 numBg:'rgba(0,0,0,0.82)', numFg:'#FFF6E9', title:'Dungeon' },
+    cave:      { wall:'#1e2420', floor:'#8a9e82', corridor:'#7a8e72',
+                 roomStroke:'#2a3a28', doorFill:'#0e1410',
+                 numBg:'rgba(14,20,16,0.8)', numFg:'#d0e8d0', title:'Cave' },
+  };
+  const S = STYLES[style] || STYLES.parchment;
+
+  // ── Room placement ────────────────────────────────────────────────────────
+  const rooms = [];
+  const rng = () => Math.random();
+  const ri = (a,b) => Math.floor(rng()*(b-a+1))+a;
+
+  function markRoom(r) {
+    for(let row=r.y; row<r.y+r.h; row++)
+      for(let col=r.x; col<r.x+r.w; col++)
+        if(row>=0&&row<ROWS&&col>=0&&col<COLS) grid[row][col]=2;
+  }
+  function overlapsAny(r, pad) {
+    for(const ex of rooms) {
+      if(r.x-pad < ex.x+ex.w+pad && r.x+r.w+pad > ex.x-pad &&
+         r.y-pad < ex.y+ex.h+pad && r.y+r.h+pad > ex.y-pad) return true;
+    }
+    return false;
+  }
+
+  // Entrance: random position on any of the 4 edges
+  const eW = ri(3,5), eH = ri(3,4);
+  const edge = ri(0,3); // 0=top, 1=right, 2=bottom, 3=left
+  const eX = edge===1 ? COLS-eW-1 : edge===3 ? 1 : ri(1, COLS-eW-2);
+  const eY = edge===2 ? ROWS-eH-1 : edge===0 ? 1 : ri(1, ROWS-eH-2);
+  const entrance = { x:eX, y:eY, w:eW, h:eH, id:1, isEntrance:true, edge };
+  rooms.push(entrance);
+  markRoom(entrance);
+
+  // Place remaining rooms — retry with shrinking sizes if needed
+  let attempts = 0, maxAttempts = numRooms * 200;
+  while(rooms.length < numRooms && attempts < maxAttempts) {
+    attempts++;
+    // Start with larger rooms, shrink to tiny if stuck
+    const progress = attempts / maxAttempts;
+    const maxW = Math.max(2, Math.floor(6 - progress*3));
+    const maxH = Math.max(2, Math.floor(5 - progress*2));
+    const w = ri(2, maxW), h = ri(2, maxH);
+    const x = ri(1, COLS-w-2), y = ri(1, ROWS-h-2);
+    const pad = progress < 0.5 ? 1 : 0;
+    if(!overlapsAny({x,y,w,h}, pad)) {
+      rooms.push({x,y,w,h,id:rooms.length+1});
+      markRoom({x,y,w,h});
+    }
+  }
+
+  // ── Corridor routing ──────────────────────────────────────────────────────
+  function cx(r){ return Math.floor(r.x + r.w/2); }
+  function cy(r){ return Math.floor(r.y + r.h/2); }
+  function setCorr(row,col) {
+    if(row>=0&&row<ROWS&&col>=0&&col<COLS&&grid[row][col]===0) grid[row][col]=1;
+  }
+  function carve(a, b) {
+    let ax=cx(a), ay=cy(a), bx=cx(b), by=cy(b);
+    if(rng()>0.5) {
+      for(let x=Math.min(ax,bx);x<=Math.max(ax,bx);x++) setCorr(ay,x);
+      for(let y=Math.min(ay,by);y<=Math.max(ay,by);y++) setCorr(y,bx);
+    } else {
+      for(let y=Math.min(ay,by);y<=Math.max(ay,by);y++) setCorr(y,ax);
+      for(let x=Math.min(ax,bx);x<=Math.max(ax,bx);x++) setCorr(by,x);
+    }
+  }
+
+  const connected = new Set([0]);
+  const treeAdj = Array.from({length:rooms.length}, ()=>[]); // adjacency for BFS
+  for(let i=1;i<rooms.length;i++) {
+    const a = rooms[i];
+    let best=0, bestD=Infinity;
+    for(const ci of connected) {
+      const b=rooms[ci], d=Math.abs(cx(a)-cx(b))+Math.abs(cy(a)-cy(b));
+      if(d<bestD){bestD=d;best=ci;}
+    }
+    connected.add(i);
+    treeAdj[i].push(best);
+    treeAdj[best].push(i);
+    carve(rooms[i], rooms[best]);
+  }
+
+  // ── Renumber rooms via BFS from entrance so IDs follow a natural path ────
+  {
+    const visited = new Array(rooms.length).fill(false);
+    const queue = [0];
+    const bfsOrder = [];
+    visited[0] = true;
+    while(queue.length) {
+      const cur = queue.shift();
+      bfsOrder.push(cur);
+      // Sort neighbours by distance from entrance room centre for consistent flow
+      const ecx = cx(rooms[0]), ecy = cy(rooms[0]);
+      const neighbours = treeAdj[cur].filter(n=>!visited[n]);
+      neighbours.sort((a,b)=>{
+        // Sort by angle from entrance centre so numbering sweeps predictably
+        const angA = Math.atan2(cy(rooms[a])-ecy, cx(rooms[a])-ecx);
+        const angB = Math.atan2(cy(rooms[b])-ecy, cx(rooms[b])-ecx);
+        return angA - angB;
+      });
+      for(const n of neighbours){ visited[n]=true; queue.push(n); }
+    }
+    // Any disconnected rooms appended last (shouldn't happen)
+    for(let i=0;i<rooms.length;i++) if(!visited[i]) bfsOrder.push(i);
+    // Apply sequential IDs in BFS order
+    const newId = new Array(rooms.length);
+    bfsOrder.forEach((origIdx, seq) => { newId[origIdx] = seq+1; });
+    rooms.forEach((r,i) => { r.id = newId[i]; });
+  }
+
+  // ── Find door positions: corridor cells touching room boundary ────────────
+  // A door is at the exact wall between a corridor cell and an adjacent room cell.
+  const doorSegs = []; // [{x1,y1,x2,y2}] in pixel coords
+  const doorPlaced = new Set();
+  for(let r=0;r<ROWS;r++) {
+    for(let c=0;c<COLS;c++) {
+      if(grid[r][c]!==1) continue; // only corridor cells
+      // Check all 4 neighbours for a room cell
+      const neighbors = [[r-1,c],[r+1,c],[r,c-1],[r,c+1]];
+      for(const [nr,nc] of neighbors) {
+        if(nr<0||nr>=ROWS||nc<0||nc>=COLS) continue;
+        if(grid[nr][nc]!==2) continue;
+        // This corridor cell touches a room — place door at the shared wall
+        const key = `${Math.min(r,nr)},${Math.min(c,nc)},${Math.max(r,nr)},${Math.max(c,nc)}`;
+        if(doorPlaced.has(key)) continue;
+        doorPlaced.add(key);
+        // Only place door with ~70% chance per junction
+        if(rng()<0.3) continue;
+        // The shared wall is between (r,c) and (nr,nc)
+        if(nr===r-1||nr===r+1) {
+          // Vertical adjacency: shared wall is horizontal line between rows
+          const wallY = Math.max(r,nr)*CELL; // top of the lower cell
+          const wallX = c*CELL;
+          // Door = thin horizontal bar across the corridor width
+          doorSegs.push({x1:wallX+CELL*0.15, y1:wallY-3, x2:wallX+CELL*0.85, y2:wallY+3});
+        } else {
+          // Horizontal adjacency: shared wall is vertical line between cols
+          const wallX = Math.max(c,nc)*CELL;
+          const wallY = r*CELL;
+          doorSegs.push({x1:wallX-3, y1:wallY+CELL*0.15, x2:wallX+3, y2:wallY+CELL*0.85});
+        }
+      }
+    }
+  }
+
+  // ── Build SVG ────────────────────────────────────────────────────────────
+  const W=COLS*CELL, H=ROWS*CELL;
+  const parts=[];
+  parts.push(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}">`);
+  parts.push(`<rect width="${W}" height="${H}" fill="${S.wall}"/>`);
+
+  // Draw floor cells
+  for(let r=0;r<ROWS;r++) {
+    for(let c=0;c<COLS;c++) {
+      if(grid[r][c]===0) continue;
+      const fill = grid[r][c]===1 ? S.corridor : S.floor;
+      parts.push(`<rect x="${c*CELL}" y="${r*CELL}" width="${CELL}" height="${CELL}" fill="${fill}"/>`);
+    }
+  }
+
+  // Room outlines
+  for(const room of rooms) {
+    const rx=room.x*CELL, ry=room.y*CELL, rw=room.w*CELL, rh=room.h*CELL;
+    if(style==='cave') {
+      parts.push(`<rect x="${rx+2}" y="${ry+2}" width="${rw-4}" height="${rh-4}" fill="none" stroke="${S.roomStroke}" stroke-width="2" rx="10"/>`);
+    } else {
+      // HUD and Dungeon/Parchment: solid rectangle outline
+      parts.push(`<rect x="${rx}" y="${ry}" width="${rw}" height="${rh}" fill="none" stroke="${S.roomStroke}" stroke-width="2"/>`);
+    }
+  }
+
+  // Draw doors — thin filled rectangles straddling the wall line
+  for(const d of doorSegs) {
+    parts.push(`<rect x="${Math.min(d.x1,d.x2)}" y="${Math.min(d.y1,d.y2)}" width="${Math.abs(d.x2-d.x1)}" height="${Math.abs(d.y2-d.y1)}" fill="${S.doorFill}" rx="1"/>`);
+  }
+
+  // Room numbers
+  for(const room of rooms) {
+    const rx=room.x*CELL, ry=room.y*CELL, rw=room.w*CELL, rh=room.h*CELL;
+    const numX=rx+rw/2, numY=ry+rh/2;
+    const circR=Math.max(10, Math.min(rw,rh)*0.2);
+    parts.push(`<circle cx="${numX}" cy="${numY}" r="${circR}" fill="${S.numBg}"/>`);
+    parts.push(`<text x="${numX}" y="${numY+1}" text-anchor="middle" dominant-baseline="middle" fill="${S.numFg}" font-family="monospace" font-weight="bold" font-size="${Math.max(9,circR*1.1)}">${room.id}</text>`);
+  }
+
+  // Entrance door — thin bar on the exterior wall of room 1 (edge depends on placement)
+  (function() {
+    const e = rooms[0];
+    const ex=e.x*CELL, ey=e.y*CELL, ew=e.w*CELL, eh=e.h*CELL;
+    const ed = e.edge||0;
+    if(ed===0) // top
+      parts.push(`<rect x="${ex+ew/2-CELL*0.35}" y="${ey-4}" width="${CELL*0.7}" height="8" fill="${S.doorFill}" rx="1"/>`);
+    else if(ed===1) // right
+      parts.push(`<rect x="${ex+ew-4}" y="${ey+eh/2-CELL*0.35}" width="8" height="${CELL*0.7}" fill="${S.doorFill}" rx="1"/>`);
+    else if(ed===2) // bottom
+      parts.push(`<rect x="${ex+ew/2-CELL*0.35}" y="${ey+eh-4}" width="${CELL*0.7}" height="8" fill="${S.doorFill}" rx="1"/>`);
+    else // left
+      parts.push(`<rect x="${ex-4}" y="${ey+eh/2-CELL*0.35}" width="8" height="${CELL*0.7}" fill="${S.doorFill}" rx="1"/>`);
+  })();
+
+  // Legend bar
+  const legY=H-18;
+  parts.push(`<rect x="0" y="${legY-4}" width="${W}" height="22" fill="${S.wall}" opacity="0.9"/>`);
+  parts.push(`<text x="8" y="${legY+10}" fill="white" font-family="monospace" font-size="11" opacity="0.9">${S.title} · ${rooms.length} rooms</text>`);
+  parts.push(`<text x="${W-8}" y="${legY+10}" text-anchor="end" fill="white" font-family="monospace" font-size="10" opacity="0.6">The Dungeon Desk</text>`);
+
+  parts.push('</svg>');
+  return { svg:parts.join(''), rooms:rooms.length, width:W, height:H };
+}
+
+// Expose to init_gen
+
+function randMap() {
+  const rooms = parseInt(document.getElementById('mapgen-rooms')?.value) || 5;
+  const style = document.getElementById('mapgen-style')?.value || 'parchment';
+  const result = generateDungeonMap(rooms, style);
+  if(!result || !result.svg) return;
+  // Convert SVG string to data URL for the map card <img>
+  const dataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(result.svg)));
+  addMap({ title: rooms + '-Room Dungeon', src: dataUrl });
+  state.maps = collectMaps();
+  renderPreview();
+  saveState();
 }
 
 function collectMaps() {
