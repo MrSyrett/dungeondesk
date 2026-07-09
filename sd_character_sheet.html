@@ -372,6 +372,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
     <button class="log-clear" onclick="clearLog()">Clear</button>
   </div>
   <div class="log-actions">
+    <button class="log-action-btn" onclick="applyRandomCharacter()" style="background:#c8a020;color:#1a1a1a;font-weight:900;">🎲 Random</button>
     <button class="log-action-btn save" onclick="saveSheet(true)">💾 Save</button>
     <button class="log-action-btn export" onclick="exportSheet()">↓ Export</button>
     <label class="log-action-btn import" style="display:flex;align-items:center;justify-content:center;cursor:pointer;">↑ Import<input type="file" accept=".json" style="display:none" onchange="importSheet(this)"></label>
@@ -1357,6 +1358,293 @@ document.addEventListener('visibilitychange', function() {
   document.addEventListener('input', go);
   document.addEventListener('change', go);
 })();
+</script>
+
+<script>
+// ── Random Character Generator ─────────────────────────────────────────────
+const RC_ANCESTRY = {
+  table: [
+    {w:4,v:'Human'},{w:2,v:'Elf'},{w:2,v:'Dwarf'},
+    {w:2,v:'Halfling'},{w:1,v:'Half-Orc'},{w:1,v:'Goblin'}
+  ],
+  ability: {
+    Human:    'Ambitious: +1 bonus talent roll at 1st level.',
+    Elf:      'Farsight: +1 to ranged attack rolls OR +1 to spellcasting checks.',
+    Dwarf:    'Stout: Start with +2 HP. Roll hit points with advantage.',
+    Halfling: 'Stealthy: Once per day, become invisible for 3 rounds.',
+    'Half-Orc': 'Mighty: +1 to attack and damage with melee weapons.',
+    Goblin:   'Keen Senses: You cannot be surprised.',
+  },
+  languages: {
+    Human:    'Common + 1 additional common language',
+    Elf:      'Common, Elvish, Sylvan',
+    Dwarf:    'Common, Dwarvish',
+    Halfling: 'Common',
+    'Half-Orc': 'Common, Orcish',
+    Goblin:   'Common, Goblin',
+  }
+};
+
+const RC_CLASSES = ['Fighter','Priest','Thief','Wizard','Bard','Ranger'];
+const RC_CLASS_INFO = {
+  Fighter: { hd:'1d8', weapons:'All weapons', armor:'All armor and shields',
+    talent:['Gain Weapon Mastery with one additional weapon type','+1 to melee and ranged attacks','+1 to melee and ranged attacks','+1 to melee and ranged attacks','+1 to melee and ranged attacks','+2 to Strength, Dexterity, or Constitution stat','+2 to Strength, Dexterity, or Constitution stat','+2 to Strength, Dexterity, or Constitution stat','+2 to Strength, Dexterity, or Constitution stat','Choose one armor type, get +1 AC from it','Choose one armor type, get +1 AC from it','Choose a talent or +2 stat points'],
+    features:['Hauler: Add CON modifier (if positive) to gear slots.','Weapon Mastery: Choose a weapon type; +1 to attack and damage. Add half your level to these rolls.','Grit: Choose STR or DEX; advantage on checks to overcome opposing force.'] },
+  Priest: { hd:'1d6', weapons:'Club, crossbow, dagger, mace, longsword, staff, warhammer', armor:'All armor and shields',
+    talent:['Gain advantage on casting one spell you know','+1 to melee or ranged attacks','+1 to melee or ranged attacks','+1 to melee or ranged attacks','+1 to melee or ranged attacks','+1 to priest spellcasting checks','+1 to priest spellcasting checks','+1 to priest spellcasting checks','+1 to priest spellcasting checks','+2 to Strength or Wisdom stat','+2 to Strength or Wisdom stat','Choose a talent or +2 stat points'],
+    features:['Turn Undead (bonus spell, does not count toward spell limit).','Spellcasting (WIS). Know 2 tier 1 spells. Add spells per level.','Languages: Celestial, Diabolic, or Primordial.','Choose a Deity matching your alignment.'] },
+  Thief: { hd:'1d4', weapons:'Club, crossbow, dagger, shortbow, shortsword', armor:'Leather armor, mithral chainmail',
+    talent:['Advantage on initiative rolls','Backstab deals +1 dice of damage','Backstab deals +1 dice of damage','Backstab deals +1 dice of damage','+2 to Strength, Dexterity, or Charisma stat','+2 to Strength, Dexterity, or Charisma stat','+2 to Strength, Dexterity, or Charisma stat','+2 to Strength, Dexterity, or Charisma stat','+2 to Strength, Dexterity, or Charisma stat','+1 to melee and ranged attacks','+1 to melee and ranged attacks','Choose a talent or +2 stat points'],
+    features:['Backstab: Hit unaware target → extra weapon die damage + half level dice.','Thievery: Advantage on climbing, sneaking, disguises, traps, locks, pickpocketing.'] },
+  Wizard: { hd:'1d4', weapons:'Dagger, staff', armor:'None',
+    talent:['Make 1 random magic item (your choice of type)','+2 to Intelligence stat or +1 to spellcasting checks','+2 to Intelligence stat or +1 to spellcasting checks','+2 to Intelligence stat or +1 to spellcasting checks','+2 to Intelligence stat or +1 to spellcasting checks','+2 to Intelligence stat or +1 to spellcasting checks','Advantage on casting one spell you know','Advantage on casting one spell you know','Advantage on casting one spell you know','Learn one additional wizard spell of any tier you know','Learn one additional wizard spell of any tier you know','Choose a talent or +2 stat points'],
+    features:['Spellcasting (INT). Know 3 tier 1 spells. Add spells per level.','Learning Spells: Study scroll 1 day, DC 15 INT check to learn permanently.','Languages: 2 additional common + 2 rare languages.'] },
+  Bard: { hd:'1d6', weapons:'Crossbow, dagger, mace, shortbow, shortsword, spear, staff', armor:'Leather armor, chainmail, shields',
+    talent:['+1 to melee/ranged attacks or +1 to Magical Dabbler rolls','+1 to melee/ranged attacks or +1 to Magical Dabbler rolls','+1 to melee/ranged attacks or +1 to Magical Dabbler rolls','+1 to melee/ranged attacks or +1 to Magical Dabbler rolls','+2 points to any stats','+2 points to any stats','+2 points to any stats','+2 points to any stats','+2 points to any stats','Presence effects become DC 9 to enact','Presence effects become DC 9 to enact','Choose a talent','You find a random priest or wizard wand (your choice)'],
+    features:['Bardic Arts: Advantage on oration, performing arts, lore, and diplomacy.','Magical Dabbler: Activate scrolls/wands using CHA. Critical fail = wizard mishap.','Presence (DC 12 CHA): Inspire (give luck token) or Fascinate (transfix targets ≤ lvl 4).','Prolific: +1d6 to learning rolls. Groups with bards +1d6 to carousing.','Languages: 4 additional common + 1 rare language.'] },
+  Ranger: { hd:'1d8', weapons:'Dagger, longbow, longsword, shortbow, shortsword, spear, staff', armor:'Leather armor, chainmail',
+    talent:['You deal d12 damage with one weapon type you choose','+1 to melee or ranged attacks and damage','+1 to melee or ranged attacks and damage','+1 to melee or ranged attacks and damage','+1 to melee or ranged attacks and damage','+2 to Strength, Dexterity, or Intelligence stat','+2 to Strength, Dexterity, or Intelligence stat','+2 to Strength, Dexterity, or Intelligence stat','+2 to Strength, Dexterity, or Intelligence stat','ADV on Herbalism checks for a remedy you choose','ADV on Herbalism checks for a remedy you choose','Choose a talent or +2 stat points'],
+    features:['Wayfinder: Advantage on Navigation, Tracking, Bushcraft, Stealth, Wild animal checks.','Herbalism (INT check): Prepare a herbal remedy. Remedies expire in 3 rounds. Salve (DC11), Stimulant (DC12), Foebane (DC13), Restorative (DC14), Curative (DC15).'] }
+};
+
+const RC_TITLES = {
+  Fighter: { Lawful:['Squire','Cavalier','Knight','Thane','Lord/Lady'], Chaotic:['Knave','Bandit','Slayer','Reaver','Warlord'], Neutral:['Warrior','Barbarian','Battlerager','Warchief','Chieftain'] },
+  Priest:  { Lawful:['Acolyte','Crusader','Templar','Champion','Paladin'], Chaotic:['Initiate','Zealot','Cultist','Scourge','Chaos Knight'], Neutral:['Seeker','Invoker','Haruspex','Mystic','Oracle'] },
+  Thief:   { Lawful:['Footpad','Burglar','Rook','Underboss','Boss'], Chaotic:['Thug','Cutthroat','Shadow','Assassin','Wraith'], Neutral:['Robber','Outlaw','Rogue','Renegade','Bandit King/Queen'] },
+  Wizard:  { Lawful:['Apprentice','Conjurer','Arcanist','Mage','Archmage'], Chaotic:['Adept','Channeler','Witch/Warlock','Diabolist','Sorcerer'], Neutral:['Shaman','Seer','Warden','Sage','Druid'] },
+  Bard:    { Lawful:['Storyteller','Balladeer','Philosopher','Poet','Master Poet'], Chaotic:['Guttersnipe','Charlatan','Satirist','Silvertongue','Doomspeaker'], Neutral:['Seeker','Witness','Speaker','Voice','Truthbearer'] },
+  Ranger:  { Lawful:['Wanderer','Strider','Warden','Guardian','Sentinel'], Chaotic:['Hood','Outlaw','Fugitive','Exile','Pariah'], Neutral:['Stranger','Wayfarer','Outlander','Recluse','Hermit'] },
+};
+
+const RC_BACKGROUNDS = [
+  'Urchin','Wanted','Cult Initiate','Thieves\' Guild','Banished','Orphaned',
+  'Wizard\'s Apprentice','Jeweler','Herbalist','Barbarian','Mercenary','Sailor',
+  'Acolyte','Soldier','Ranger','Scout','Minstrel','Scholar','Noble','Chirurgeon'
+];
+
+const RC_NAMES = {
+  Human:    ['Zali','Bram','Clara','Nattias','Rina','Denton','Mirena','Aran','Morgan','Giralt','Tamra','Oscar','Ishana','Rogar','Jasmin','Tarin','Yuri','Malchor','Lienna','Godfrey'],
+  Elf:      ['Eliara','Ryarn','Sariel','Tirolas','Galira','Varos','Daeniel','Axidor','Hiralia','Cyrwin','Lothiel','Zaphiel','Nayra','Ithior','Amriel','Elyon','Jirwyn','Natinel','Fiora','Ruhiel'],
+  Dwarf:    ['Hilde','Torbin','Marga','Bruno','Karina','Naugrim','Brenna','Darvin','Elga','Alric','Isolde','Gendry','Bruga','Junnor','Vidrid','Torson','Brielle','Ulfgar','Sarna','Grimm'],
+  Halfling: ['Willow','Benny','Annie','Tucker','Marie','Hobb','Cora','Gordie','Rose','Ardo','Alma','Norbert','Jennie','Barvin','Tilly','Pike','Lydia','Marlow','Astrid','Jasper'],
+  'Half-Orc':['Vara','Gralk','Ranna','Korv','Zasha','Hrogar','Klara','Tragan','Brolga','Drago','Yelena','Krull','Ulara','Tulk','Shiraal','Wulf','Ivara','Hirok','Aja','Zoraan'],
+  Goblin:   ['Iggs','Tark','Nix','Lenk','Roke','Fitz','Tila','Riggs','Prim','Zeb','Finn','Borg','Yark','Deeg','Nibs','Brak','Fink','Rizzo','Squib','Grix'],
+};
+
+const RC_SPELL_DATA = {
+  // Priest Tier 1
+  'Cure Wounds':         { level:'1', range:'Close', duration:'Instant',   damage:'', desc:'Restore 1+level d6 HP with touch.' },
+  'Holy Weapon':         { level:'1', range:'Close', duration:'5 rounds',  damage:'', desc:'One touched weapon deals +1d6 damage (1d8 vs undead).' },
+  'Light':               { level:'1', range:'Close', duration:'1 hour',    damage:'', desc:'One object glows bright, illuminating near distance for 1 hour.' },
+  'Protection From Evil':{ level:'1', range:'Close', duration:'Focus',     damage:'', desc:'Chaotic creatures have disadvantage on attacks vs target.' },
+  'Shield of Faith':     { level:'1', range:'Self',  duration:'5 rounds',  damage:'', desc:'Gain +2 bonus to AC for duration.' },
+  'Turn Undead':         { level:'1', range:'Near',  duration:'Instant',   damage:'', desc:'Undead in near range flee (CHA check vs spell check). Fail by 10+ and ≤ your level = destroyed.' },
+  // Wizard Tier 1
+  'Alarm':               { level:'1', range:'Close', duration:'1 day',     damage:'', desc:'Ward a door/threshold. You are mentally alerted when a creature passes through it.' },
+  'Burning Hands':       { level:'1', range:'Close', duration:'Instant',   damage:'2d6', desc:'Spread fingers and release a circle of flame roaring out to a close area.' },
+  'Charm Person':        { level:'1', range:'Near',  duration:'1d8 days',  damage:'', desc:'Beguile one humanoid of level 2 or less. It regards you as a trusted friend.' },
+  'Detect Magic':        { level:'1', range:'Near',  duration:'Focus',     damage:'', desc:'Sense magic within near range. Focus 2 rounds to discern general properties.' },
+  'Hold Portal':         { level:'1', range:'Near',  duration:'10 rounds', damage:'', desc:'Magically hold a portal closed for the duration.' },
+  'Magic Missile':       { level:'1', range:'Far',   duration:'Instant',   damage:'1d4', desc:'Advantage on cast check. A glowing bolt of force deals 1d4 damage to one target.' },
+  'Sleep':               { level:'1', range:'Near',  duration:'Instant',   damage:'', desc:'Creatures level 2 or less in a near cube fall into deep sleep. Woken by damage or shaking.' },
+  'Mage Armor':          { level:'1', range:'Self',  duration:'10 rounds', damage:'', desc:'Your AC becomes 14 (18 on critical success) for duration.' },
+};
+
+const RC_PRIEST_SPELLS_T1 = ['Cure Wounds','Holy Weapon','Light','Protection From Evil','Shield of Faith'];
+const RC_WIZARD_SPELLS_T1 = ['Alarm','Burning Hands','Charm Person','Detect Magic','Hold Portal','Light','Magic Missile','Protection From Evil','Sleep'];
+
+const RC_ALIGNMENTS = ['Lawful','Lawful','Lawful','Neutral','Neutral','Chaotic'];
+const RC_DEITIES = {
+  Lawful:  ['Saint Terragnis','Gede','Madeera the Covenant','Ord'],
+  Neutral: ['Ord','Memnon'],
+  Chaotic: ['Shune the Vile','Ramlaat','Memnon'],
+};
+
+function _rc_3d6() { return [0,0,0].reduce(s=>s+Math.ceil(Math.random()*6),0); }
+function _rc_mod(v) {
+  if(v<=3)return -4;if(v<=5)return -3;if(v<=7)return -2;if(v<=9)return -1;
+  if(v<=11)return 0;if(v<=13)return 1;if(v<=15)return 2;if(v<=17)return 3;return 4;
+}
+function _rc_roll(pool) { return pool[Math.floor(Math.random()*pool.length)]; }
+function _rc_weighted(table) {
+  const total = table.reduce((s,e)=>s+e.w,0);
+  let r = Math.floor(Math.random()*total);
+  for(const e of table){ r-=e.w; if(r<0) return e.v; }
+  return table[table.length-1].v;
+}
+function _rc_talent(cls) {
+  const t = RC_CLASS_INFO[cls]?.talent || [];
+  // Roll 2d6 mapped to talent table
+  const roll = Math.ceil(Math.random()*6)+Math.ceil(Math.random()*6);
+  if(roll===2) return t[0];
+  if(roll<=6) return t[1];
+  if(roll<=9) return t[6];
+  if(roll<=11) return t[9];
+  return t[11];
+}
+
+function randomCharacter() {
+  // Stats
+  const statNames = ['STR','DEX','CON','INT','WIS','CHA'];
+  const statVals = statNames.map(()=>_rc_3d6());
+  const statMods = statVals.map(_rc_mod);
+  const statsObj = {};
+  statNames.forEach((n,i)=>{ statsObj[n]={val:statVals[i],mod:statMods[i]}; });
+
+  // Ancestry
+  const ancestry = _rc_weighted(RC_ANCESTRY.table);
+
+  // Class
+  const cls = _rc_roll(RC_CLASSES);
+  const ci = RC_CLASS_INFO[cls];
+
+  // Alignment
+  const alignment = RC_ALIGNMENTS[Math.floor(Math.random()*RC_ALIGNMENTS.length)];
+
+  // HP
+  const hdNum = parseInt(ci.hd.split('d')[1]);
+  let hp = Math.ceil(Math.random()*hdNum) + statsObj.CON.mod;
+  if(ancestry==='Dwarf') hp += 2;
+  hp = Math.max(1,hp);
+
+  // Name
+  const name = _rc_roll(RC_NAMES[ancestry]||RC_NAMES.Human);
+
+  // Background
+  const background = RC_BACKGROUNDS[Math.floor(Math.random()*RC_BACKGROUNDS.length)];
+
+  // Title (level 1)
+  const titleList = RC_TITLES[cls]?.[alignment] || [];
+  const title = titleList[0] || '';
+
+  // Talent roll
+  const talent = _rc_talent(cls);
+  // Bonus talent for Human
+  const talent2 = ancestry==='Human' ? _rc_talent(cls) : null;
+
+  // Starting spells
+  let spells = [];
+  if(cls==='Priest') {
+    const pool = [...RC_PRIEST_SPELLS_T1];
+    const s1 = _rc_roll(pool); spells.push(s1);
+    const s2 = _rc_roll(pool.filter(s=>s!==s1)); spells.push(s2);
+    spells.push('Turn Undead (free)');
+  } else if(cls==='Wizard') {
+    const pool = [...RC_WIZARD_SPELLS_T1];
+    for(let i=0;i<3;i++){ const s=_rc_roll(pool.filter(x=>!spells.includes(x))); spells.push(s); }
+  }
+
+  // Deity (priests or any character with religious background)
+  let deity = null;
+  if(cls==='Priest'||background==='Acolyte') {
+    deity = _rc_roll(RC_DEITIES[alignment]||RC_DEITIES.Neutral);
+  }
+
+  // Gear (standard 1st level random)
+  const gearItems = ['Crawling kit','1 weapon (your choice)'];
+  if(['Fighter','Priest','Bard','Ranger','Dwarf'].includes(cls)||['Fighter','Priest','Bard','Ranger'].includes(cls)) {
+    if(ci.armor!=='None') gearItems.push('Leather armor');
+  }
+  gearItems.push('5 gp');
+
+  return {
+    name, ancestry, cls, alignment, title, background, deity,
+    stats: statsObj, hp, hd: ci.hd,
+    weapons: ci.weapons, armor: ci.armor,
+    features: ci.features,
+    talent, talent2, spells, gear: gearItems,
+    ancestryAbility: RC_ANCESTRY.ability[ancestry],
+    languages: RC_ANCESTRY.languages[ancestry],
+  };
+}
+
+function applyRandomCharacter() {
+  const c = randomCharacter();
+  const set = (id,v) => { const el=document.getElementById(id); if(el) el.value=v; };
+
+  // Header fields
+  set('f-name',       c.name);
+  set('f-class',      c.cls);
+  set('f-ancestry',   c.ancestry);
+  set('f-title',      c.title);
+  set('f-alignment',  c.alignment);
+  set('f-background', c.background);
+  set('f-deity',      c.deity || '');
+
+  // Level (find xp-level field)
+  set('xp-level', '1');
+
+  // Stats
+  const statIds = {STR:'str-val',DEX:'dex-val',CON:'con-val',INT:'int-val',WIS:'wis-val',CHA:'cha-val'};
+  Object.entries(c.stats).forEach(([k,v])=>{ set(statIds[k], v.val); });
+
+  // Trigger stat recalculation if it exists
+  document.querySelectorAll('.stat-val').forEach(el=>el.dispatchEvent(new Event('input')));
+
+  // HP
+  set('hp-current', c.hp);
+  set('hp-max',     c.hp);
+
+  // Talents textarea
+  const talentLines = [
+    '— Class Features —',
+    ...c.features,
+    '',
+    '— Ancestry: ' + c.ancestry + ' —',
+    c.ancestryAbility,
+    '',
+    '— Languages —',
+    c.languages,
+    '',
+    '— Talent Roll —',
+    c.talent,
+    ...(c.talent2 ? ['','— Bonus Talent (Human) —', c.talent2] : []),
+  ];
+  set('talents-text', talentLines.join('\n'));
+
+  // Spells — clear then fill all fields
+  document.querySelectorAll('#spells-list .spell-row').forEach(row=>{
+    const inp = row.querySelector('.spell-input');
+    const lvl = row.querySelector('.spell-level');
+    const rng = row.querySelector('.spell-range');
+    const dur = row.querySelector('.spell-duration');
+    const dmg = row.querySelector('.spell-damage');
+    const dsc = row.querySelector('.spell-desc');
+    if(inp) inp.value = '';
+    if(lvl) lvl.value = '1';
+    if(rng) rng.value = '';
+    if(dur) dur.value = '';
+    if(dmg) dmg.value = '';
+    if(dsc) { dsc.value = ''; autoResizeDesc(dsc); }
+  });
+  const spellRows = document.querySelectorAll('#spells-list .spell-row');
+  c.spells.forEach((sp, i) => {
+    if(!spellRows[i]) return;
+    const row = spellRows[i];
+    const data = RC_SPELL_DATA[sp] || {};
+    const inp = row.querySelector('.spell-input');
+    const lvl = row.querySelector('.spell-level');
+    const rng = row.querySelector('.spell-range');
+    const dur = row.querySelector('.spell-duration');
+    const dmg = row.querySelector('.spell-damage');
+    const dsc = row.querySelector('.spell-desc');
+    if(inp) inp.value = sp;
+    if(lvl && data.level) lvl.value = data.level;
+    if(rng && data.range) rng.value = data.range;
+    if(dur && data.duration) dur.value = data.duration;
+    if(dmg && data.damage) dmg.value = data.damage;
+    if(dsc && data.desc) { dsc.value = data.desc; autoResizeDesc(dsc); }
+  });
+
+  // Gear — clear then fill
+  document.querySelectorAll('#gear-list .gear-name').forEach(el=>el.value='');
+  const gearInputs = document.querySelectorAll('#gear-list .gear-name');
+  c.gear.forEach((g, i) => { if(gearInputs[i]) gearInputs[i].value = g; });
+
+  saveSheet(false);
+  addLog('Random Character', '🎲', `${c.name} the ${c.ancestry} ${c.cls} (${c.alignment} ${c.title})`, 'normal');
+}
+
 </script>
 </body>
 </html>
