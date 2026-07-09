@@ -1829,6 +1829,13 @@ function randomCharacter() {
 }
 
 function applyRandomCharacter() {
+  // Check if sheet has any content worth warning about
+  const hasContent = (document.getElementById('f-name')?.value.trim()) ||
+    (document.getElementById('f-class')?.value.trim()) ||
+    (document.getElementById('str-val')?.value.trim()) ||
+    (document.querySelectorAll('#spells-list .spell-row').length > 0) ||
+    (document.querySelector('#attacks-body tr') !== null);
+  if(hasContent && !confirm('Generate a random character? This will overwrite the current sheet.')) return;
   const c = randomCharacter();
   const set = (id,v) => { const el=document.getElementById(id); if(el) el.value=v; };
 
