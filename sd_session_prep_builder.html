@@ -27,7 +27,7 @@
   .sidebar { width: 320px; min-width: 320px; background: var(--ui-panel); border-right: 1px solid var(--ui-border); display: flex; flex-direction: column; overflow: hidden; transition: width 0.25s, min-width 0.25s; }
   .sidebar.collapsed { width: 0px; min-width: 0; overflow: hidden; }
   .sidebar-pull-tab {
-    position: fixed; top: 50%; left: 0; transform: translateY(-50%);
+    position: fixed; top: 50%; left: 320px; transform: translateY(-50%);
     width: 22px; height: 60px; background: #e8c84a; border: none;
     border-radius: 0 6px 6px 0; cursor: pointer; z-index: 300;
     display: flex; align-items: center; justify-content: center;
@@ -1689,13 +1689,13 @@ function toggleSidebar() {
   const isMobile  = window.innerWidth <= 768;
   const collapsed = sidebar.classList.toggle('collapsed');
   if(pullTab) {
-    pullTab.textContent = collapsed ? '▼' : '▲';
     pullTab.title = collapsed ? 'Show controls' : 'Hide controls';
     if(isMobile) {
       setPullTabMobile(pullTab, collapsed);
       pullTab.textContent = collapsed ? '▼' : '▲';
     } else {
       pullTab.style.left = collapsed ? '0px' : '320px';
+      pullTab.textContent = collapsed ? '▶' : '◀';
     }
   }
 }
@@ -1761,6 +1761,7 @@ loadState();buildSidebarFromState();renderPreview();
     pt.textContent  = '▲';
   } else {
     pt.style.left = '320px';
+    pt.textContent = '◀';
   }
 })();
 </script>
