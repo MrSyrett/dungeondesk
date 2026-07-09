@@ -1856,11 +1856,23 @@ function applyRandomCharacter() {
   // Trigger stat recalculation if it exists
   document.querySelectorAll('.stat-val').forEach(el=>el.dispatchEvent(new Event('input')));
 
+  // Auto-calculate AC: 10 + DEX mod + armor bonus
+  const dexMod = c.stats.DEX.mod;
+  const armorStr = (RC_CLASS_INFO[c.cls]?.armor || '').toLowerCase();
+  let armorBonus = 0;
+  if(armorStr === 'none') {
+    armorBonus = 0; // Wizard — no armor
+  } else if(armorStr.includes('all armor') || armorStr.includes('chainmail')) {
+    armorBonus = 4; // Chainmail is best non-plate armor in SD
+  } else if(armorStr.includes('leather')) {
+    armorBonus = 1; // Leather armor
+  }
+  const ac = 10 + dexMod + armorBonus;
+  set('ac-val', ac);
+
   // HP
   set('hp-current', c.hp);
   set('hp-max',     c.hp);
-
-  // Talents textarea
   const talentLines = [
     '— Class Features —',
     ...c.features,
@@ -1923,11 +1935,12 @@ function applyRandomCharacter() {
   const crawlingKit = [
     {name:'Torch',          qty:'3'},
     {name:'Rations',        qty:'3'},
-    {name:'Rope (50 ft)',   qty:'1'},
+    {name:'Rope (60 ft)',   qty:'1'},
     {name:'Flint & Steel',  qty:'1'},
     {name:'Grappling Hook', qty:'1'},
     {name:'Crowbar',        qty:'1'},
     {name:'Lantern',        qty:'1'},
+    {name:'Iron Spikes',    qty:'10'},
   ];
   const gearItems = [];
   c.gear.forEach(function(g) {
@@ -1945,6 +1958,12 @@ function applyRandomCharacter() {
     if(gearNameInputs[i]) gearNameInputs[i].value = g.name;
     if(gearQtyInputs[i])  gearQtyInputs[i].value  = g.qty !== '1' ? g.qty : '';
   });
+
+  // Backpack goes in Free to Carry
+  if(c.gear.includes('Crawling kit')) {
+    const fc = document.getElementById('free-carry');
+    if(fc) fc.value = 'Backpack';
+  }
 
   saveSheet(false);
   addLog('Random Character', '🎲', `${c.name} the ${c.ancestry} ${c.cls} (${c.alignment} ${c.title})`, 'normal');
