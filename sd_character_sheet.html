@@ -311,6 +311,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
               <th>Weapon / Attack</th>
               <th style="width:50px">Bonus</th>
               <th style="width:60px">Stat</th>
+              <th style="width:54px">Range</th>
               <th style="width:70px">Damage</th>
               <th style="width:24px;text-align:center;" title="Always Advantage">▲</th>
               <th style="width:32px"></th>
@@ -318,7 +319,28 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
           </thead>
           <tbody id="attacks-body"></tbody>
         </table>
-        <button onclick="addAttackRow()" style="margin:4px 8px;padding:3px 8px;background:var(--black);color:white;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;">+ Add</button>
+        <div style="display:flex;align-items:center;gap:4px;padding:2px 6px 4px;flex-wrap:wrap;">
+          <button onclick="addAttackWithPicker()" style="padding:3px 8px;background:var(--black);color:white;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;">+ Add</button>
+          <select id="weapon-picker" style="flex:1;min-width:80px;font-size:10px;padding:3px 4px;border:1px solid var(--rule);background:var(--input-bg);color:var(--ink);font-family:'Montserrat',sans-serif;outline:none;">
+              <option value="">— Select Weapon —</option>
+              <option value="Bastard Sword">Bastard Sword (1d8/1d10, Close)</option>
+              <option value="Club">Club (1d4, Close)</option>
+              <option value="Crossbow">Crossbow (1d6, Far)</option>
+              <option value="Dagger">Dagger (1d4, Close/Near)</option>
+              <option value="Greataxe">Greataxe (1d8/1d10, Close)</option>
+              <option value="Greatsword">Greatsword (1d12, Close)</option>
+              <option value="Javelin">Javelin (1d4, Close/Far)</option>
+              <option value="Longbow">Longbow (1d8, Far)</option>
+              <option value="Longsword">Longsword (1d8, Close)</option>
+              <option value="Mace">Mace (1d6, Close)</option>
+              <option value="Shortbow">Shortbow (1d4, Far)</option>
+              <option value="Shortsword">Shortsword (1d6, Close)</option>
+              <option value="Spear">Spear (1d6, Close/Near)</option>
+              <option value="Staff">Staff (1d4, Close)</option>
+              <option value="Warhammer">Warhammer (1d10, Close)</option>
+            </select>
+          <button onclick="removeLastAttack()" style="padding:3px 8px;background:transparent;color:var(--muted);border:1px solid var(--rule);cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;">- Remove</button>
+        </div>
       </div>
 
       <!-- TALENTS below attacks -->
@@ -407,6 +429,231 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
 </div><!-- end app-wrap -->
 
 <script>
+// ── Shadowdark Weapons ─────────────────────────────────────────────────────
+const SD_WEAPONS = [
+  {name:'Bastard Sword', type:'M',   range:'Close',      damage:'1d8/1d10', props:'Versatile, 2 slots'},
+  {name:'Club',          type:'M',   range:'Close',      damage:'1d4',      props:''},
+  {name:'Crossbow',      type:'R',   range:'Far',        damage:'1d6',      props:'Two-handed, Loading'},
+  {name:'Dagger',        type:'M/R', range:'Close/Near', damage:'1d4',      props:'Finesse, Thrown'},
+  {name:'Greataxe',      type:'M',   range:'Close',      damage:'1d8/1d10', props:'Versatile, 2 slots'},
+  {name:'Greatsword',    type:'M',   range:'Close',      damage:'1d12',     props:'Two-handed, 2 slots'},
+  {name:'Javelin',       type:'M/R', range:'Close/Far',  damage:'1d4',      props:'Thrown'},
+  {name:'Longbow',       type:'R',   range:'Far',        damage:'1d8',      props:'Two-handed'},
+  {name:'Longsword',     type:'M',   range:'Close',      damage:'1d8',      props:''},
+  {name:'Mace',          type:'M',   range:'Close',      damage:'1d6',      props:''},
+  {name:'Shortbow',      type:'R',   range:'Far',        damage:'1d4',      props:'Two-handed'},
+  {name:'Shortsword',    type:'M',   range:'Close',       damage:'1d6',     props:''},
+  {name:'Spear',         type:'M/R', range:'Close/Near', damage:'1d6',      props:'Thrown'},
+  {name:'Staff',         type:'M',   range:'Close',      damage:'1d4',      props:'Two-handed'},
+  {name:'Warhammer',     type:'M',   range:'Close',      damage:'1d10',     props:'Two-handed'},
+];
+
+// ── Shadowdark Spells ──────────────────────────────────────────────────────
+const SD_SPELLS = [
+  // Priest Tier 1
+  {name:'Cure Wounds',           tier:'1', caster:'Priest',  range:'Close', duration:'Instant',   damage:'',     desc:'Touch a creature to restore 1+level d6 HP.'},
+  {name:'Holy Weapon',           tier:'1', caster:'Priest',  range:'Close', duration:'5 rounds',  damage:'',     desc:'One touched weapon deals +1d6 damage (1d8 vs undead).'},
+  {name:'Light',                 tier:'1', caster:'Both',    range:'Close', duration:'1 hour',    damage:'',     desc:'One object glows with bright heatless light illuminating near range.'},
+  {name:'Protection From Evil',  tier:'1', caster:'Both',    range:'Close', duration:'Focus',     damage:'',     desc:'Chaotic creatures have disadvantage on attacks vs target. Target has ADV on saves vs chaotic magic.'},
+  {name:'Shield of Faith',       tier:'1', caster:'Priest',  range:'Self',  duration:'5 rounds',  damage:'',     desc:'+2 bonus to AC for duration.'},
+  {name:'Turn Undead',           tier:'1', caster:'Priest',  range:'Near',  duration:'Instant',   damage:'',     desc:'Undead in near flee (CHA vs your spellcheck). Fail by 10+ and ≤ your level = destroyed.'},
+  // Priest Tier 2
+  {name:'Augury',                tier:'2', caster:'Priest',  range:'Self',  duration:'Instant',   damage:'',     desc:'Ask if an action in the next hour will bring good or ill. Answer is weal, woe, weal and woe, or nothing.'},
+  {name:'Bless',                 tier:'2', caster:'Priest',  range:'Near',  duration:'Focus',     damage:'',     desc:'Up to 3 allies in near gain +1 to attacks and saves.'},
+  {name:'Blind/Deafen',         tier:'2', caster:'Priest',  range:'Near',  duration:'Focus',     damage:'',     desc:'DC 13 CON or one target is blinded or deafened (your choice).'},
+  {name:'Cleansing Weapon',      tier:'2', caster:'Priest',  range:'Close', duration:'5 rounds',  damage:'1d4',  desc:'Touched weapon deals +1d4 damage (+1d6 vs undead) for duration.'},
+  {name:'Smite',                 tier:'2', caster:'Priest',  range:'Close', duration:'Instant',   damage:'2d6',  desc:'Your next weapon attack deals +2d6 radiant damage.'},
+  {name:'Zone of Truth',         tier:'2', caster:'Priest',  range:'Near',  duration:'Focus',     damage:'',     desc:'Creatures in near-sized area cannot lie. DC 13 CHA to resist.'},
+  // Priest Tier 3
+  {name:'Command',               tier:'3', caster:'Priest',  range:'Near',  duration:'Focus',     damage:'',     desc:'DC 14 WIS or one target follows a one-word command each round.'},
+  {name:'Lay To Rest',           tier:'3', caster:'Priest',  range:'Close', duration:'Instant',   damage:'',     desc:'Permanently destroy one undead creature you touch. DC 14 CON to resist.'},
+  {name:'Mass Cure',             tier:'3', caster:'Priest',  range:'Near',  duration:'Instant',   damage:'',     desc:'All allies in near regain 2d6 HP.'},
+  {name:'Rebuke Unholy',         tier:'3', caster:'Priest',  range:'Near',  duration:'Instant',   damage:'4d6',  desc:'All undead and chaotic creatures in near take 4d6 radiant damage. DC 14 CON half.'},
+  // Wizard Tier 1
+  {name:'Alarm',                 tier:'1', caster:'Wizard',  range:'Close', duration:'1 day',     damage:'',     desc:'Ward a door or threshold. You are mentally alerted when a creature passes through.'},
+  {name:'Burning Hands',         tier:'1', caster:'Wizard',  range:'Close', duration:'Instant',   damage:'2d6',  desc:'Circle of flame roars out to a close area. DC 11 DEX half.'},
+  {name:'Charm Person',          tier:'1', caster:'Wizard',  range:'Near',  duration:'1d8 days',  damage:'',     desc:'Beguile one humanoid of level 2 or less in near. Regards you as a trusted friend.'},
+  {name:'Detect Magic',          tier:'1', caster:'Wizard',  range:'Near',  duration:'Focus',     damage:'',     desc:'Sense magic within near. Focus 2 rounds to learn general properties.'},
+  {name:'Hold Portal',           tier:'1', caster:'Wizard',  range:'Near',  duration:'10 rounds', damage:'',     desc:'Magically hold a portal closed for duration.'},
+  {name:'Mage Armor',            tier:'1', caster:'Wizard',  range:'Self',  duration:'10 rounds', damage:'',     desc:'Your AC becomes 14 (18 on critical success).'},
+  {name:'Magic Missile',         tier:'1', caster:'Wizard',  range:'Far',   duration:'Instant',   damage:'1d4',  desc:'ADV on cast check. Glowing bolt of force deals 1d4 damage to one target.'},
+  {name:'Sleep',                 tier:'1', caster:'Wizard',  range:'Near',  duration:'Instant',   damage:'',     desc:'Creatures level 2 or less in a near cube fall into deep sleep.'},
+  // Wizard Tier 2
+  {name:'Acid Arrow',            tier:'2', caster:'Wizard',  range:'Far',   duration:'Instant',   damage:'4d4',  desc:'Arrow of acid deals 4d4 damage, then 2d4 next round.'},
+  {name:'Alter Self',            tier:'2', caster:'Wizard',  range:'Self',  duration:'Focus',     damage:'',     desc:'Assume a different humanoid form for the duration.'},
+  {name:'Detect Thoughts',       tier:'2', caster:'Wizard',  range:'Near',  duration:'Focus',     damage:'',     desc:'Learn the surface thoughts of one creature you can see each round.'},
+  {name:'Knock',                 tier:'2', caster:'Wizard',  range:'Near',  duration:'Instant',   damage:'',     desc:'Open one magically locked door, chest, or portal.'},
+  {name:'Levitate',              tier:'2', caster:'Wizard',  range:'Self',  duration:'Focus',     damage:'',     desc:'Rise or descend up to a near distance per round. You hover if not moving.'},
+  {name:'Mirror Image',          tier:'2', caster:'Wizard',  range:'Self',  duration:'Focus',     damage:'',     desc:'3 duplicates. Attackers have a 1-in-4 chance of hitting the real you.'},
+  {name:'Misty Step',            tier:'2', caster:'Wizard',  range:'Self',  duration:'Instant',   damage:'',     desc:'Teleport a near distance to a visible location.'},
+  {name:'Silence',               tier:'2', caster:'Wizard',  range:'Far',   duration:'Focus',     damage:'',     desc:'Magical silence in a near cube. No spells can be cast within.'},
+  {name:'Web',                   tier:'2', caster:'Wizard',  range:'Near',  duration:'Focus',     damage:'',     desc:'Sticky webs fill a near cube. DC 12 STR to move through.'},
+  // Wizard Tier 3
+  {name:'Fireball',              tier:'3', caster:'Wizard',  range:'Far',   duration:'Instant',   damage:'6d6',  desc:'Explosion in a near cube at far. 6d6 damage. DC 14 DEX half.'},
+  {name:'Fly',                   tier:'3', caster:'Wizard',  range:'Close', duration:'Focus',     damage:'',     desc:'One creature can fly at double near speed for duration.'},
+  {name:'Lightning Bolt',        tier:'3', caster:'Wizard',  range:'Near',  duration:'Instant',   damage:'6d6',  desc:'Bolt of lightning strikes near range in a line. 6d6 damage. DC 14 DEX half.'},
+  {name:'Magic Circle',          tier:'3', caster:'Wizard',  range:'Close', duration:'1 hour',    damage:'',     desc:'Ward an area against chaotic or lawful creatures (choose). They cannot enter or affect those within.'},
+  {name:'Polymorph',             tier:'3', caster:'Wizard',  range:'Near',  duration:'Focus',     damage:'',     desc:'Transform one creature into a beast you choose. Target uses beast stats.'},
+  {name:'Stoneskin',             tier:'3', caster:'Wizard',  range:'Close', duration:'Focus',     damage:'',     desc:'Target gains +4 AC and resistance to non-magical weapon damage.'},
+  // Tier 4
+  {name:'Animate Dead',          tier:'4', caster:'Wizard',  range:'Close', duration:'1 day',     damage:'',     desc:'Animate a humanoid corpse as a skeleton or zombie under your control.'},
+  {name:'Commune',               tier:'4', caster:'Priest',  range:'Self',  duration:'Instant',   damage:'',     desc:'Ask your deity 3 yes/no questions. Truthful answers.'},
+  {name:'Control Water',         tier:'4', caster:'Priest',  range:'Far',   duration:'Focus',     damage:'',     desc:'Control a body of water up to 100 feet wide. Raise, lower, redirect.'},
+  {name:'Flame Strike',          tier:'4', caster:'Priest',  range:'Near',  duration:'Instant',   damage:'8d6',  desc:'Column of divine fire strikes a near-sized area. 8d6 damage. DC 15 DEX half.'},
+  {name:'Telekinesis',           tier:'4', caster:'Wizard',  range:'Far',   duration:'Focus',     damage:'',     desc:'Lift a creature or object up to 1,000 lbs and move it a near distance.'},
+  {name:'Dimension Door',        tier:'4', caster:'Wizard',  range:'Self',  duration:'Instant',   damage:'',     desc:'Teleport yourself and up to 4 willing targets up to 100 miles.'},
+  // Tier 5
+  {name:'Divine Vengeance',      tier:'5', caster:'Priest',  range:'Near',  duration:'Instant',   damage:'10d6', desc:'Call down divine wrath. All enemies in near take 10d6 damage. DC 18 DEX half.'},
+  {name:'Dominion',              tier:'5', caster:'Priest',  range:'Far',   duration:'Focus',     damage:'',     desc:'DC 18 WIS or control one creature you can see. They obey commands.'},
+  {name:'Heal',                  tier:'5', caster:'Priest',  range:'Close', duration:'Instant',   damage:'',     desc:'One touched creature is restored to full HP and cured of all conditions.'},
+  {name:'Create Undead',         tier:'5', caster:'Wizard',  range:'Close', duration:'1 day',     damage:'',     desc:'Summon a powerful undead creature to serve you for 1 day.'},
+  {name:'Hold Monster',          tier:'5', caster:'Wizard',  range:'Near',  duration:'Focus',     damage:'',     desc:'Paralyze one creature you can see. DC 18 CON each round to resist.'},
+];
+
+function weaponOptions() {
+  return '<option value="">— Select Weapon —</option>' +
+    SD_WEAPONS.map(w=>`<option value="${w.name}">${w.name} (${w.damage})</option>`).join('');
+}
+
+function spellOptions() {
+  const sorted = SD_SPELLS.slice().sort((a,b)=>parseInt(a.tier)-parseInt(b.tier)||a.name.localeCompare(b.name));
+  let html = '<option value="">— Select Spell —</option>';
+  let curTier = '';
+  sorted.forEach(s=>{
+    if(s.tier !== curTier) {
+      curTier = s.tier;
+      html += `<optgroup label="Tier ${s.tier}">`;
+    }
+    html += `<option value="${s.name}">${s.name} (${s.caster})</option>`;
+  });
+  return html;
+}
+
+
+function pickWeapon(sel) {
+  const name = sel.value;
+  if(!name) return;
+  const w = SD_WEAPONS.find(x=>x.name===name);
+  if(!w) return;
+  addAttackRow();
+  const tbody = document.getElementById('attacks-body');
+  const row = tbody.lastElementChild;
+  const cells = row.querySelectorAll('td input, td select');
+  // cells: [name, bonus, stat, damage, ...]
+  if(cells[0]) cells[0].value = w.name;
+  if(cells[1]) cells[1].value = '+0';
+  if(cells[2]) {
+    // Auto-select DEX for ranged/finesse, STR for melee
+    const isRanged = w.type === 'R';
+    const isFinesse = w.props.toLowerCase().includes('finesse');
+    cells[2].value = (isRanged || isFinesse) ? 'dex' : 'str';
+  }
+  if(cells[3]) cells[3].value = w.damage;
+  sel.value = '';
+}
+
+function removeLastAttack() {
+  const tbody = document.getElementById('attacks-body');
+  if(tbody && tbody.lastElementChild) tbody.lastElementChild.remove();
+}
+
+function addAttackWithPicker() {
+  const sel = document.getElementById('weapon-picker');
+  const name = sel ? sel.value : '';
+  addAttackRow();
+  if(name && typeof SD_WEAPONS !== 'undefined') {
+    const w = SD_WEAPONS.find(x=>x.name===name);
+    if(w) {
+      const tbody = document.getElementById('attacks-body');
+      const row = tbody.lastElementChild;
+      const inputs = row.querySelectorAll('td input');
+      const selects = row.querySelectorAll('td select');
+      // inputs: [0]=name, [1]=bonus, [2]=damage
+      // selects: [0]=stat, [1]=range
+      if(inputs[0]) inputs[0].value = w.name;
+      if(inputs[1]) inputs[1].value = '+0';
+      if(inputs[2]) inputs[2].value = w.damage;
+      if(selects[0]) selects[0].value = (w.type==='R'||w.props.toLowerCase().includes('finesse'))?'dex':'str';
+      // Range: use last part of range string (e.g. 'Close/Near' -> 'Near', 'Far' -> 'Far')
+      if(selects[1]) {
+        const parts = w.range.split('/');
+        selects[1].value = parts[parts.length-1].trim();
+      }
+    }
+  }
+  if(sel) sel.value = '';
+}
+
+function populateWeaponPicker() {
+  const sel = document.getElementById('weapon-picker');
+  if(!sel) return;
+  sel.options.length = 0;
+  sel.add(new Option('— Select Weapon —', ''));
+  if(typeof SD_WEAPONS === 'undefined') return;
+  SD_WEAPONS.forEach(function(w) {
+    sel.add(new Option(w.name + ' (' + w.damage + ', ' + w.range + ')', w.name));
+  });
+}
+
+
+function pickSpell(sel) {
+  const name = sel.value;
+  if(!name) return;
+  const s = SD_SPELLS.find(x=>x.name===name);
+  if(!s) return;
+  // Find first empty spell row or add a new one
+  const rows = [...document.querySelectorAll('#spells-list .spell-row')];
+  let row = rows.find(r=>!r.querySelector('.spell-input')?.value);
+  if(!row) {
+    _spellCount++;
+    row = addSpellRow(_spellCount);
+  }
+  if(!row) return;
+  const inp  = row.querySelector('.spell-input');
+  const lvl  = row.querySelector('.spell-level');
+  const rng  = row.querySelector('.spell-range');
+  const dur  = row.querySelector('.spell-duration');
+  const dmg  = row.querySelector('.spell-damage');
+  const dsc  = row.querySelector('.spell-desc');
+  if(inp) inp.value = s.name;
+  if(lvl) lvl.value = s.tier;
+  if(rng) rng.value = s.range;
+  if(dur) dur.value = s.duration;
+  if(dmg) dmg.value = s.damage || '';
+  if(dsc) { dsc.value = s.desc; autoResizeDesc(dsc); }
+  sel.value = '';
+  try{ saveSheet(false); } catch(e){}
+}
+
+function populateSpellPicker() {
+  const sel = document.getElementById('spell-picker');
+  if(!sel) return;
+  // Clear all existing options and optgroups
+  while(sel.firstChild) sel.removeChild(sel.firstChild);
+  sel.add(new Option('— Select Spell —', ''));
+  if(typeof SD_SPELLS === 'undefined') return;
+  const sorted = SD_SPELLS.slice().sort(function(a,b){
+    return parseInt(a.tier)-parseInt(b.tier)||a.name.localeCompare(b.name);
+  });
+  let curTier = '';
+  let grp = null;
+  sorted.forEach(function(s) {
+    if(s.tier !== curTier) {
+      curTier = s.tier;
+      grp = document.createElement('optgroup');
+      grp.label = 'Tier ' + s.tier;
+      sel.appendChild(grp);
+    }
+    const opt = document.createElement('option');
+    opt.value = s.name;
+    opt.textContent = s.name + ' (' + s.caster + ')';
+    grp.appendChild(opt);
+  });
+}
+
+
+</script>
+<script>
 
 // ── STAT MODIFIER (Shadowdark uses standard D&D mod: floor((stat-10)/2)) ──
 function statToMod(val) {
@@ -461,7 +708,7 @@ function getStatMod(id) {
 
 // ── ATTACKS ──
 function buildAttacks() {
-  for(let i=0;i<4;i++) addAttackRow();
+  // Start empty — use + Add or weapon picker to add rows
 }
 
 function addAttackRow() {
@@ -472,6 +719,7 @@ function addAttackRow() {
     <td><input type="text" placeholder="Longsword, Fireball..."></td>
     <td><input type="text" style="width:100%;text-align:center;" placeholder="+0"></td>
     <td><select style="width:100%;border:1px solid var(--rule);background:var(--input-bg);color:var(--ink);font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;padding:2px 2px;outline:none;" title="Stat mod">${statOpts}</select></td>
+    <td><select class="atk-range" style="width:100%;border:1px solid var(--rule);background:var(--input-bg);color:var(--ink);font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;padding:2px 2px;outline:none;" title="Range"><option value="">—</option><option value="Close">Close</option><option value="Near">Near</option><option value="Far">Far</option></select></td>
     <td><input type="text" placeholder="1d8+2"></td>
     <td><button class="atk-adv-btn" onclick="toggleAtkAdv(this)" title="Always roll with advantage">▲</button></td>
     <td><button class="atk-roll-btn" onclick="rollAttack(this)">Roll</button></td>
@@ -501,8 +749,9 @@ function addSpellRow(num) {
     `<div style="grid-column:2/-1;padding:1px 0 4px;">` +
     `<textarea class="spell-desc" placeholder="Description..." rows="1" oninput="autoResizeDesc(this)"></textarea>` +
     `</div>`;
-  const addBtn = list.querySelector('.spell-add-btn');
-  if(addBtn) list.insertBefore(row, addBtn);
+  // Insert before the bottom bar (which contains the Add/Remove buttons)
+  const bar = list.querySelector('div[style*="display:flex"]');
+  if(bar) list.insertBefore(row, bar);
   else list.appendChild(row);
   return row;
 }
@@ -522,24 +771,44 @@ function buildSpells() {
     '<span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Advantage">▲</span>' +
     '<span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Lost">✗</span>' +
     '<span style="font-size:7px;font-weight:700;color:var(--muted);">Roll</span>';
-    list.appendChild(hdr);
-  _spellCount = 5;
-  for(let i=1;i<=_spellCount;i++) addSpellRow(i);
-  const btn = document.createElement('button');
-  btn.className = 'spell-add-btn';
-  btn.style.cssText = 'margin:4px 4px 4px 8px;padding:3px 8px;background:var(--black);color:white;border:none;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;';
-  btn.textContent = '+ Add Spell';
-  btn.onclick = function() { _spellCount++; addSpellRow(_spellCount); };
-  list.appendChild(btn);
-  const rmBtn = document.createElement('button');
-  rmBtn.className = 'spell-remove-btn';
-  rmBtn.style.cssText = 'margin:4px 4px;padding:3px 8px;background:transparent;color:var(--muted);border:1px solid var(--rule);cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;';
-  rmBtn.textContent = '- Remove Spell';
-  rmBtn.onclick = function() {
-    const rows = list.querySelectorAll('.spell-row');
-    if(rows.length > 1) { rows[rows.length-1].remove(); _spellCount = Math.max(1, _spellCount-1); }
+  list.appendChild(hdr);
+  _spellCount = 0; // start with no spells
+
+  // Bottom controls: [+ Add Spell] [spell picker dropdown] [- Remove Spell]
+  const bar = document.createElement('div');
+  bar.style.cssText = 'display:flex;align-items:center;gap:4px;padding:4px 6px;flex-wrap:wrap;';
+  bar.innerHTML =
+    '<button class="spell-add-btn" style="padding:3px 8px;background:var(--black);color:white;border:none;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;">+ Add Spell</button>' +
+    '<select id="spell-picker" style="flex:1;min-width:100px;font-size:10px;padding:3px 4px;border:1px solid var(--rule);background:var(--input-bg);color:var(--ink);font-family:Montserrat,sans-serif;outline:none;"><option value="">— Select Spell —</option></select>' +
+    '<button class="spell-remove-btn" style="padding:3px 8px;background:transparent;color:var(--muted);border:1px solid var(--rule);cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;">- Remove</button>';
+  list.appendChild(bar);
+  // Populate spell picker now that the element exists in the DOM
+  if(typeof populateSpellPicker === 'function') populateSpellPicker();
+
+  // Wire buttons
+  bar.querySelector('.spell-add-btn').onclick = function() {
+    const sel = document.getElementById('spell-picker');
+    const name = sel ? sel.value : '';
+    _spellCount++;
+    const row = addSpellRow(_spellCount);
+    if(name && typeof SD_SPELLS !== 'undefined') {
+      const s = SD_SPELLS.find(x=>x.name===name);
+      if(s && row) {
+        const inp = row.querySelector('.spell-input');   if(inp) inp.value = s.name;
+        const lvl = row.querySelector('.spell-level');   if(lvl) lvl.value = s.tier;
+        const rng = row.querySelector('.spell-range');   if(rng) rng.value = s.range;
+        const dur = row.querySelector('.spell-duration'); if(dur) dur.value = s.duration;
+        const dmg = row.querySelector('.spell-damage');  if(dmg) dmg.value = s.damage||'';
+        const dsc = row.querySelector('.spell-desc');    if(dsc){dsc.value=s.desc;autoResizeDesc(dsc);}
+      }
+    }
+    if(sel) sel.value = '';
   };
-  list.appendChild(rmBtn);
+  bar.querySelector('.spell-remove-btn').onclick = function() {
+    const rows = list.querySelectorAll('.spell-row');
+    if(rows.length > 0) { rows[rows.length-1].remove(); _spellCount = Math.max(0, _spellCount-1); }
+  };
+
 }
 
 function adjustLuck(delta) {
@@ -848,10 +1117,12 @@ function collectSheet(){
   const attackStrings = [];
   document.querySelectorAll('#attacks-body tr').forEach(tr => {
     const inputs = tr.querySelectorAll('input[type="text"]');
-    const sel = tr.querySelector('select');
+    const sels = tr.querySelectorAll('select');
+    const sel = sels[0];
     const name = inputs[0]?.value.trim();
     const bonus = inputs[1]?.value.trim();
     const stat = sel?.value ? sel.value.toUpperCase() : '';
+    const range = sels[1]?.value || '';
     const dmg = inputs[2]?.value.trim();
     if(name) {
       const statMod = stat ? getStatMod(stat.toLowerCase()) : 0;
@@ -1106,7 +1377,7 @@ function _applySDData(d){
       addAttackRow();
       const tr = tbody.lastElementChild;
       const inputs = tr.querySelectorAll('input[type="text"]');
-      const sel = tr.querySelector('select');
+      const rowSels = tr.querySelectorAll('select');
       if(typeof atk === 'string') {
         // Try to parse "WEAPON: +bonus, damage"
         const m = atk.match(/^([^:]+):\s*([+\-]?\d+)(?:,\s*([\dd()\s+\-]+))?/i);
@@ -1128,11 +1399,12 @@ function _applySDData(d){
         }
       } else {
         inputs[0].value = atk.name||''; inputs[1].value = atk.bonus||'';
-        if(sel) sel.value = atk.stat||'';
+        if(rowSels[0]) rowSels[0].value = atk.stat||'';
+        if(rowSels[1] && atk.range) rowSels[1].value = atk.range;
         inputs[2].value = atk.damage||'';
       }
     });
-  } else for(let i=0;i<4;i++) addAttackRow();
+  // New character: start with no attack rows
 
   // Portrait
   if(d.portrait || d._sheet?.portrait) {
@@ -1221,6 +1493,8 @@ function autoLoad(){
   }
 }
 
+}
+
 // INIT
 if(localStorage.getItem('sd_dark')==='1'){document.body.classList.add('dark');document.getElementById('dm-toggle').classList.add('on');}
 buildStats();
@@ -1228,6 +1502,7 @@ buildAttacks();
 buildSpells();
 buildGear();
 autoLoad();
+setTimeout(function(){ populateSpellPicker(); }, 0);
 </script>
 
 <!-- Mobile -->
@@ -1602,7 +1877,11 @@ function applyRandomCharacter() {
   ];
   set('talents-text', talentLines.join('\n'));
 
-  // Spells — clear then fill all fields
+  // Spells — ensure enough rows exist for spellcasters
+  if(c.spells.length > 0) {
+    while(_spellCount < c.spells.length) { _spellCount++; addSpellRow(_spellCount); }
+  }
+  // Clear then fill all fields
   document.querySelectorAll('#spells-list .spell-row').forEach(row=>{
     const inp = row.querySelector('.spell-input');
     const lvl = row.querySelector('.spell-level');
@@ -1636,15 +1915,43 @@ function applyRandomCharacter() {
     if(dsc && data.desc) { dsc.value = data.desc; autoResizeDesc(dsc); }
   });
 
-  // Gear — clear then fill
-  document.querySelectorAll('#gear-list .gear-name').forEach(el=>el.value='');
-  const gearInputs = document.querySelectorAll('#gear-list .gear-name');
-  c.gear.forEach((g, i) => { if(gearInputs[i]) gearInputs[i].value = g; });
+  // GP: put in coin field not gear
+  const gpField = document.getElementById('coin-gp');
+  if(gpField) gpField.value = '5';
+
+  // Gear: expand crawling kit into individual items (7 slots), skip 5gp entry
+  const crawlingKit = [
+    {name:'Torch',          qty:'3'},
+    {name:'Rations',        qty:'3'},
+    {name:'Rope (50 ft)',   qty:'1'},
+    {name:'Flint & Steel',  qty:'1'},
+    {name:'Grappling Hook', qty:'1'},
+    {name:'Crowbar',        qty:'1'},
+    {name:'Lantern',        qty:'1'},
+  ];
+  const gearItems = [];
+  c.gear.forEach(function(g) {
+    if(g === '5 gp') return; // handled by coin field
+    if(g === 'Crawling kit') { gearItems.push(...crawlingKit); }
+    else if(g === '1 weapon (your choice)') { gearItems.push({name:'Weapon (your choice)', qty:'1'}); }
+    else if(g === 'Leather armor') { gearItems.push({name:'Leather armor', qty:'1'}); }
+    else { gearItems.push({name:g, qty:'1'}); }
+  });
+  document.querySelectorAll('#gear-list .gear-name').forEach(function(el){ el.value=''; });
+  document.querySelectorAll('#gear-list .gear-qty').forEach(function(el){ el.value=''; });
+  const gearNameInputs = document.querySelectorAll('#gear-list .gear-name');
+  const gearQtyInputs  = document.querySelectorAll('#gear-list .gear-qty');
+  gearItems.forEach(function(g, i) {
+    if(gearNameInputs[i]) gearNameInputs[i].value = g.name;
+    if(gearQtyInputs[i])  gearQtyInputs[i].value  = g.qty !== '1' ? g.qty : '';
+  });
 
   saveSheet(false);
   addLog('Random Character', '🎲', `${c.name} the ${c.ancestry} ${c.cls} (${c.alignment} ${c.title})`, 'normal');
 }
 
 </script>
+
+
 </body>
 </html>
