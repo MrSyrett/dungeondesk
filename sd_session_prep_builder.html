@@ -1417,7 +1417,7 @@ function renderPreview() {
   const renderFlowchart = (fcId) => {
     const fc=document.getElementById(fcId);
     if(!fc) return;
-    const locNodes=state.locations.map(l=>({name:l.tag||l.name||'Encounter',tag:l.tag,type:l.type||'combat'}));
+    const locNodes=state.locations.map(l=>({name:l.name||l.tag||'Encounter',tag:l.tag,type:l.type||'combat'}));
     const allNodes=[...locNodes];
     if(!allNodes.length){fc.innerHTML='';return;}
     const typeNodeColors={
@@ -1427,9 +1427,9 @@ function renderPreview() {
     };
     fc.innerHTML=allNodes.map((n,i)=>{
       const c=typeNodeColors[n.type]||typeNodeColors.combat;
-      const tag=n.tag?n.tag.split('//')[0].trim().toUpperCase():n.type.toUpperCase();
+      const label=(n.name||n.tag||n.type).toUpperCase();
       return `<div class="flow-node" style="background:${c.bg};">
-        <div class="flow-label" style="color:${c.lbl}">${tag}</div>
+        <div class="flow-label" style="color:${c.lbl}">${label}</div>
       </div>${i<allNodes.length-1?'<div class="flow-arrow">→</div>':''}`;
     }).join('');
   };
@@ -3563,14 +3563,12 @@ function randEncounterBatch() {
   _addEnc(mot, 0); // Guardian
 
   const midCount = n - 3; // rooms between guardian and climax
-  // Mandatory: puzzle and setback if room permits
+  // Mandatory: puzzle then setback in order
   const mid = [];
   if(midCount >= 1) mid.push(1); // Puzzle
   if(midCount >= 2) mid.push(2); // Setback
-  // Fill remaining middle slots with extra room types
+  // Fill remaining middle slots with extra room types (no shuffle — keep Puzzle→Setback order)
   for(let i = mid.length; i < midCount; i++) mid.push('extra');
-  // Shuffle middle
-  mid.sort(function(){ return Math.random() - 0.5; });
   mid.forEach(function(slot) {
     if(slot === 'extra') _addExtraEnc(mot);
     else _addEnc(mot, slot);
