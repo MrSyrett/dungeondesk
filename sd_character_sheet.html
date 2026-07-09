@@ -797,7 +797,8 @@ function clearDicePool(){dicePool=[];updateDicePoolDisplay();}
 function toggleDarkMode(){
   const on=document.body.classList.toggle('dark');
   document.getElementById('dm-toggle').classList.toggle('on',on);
-  }
+  try{ localStorage.setItem('sd_dark', on?'1':'0'); }catch(e){}
+}
 
 // ── SAVE / EXPORT / IMPORT ──
 function collectSheet(){
