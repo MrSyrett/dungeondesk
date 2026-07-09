@@ -145,6 +145,8 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 
 /* CENTER — attacks + gear */
 .center-col{grid-column:2;grid-row:1;display:flex;flex-direction:column;border-right:2px solid var(--border);}
+.attacks-section-wrap{flex-shrink:0;}
+.talents-section-wrap{flex:1;display:flex;flex-direction:column;}
 .attacks-section,.gear-section{display:flex;flex-direction:column;}
 .attacks-table,.gear-table{width:100%;border-collapse:collapse;}
 .attacks-table th,.gear-table th{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);padding:3px 6px;border-bottom:1px solid var(--rule);text-align:left;background:var(--bg);}
@@ -156,8 +158,8 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 /* RIGHT — talents + spells */
 .right-col{grid-column:3;grid-row:1/3;border-left:2px solid var(--border);}
 .talents-section{padding:0;}
-.talents-area{min-height:120px;padding:6px 10px;border-bottom:1px solid var(--rule);}
-.talents-area textarea{width:100%;min-height:110px;border:none;background:transparent;resize:none;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);}
+.talents-area{flex:1;padding:0;display:flex;flex-direction:column;}
+.talents-area textarea{width:100%;flex:1;min-height:260px;border:none;background:transparent;resize:none;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);padding:6px 10px;box-sizing:border-box;}
 .spells-list{padding:0;}
 /* Spell rows use grid for perfect column alignment */
 .spell-row{display:grid;grid-template-columns:16px 1fr 26px 30px 48px 60px 60px 20px 20px 24px;align-items:center;gap:2px;padding:1px 6px;border-bottom:1px solid var(--rule);}
@@ -174,7 +176,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .atk-adv-btn{padding:2px 4px;background:transparent;border:1px solid var(--rule);cursor:pointer;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:900;color:var(--muted);}
 .atk-adv-btn.on{background:#1a3a1a;border-color:#2d7a2d;color:#6dbf6d;}
 
-.spells-bottom{grid-column:1/3;grid-row:2;border-top:2px solid var(--border);}
+.spells-bottom{grid-column:1/3;grid-row:2;}
 .spell-desc{border:none;background:transparent;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:500;outline:none;color:var(--muted);padding:1px 2px;resize:none;min-height:16px;width:100%;}
 .gear-slot-disabled .gear-name{text-decoration:line-through;opacity:0.35;color:var(--muted);pointer-events:none;}
 .gear-slot-disabled .gear-qty{opacity:0.35;pointer-events:none;}
@@ -345,9 +347,9 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
 
       <!-- TALENTS below attacks -->
       <div class="talents-section-wrap">
-        <div class="sl" style="margin-top:4px;">Talents</div>
-        <div class="talents-area" style="flex:1;">
-          <textarea id="talents-text" placeholder="List talents, features, and special abilities here..." style="width:100%;height:100%;min-height:160px;border:none;background:transparent;resize:none;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);padding:6px 10px;"></textarea>
+        <div class="sl">Talents</div>
+        <div class="talents-area">
+          <textarea id="talents-text" placeholder="List talents, features, and special abilities here..." style="width:100%;flex:1;min-height:260px;border:none;background:transparent;resize:none;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);padding:6px 10px;box-sizing:border-box;"></textarea>
         </div>
       </div>
     </div><!-- end center-col -->
@@ -728,7 +730,7 @@ function addAttackRow() {
 }
 
 // ── SPELLS ──
-let _spellCount = 5;
+let _spellCount = 0;
 
 function addSpellRow(num) {
   const list = document.getElementById('spells-list');
@@ -1329,7 +1331,7 @@ function _applySDData(d){
   else if(d.spells) spells = d.spells;
   else if(d.bonuses) spells = d.bonuses.filter(b => b.name?.startsWith('Spell:')).map(b => b.bonusName).filter(Boolean);
   // Ensure enough rows exist
-  const neededSpells = Math.max(5, spells.length, (d._sheet?.spellData||[]).filter(s=>s&&s.name).length);
+  const neededSpells = Math.max(0, spells.length, (d._sheet?.spellData||[]).filter(s=>s&&s.name).length);
   while(_spellCount < neededSpells) { _spellCount++; addSpellRow(_spellCount); }
   document.querySelectorAll('#spells-list .spell-row').forEach((row, i) => {
     row.querySelector('.spell-input').value = spells[i] || '';
@@ -1404,6 +1406,7 @@ function _applySDData(d){
         inputs[2].value = atk.damage||'';
       }
     });
+  }  // end if(d.attacks)
   // New character: start with no attack rows
 
   // Portrait
@@ -1463,14 +1466,8 @@ function newCharacter(){
   ['hp-current','hp-max','ac-val','xp-current','xp-next','xp-level','lk-val','coin-gp','coin-sp','coin-cp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('talents-text').value='';
   document.getElementById('free-carry').value='';
-  document.querySelectorAll('#spells-list .spell-row').forEach(row => {
-    row.querySelector('.spell-input').value = '';
-    row.querySelector('.spell-level').value = '';
-    const advBtn = row.querySelector('.spell-adv-btn');
-    const lostBtn = row.querySelector('.spell-lost-btn');
-    if(advBtn) advBtn.classList.remove('on');
-    if(lostBtn) { lostBtn.classList.remove('on'); row.classList.remove('lost'); }
-  });
+  document.querySelectorAll('#spells-list .spell-row').forEach(row => row.remove());
+  _spellCount = 0;
   document.querySelectorAll('#gear-list .gear-name').forEach(el=>el.value='');
   document.querySelectorAll('#gear-list .gear-qty').forEach(el=>el.value='');
   const tbody=document.getElementById('attacks-body');tbody.innerHTML='';buildAttacks();
@@ -1491,8 +1488,6 @@ function autoLoad(){
     applySheet(data);
   } catch(e) {
   }
-}
-
 }
 
 // INIT
