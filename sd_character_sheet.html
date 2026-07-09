@@ -117,19 +117,24 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 
 /* HP / AC */
 .hp-ac-row{display:flex;border-bottom:1px solid var(--rule);}
-.hp-box,.ac-box{flex:1;padding:6px 8px;display:flex;flex-direction:column;align-items:center;gap:3px;}
+.hp-box,.ac-box{flex:0 0 50%;padding:5px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;box-sizing:border-box;overflow:hidden;}
 .hp-box{border-right:1px solid var(--rule);}
 .hpac-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);}
-.hpac-inputs{display:flex;align-items:center;gap:3px;}
-.hpac-input{width:44px;height:36px;border:2px solid var(--border);background:var(--input-bg);font-family:'Montserrat',sans-serif;font-size:18px;font-weight:900;text-align:center;color:var(--ink);outline:none;}
-.hpac-slash{font-size:16px;font-weight:700;color:var(--muted);}
-.hpac-max{width:38px;height:30px;border:1px solid var(--rule);background:var(--box);font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;text-align:center;color:var(--ink);outline:none;}
+.hpac-inputs{display:flex;align-items:center;gap:2px;overflow:hidden;}
+.hpac-input{width:36px;min-width:0;height:34px;border:2px solid var(--border);background:var(--input-bg);font-family:'Montserrat',sans-serif;font-size:16px;font-weight:900;text-align:center;color:var(--ink);outline:none;}
+.hpac-slash{font-size:13px;font-weight:700;color:var(--muted);flex-shrink:0;}
+.hpac-max{width:30px;min-width:0;height:28px;border:1px solid var(--rule);background:var(--box);font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;text-align:center;color:var(--ink);outline:none;}
 
-/* XP */
-.xp-row{display:flex;align-items:center;gap:4px;padding:5px 8px;border-bottom:1px solid var(--rule);}
-.xp-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);flex-shrink:0;}
-.xp-input{width:40px;height:26px;border:1px solid var(--rule);background:var(--input-bg);font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;text-align:center;color:var(--ink);outline:none;}
-.xp-slash{font-size:14px;color:var(--muted);}
+/* XP + LUCK */
+.xp-row{display:flex;align-items:center;border-bottom:1px solid var(--rule);}
+.xp-half{flex:0 0 50%;display:flex;align-items:center;gap:3px;padding:4px 8px;box-sizing:border-box;}
+.xp-half:first-child{border-right:1px solid var(--rule);}
+.xp-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);flex-shrink:0;}
+.xp-input{width:32px;height:22px;border:1px solid var(--rule);background:var(--input-bg);font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;text-align:center;color:var(--ink);outline:none;}
+.xp-slash{font-size:12px;color:var(--muted);}
+.lk-input{width:30px;height:22px;border:1px solid var(--rule);background:var(--input-bg);font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;text-align:center;color:var(--ink);outline:none;}
+.lk-btn{width:18px;height:22px;background:var(--box);border:1px solid var(--rule);cursor:pointer;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:900;color:var(--muted);line-height:1;padding:0;}
+.lk-btn:hover{background:var(--black);color:white;}
 
 /* COIN */
 .coin-row{display:flex;border-bottom:1px solid var(--rule);}
@@ -278,10 +283,18 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
 
       <!-- XP -->
       <div class="xp-row">
-        <span class="xp-label">XP</span>
-        <input type="text" class="xp-input" id="xp-current" placeholder="0">
-        <span class="xp-slash">/</span>
-        <input type="text" class="xp-input" id="xp-next" placeholder="0">
+        <div class="xp-half">
+          <span class="xp-label">XP</span>
+          <input type="text" class="xp-input" id="xp-current" placeholder="0">
+          <span class="xp-slash">/</span>
+          <input type="text" class="xp-input" id="xp-next" placeholder="0">
+        </div>
+        <div class="xp-half">
+          <span class="xp-label">Lk</span>
+          <button class="lk-btn" onclick="adjustLuck(-1)">−</button>
+          <input type="text" class="lk-input" id="lk-val" placeholder="0">
+          <button class="lk-btn" onclick="adjustLuck(1)">+</button>
+        </div>
       </div>
 
       <!-- SPELLS -->
@@ -526,6 +539,12 @@ function buildSpells() {
     if(rows.length > 1) { rows[rows.length-1].remove(); _spellCount = Math.max(1, _spellCount-1); }
   };
   list.appendChild(rmBtn);
+}
+
+function adjustLuck(delta) {
+  const el = document.getElementById('lk-val');
+  if(!el) return;
+  el.value = (parseInt(el.value) || 0) + delta;
 }
 
 function autoResizeDesc(el) {
@@ -948,6 +967,7 @@ function collectSheet(){
     _sheet: {
       hpCurrent: document.getElementById('hp-current')?.value || '',
       xpNext:    document.getElementById('xp-next')?.value || '',
+      luckPts:   document.getElementById('lk-val')?.value || '',
       spellData: spellData,
       gearQtys: [...document.querySelectorAll('#gear-list .gear-qty')].map(el => el.value || ''),
       gearDisabled: [...document.querySelectorAll('#gear-list > div')].map(row => row.classList.contains('gear-slot-disabled')),
@@ -994,6 +1014,7 @@ function _applySDData(d){
   // XP / Level
   set('xp-current', d.XP ?? d.xp?.current ?? 0);
   set('xp-next',    d._sheet?.xpNext ?? d.xp?.next ?? '');
+  set('lk-val',     d._sheet?.luckPts ?? '');
   // xp-level field removed
 
   // Coins
@@ -1165,7 +1186,7 @@ function newCharacter(){
   if(!confirm('Clear sheet and start a new character?')) return;
   ['f-name','f-ancestry','f-class','f-title','f-alignment','f-background','f-deity','f-level'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   STATS.forEach(s=>{const el=document.getElementById(s.id+'-val');if(el){el.value='';onStatChange(s.id);}});
-  ['hp-current','hp-max','ac-val','xp-current','xp-next','xp-level','coin-gp','coin-sp','coin-cp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['hp-current','hp-max','ac-val','xp-current','xp-next','xp-level','lk-val','coin-gp','coin-sp','coin-cp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('talents-text').value='';
   document.getElementById('free-carry').value='';
   document.querySelectorAll('#spells-list .spell-row').forEach(row => {
