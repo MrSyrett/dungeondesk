@@ -876,7 +876,8 @@ input[type="number"] { -moz-appearance: textfield; }
   <div class="tool-instance gen-tool" data-tool="gen">
     <div class="toolbar-tpl" style="display:none">
       <div class="gen-tabs">
-        <button class="gen-tab active" data-tab="npc">NPC</button>
+        <button class="gen-tab active" data-tab="adventure">Adventure</button>
+        <button class="gen-tab" data-tab="npc">NPC</button>
         <button class="gen-tab" data-tab="rival">Rival Crawlers</button>
         <button class="gen-tab" data-tab="monster">Monster</button>
         <button class="gen-tab" data-tab="dungeon">Dungeon</button>
@@ -890,7 +891,7 @@ input[type="number"] { -moz-appearance: textfield; }
     <div class="gen-body">
 
       <!-- NPC PANEL -->
-      <div class="gen-panel active" data-panel="npc">
+      <div class="gen-panel" data-panel="npc">
         <div class="gen-controls">
           <label class="gen-label">Ancestry
             <select class="gen-select" id="gen-npc-ancestry">
@@ -955,7 +956,20 @@ input[type="number"] { -moz-appearance: textfield; }
       <!-- MONSTER PANEL -->
       <div class="gen-panel" data-panel="monster">
         <div class="gen-controls">
-          <label class="gen-label">Party Level (PL)
+          <label class="gen-label">Source
+            <select class="gen-select" id="gen-mon-source" onchange="(function(v){var w=document.getElementById('gen-mon-pl-wrap');var x=document.getElementById('gen-mon-mut-wrap');if(w)w.style.display=v==='database'?'none':'';if(x)x.style.display=v==='database'?'none':''})(this.value)">
+              <option value="random">Random (Generated)</option>
+              <option value="database">Shadowdark Bestiary</option>
+            </select>
+          </label>
+          <label class="gen-label">Count
+            <select class="gen-select" id="gen-mon-count">
+              <option value="1">1</option><option value="2">2</option>
+              <option value="3">3</option><option value="4">4</option>
+              <option value="5">5</option>
+            </select>
+          </label>
+          <label class="gen-label" id="gen-mon-pl-wrap">Party Level (PL)
             <select class="gen-select" id="gen-mon-pl">
               <option value="1">1</option><option value="2">2</option>
               <option value="3">3</option><option value="4">4</option>
@@ -964,7 +978,7 @@ input[type="number"] { -moz-appearance: textfield; }
               <option value="9">9</option><option value="10">10</option>
             </select>
           </label>
-          <label class="gen-label">Mutations
+          <label class="gen-label" id="gen-mon-mut-wrap">Mutations
             <select class="gen-select" id="gen-mon-mut">
               <option value="0">None</option>
               <option value="1">1</option>
@@ -1175,6 +1189,78 @@ input[type="number"] { -moz-appearance: textfield; }
       <!-- SHOP / TAVERN PANEL -->
 
       <!-- ADVENTURE GENERATOR PANEL -->
+
+      <div class="gen-panel active" data-panel="adventure">
+        <div class="gen-controls">
+          <label class="gen-label">Party Level
+            <select class="gen-select" id="gen-adv-level">
+              <option value="1">1</option><option value="2">2</option>
+              <option value="3">3</option><option value="4">4</option>
+              <option value="5">5</option><option value="6">6</option>
+              <option value="7">7</option><option value="8">8</option>
+              <option value="9">9</option><option value="10">10</option>
+            </select>
+          </label>
+          <label class="gen-label">Dungeon Motif
+            <select class="gen-select" id="gen-adv-motif">
+              <option value="random">Random</option>
+              <optgroup label="── Classic ──">
+                <option value="Abandoned">Abandoned</option>
+                <option value="Undead">Undead</option>
+                <option value="Aberrant">Aberrant</option>
+                <option value="Giant">Giant</option>
+                <option value="Vermin">Vermin</option>
+                <option value="Infernal">Infernal</option>
+              </optgroup>
+              <optgroup label="── Locations ──">
+                <option value="Caves">Caves</option>
+                <option value="Crypts">Crypts</option>
+                <option value="Ruins">Ruins</option>
+                <option value="Dungeon">Dungeon</option>
+                <option value="Mansion">Mansion</option>
+                <option value="Tower">Tower</option>
+              </optgroup>
+            </select>
+          </label>
+          <label class="gen-label">Rooms
+            <select class="gen-select" id="gen-adv-rooms">
+              <option value="5" selected>5 (Classic)</option>
+              <option value="8">8</option><option value="10">10</option>
+              <option value="12">12</option><option value="15">15</option><option value="20">20</option>
+            </select>
+          </label>
+          <label class="gen-label">Map Style
+            <select class="gen-select" id="gen-adv-mapstyle">
+              <option value="parchment">Dungeon</option>
+              <option value="nodes">Nodes</option>
+              <option value="cave">Cave</option>
+              <option value="hud">HUD</option>
+            </select>
+          </label>
+          <label class="gen-label">Monsters
+            <select class="gen-select" id="gen-adv-nmon"><option value="1">1</option><option value="2">2</option><option value="3" selected>3</option><option value="4">4</option><option value="5">5</option></select>
+          </label>
+          <label class="gen-label">Source
+            <select class="gen-select" id="gen-adv-monsrc">
+              <option value="mix">Random</option>
+              <option value="random">Generated Only</option>
+              <option value="database">Bestiary Only</option>
+            </select>
+          </label>
+          <label class="gen-label">NPCs
+            <select class="gen-select" id="gen-adv-nnpc"><option value="1">1</option><option value="2" selected>2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>
+          </label>
+          <label class="gen-label">Treasures
+            <select class="gen-select" id="gen-adv-ntres"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option></select>
+          </label>
+        </div>
+        <div class="gen-results" id="gen-adv-results">
+          <div class="gen-empty">Set options and press 🎲 Generate</div>
+        </div>
+        <div id="gen-adv-bar" style="display:none;padding:8px 14px;background:var(--panel);border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;align-items:center;">
+          <button id="gen-adv-load-btn" class="btn small primary" style="white-space:nowrap">📖 Load to Adventure</button>
+        </div>
+      </div>
 
     </div>
   </div>
@@ -4849,7 +4935,7 @@ window.init_gen = function(root) {
   const tabs   = root.querySelectorAll('.gen-tab');
   const panels = root.querySelectorAll('.gen-panel');
   const rollBtn = root.querySelector('.gen-roll');
-  let activeTab = 'npc';
+  let activeTab = 'adventure';
 
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
@@ -4866,6 +4952,192 @@ window.init_gen = function(root) {
       const count=parseInt(root.querySelector('#gen-npc-count').value)||1;
       const res=root.querySelector('#gen-npc-results'); res.innerHTML='';
       for(let i=0;i<count;i++) res.appendChild(genNPC(anc,wlth));
+
+    } else if(activeTab==='rival') {
+      const size=root.querySelector('#gen-rival-size').value;
+      const disp=root.querySelector('#gen-rival-disp').value;
+      const res=root.querySelector('#gen-rival-results'); res.innerHTML='';
+      res.appendChild(genRivalCrawler(size,disp));
+
+    } else if(activeTab==='monster') {
+      const source=root.querySelector('#gen-mon-source').value;
+      const count=parseInt(root.querySelector('#gen-mon-count').value)||1;
+      const res=root.querySelector('#gen-mon-results'); res.innerHTML='';
+      for(let i=0;i<count;i++){
+        if(source==='database') {
+          const m=SD_MONSTERS[Math.floor(Math.random()*SD_MONSTERS.length)];
+          res.appendChild(card(
+            `<div class="gen-card-header"><span class="gen-card-name">${esc(m.name)}</span><span class="gen-card-tag">LV ${m.lv} · AL ${m.al}</span></div>`+
+            `<div class="gen-card-row"><span class="gen-card-row-label">AC</span><span>${esc(m.ac)}</span>&ensp;<span class="gen-card-row-label">HP</span><span>${esc(m.hp)}</span>&ensp;<span class="gen-card-row-label">MV</span><span>${esc(m.mv)}</span></div>`+
+            `<div class="gen-card-row"><span class="gen-card-row-label">STR</span><span>${esc(m.s)}</span>&ensp;<span class="gen-card-row-label">DEX</span><span>${esc(m.d)}</span>&ensp;<span class="gen-card-row-label">CON</span><span>${esc(m.c)}</span>&ensp;<span class="gen-card-row-label">INT</span><span>${esc(m.i)}</span>&ensp;<span class="gen-card-row-label">WIS</span><span>${esc(m.w)}</span>&ensp;<span class="gen-card-row-label">CHA</span><span>${esc(m.ch)}</span></div>`+
+            `<div class="gen-card-row"><span class="gen-card-row-label">ATK</span><span>${esc(m.atk)}</span></div>`+
+            (m.notes?`<div class="gen-card-row"><span class="gen-card-row-label">Traits</span><span>${esc(m.notes)}</span></div>`:'')
+          ));
+        } else {
+          const pl=root.querySelector('#gen-mon-pl').value;
+          const mut=root.querySelector('#gen-mon-mut').value;
+          res.appendChild(genMonster(pl,mut));
+        }
+      }
+
+    } else if(activeTab==='encounter') {
+      const type=root.querySelector('#gen-enc-type').value;
+      const res=root.querySelector('#gen-enc-results'); res.innerHTML='';
+      if(type==='random') {
+        const t=ALL_ENC_TYPES[Math.floor(Math.random()*ALL_ENC_TYPES.length)];
+        res.appendChild(genEncounterItem(t));
+      } else {
+        res.appendChild(genEncounterItem(type));
+      }
+
+    } else if(activeTab==='shop') {
+      const type=root.querySelector('#gen-shop-type').value;
+      const tier=root.querySelector('#gen-shop-tier').value;
+      const res=root.querySelector('#gen-shop-results'); res.innerHTML='';
+      res.appendChild(genShop(type,tier));
+
+    } else if(activeTab==='adventure') {
+      const level   = root.querySelector('#gen-adv-level').value;
+      const motifSel = root.querySelector('#gen-adv-motif').value;
+      const motif   = motifSel === 'random'
+        ? R(['Abandoned','Undead','Aberrant','Giant','Vermin','Infernal','Caves','Crypts','Ruins','Dungeon','Mansion','Tower'])
+        : motifSel;
+      const mapstyle = root.querySelector('#gen-adv-mapstyle').value;
+      const res = root.querySelector('#gen-adv-results');
+      res.innerHTML = '';
+      res.style.cssText = 'overflow-y:auto;display:block;padding:0;';
+
+      // ── Helper: section label ──
+      const sec = (label, color) => {
+        const d = document.createElement('div');
+        d.style.cssText = 'font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:'+(color||'var(--gold)')+';padding:8px 10px 3px;background:var(--panel);border-top:1px solid var(--border);grid-column:1/-1;';
+        d.textContent = label;
+        return d;
+      };
+
+      // ── 5-Room Dungeon (rooms left, map right) ──────────────────────
+      const nRooms = parseInt(root.querySelector('#gen-adv-rooms').value) || 5;
+      const monSrc = root.querySelector('#gen-adv-monsrc').value;
+      const nMon  = parseInt(root.querySelector('#gen-adv-nmon').value)  || 3;
+      const nNpc  = parseInt(root.querySelector('#gen-adv-nnpc').value)  || 2;
+      const nTres = parseInt(root.querySelector('#gen-adv-ntres').value) || 5;
+
+      const dungeonWrap = document.createElement('div');
+      dungeonWrap.style.cssText = 'padding:6px 8px;border-bottom:1px solid var(--border);';
+
+      // Side-by-side: rooms left, map right
+      const dungSplit = document.createElement('div');
+      dungSplit.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start;';
+
+      // Left: dungeon room cards stacked
+      const dungRooms = document.createElement('div');
+      dungRooms.style.cssText = 'display:flex;flex-direction:column;gap:5px;';
+      const dungEl = genDungeon(level, motif, nRooms);
+      Array.from(dungEl.querySelectorAll('.gen-card')).forEach(c => {
+        c.style.padding = '5px 7px'; c.style.gap = '2px';
+        dungRooms.appendChild(c);
+      });
+      if(!dungRooms.children.length) dungRooms.appendChild(dungEl);
+      dungSplit.appendChild(dungRooms);
+
+      // Right: map
+      const mapCol = document.createElement('div');
+      mapCol.style.cssText = 'display:flex;align-items:flex-start;justify-content:center;';
+      if(window._genDungeonMap) {
+        const mapResult = window._genDungeonMap(nRooms, mapstyle);
+        root._mapSvg = mapResult.svg;
+        const mapWrap = document.createElement('div');
+        mapWrap.style.cssText = 'width:100%;';
+        mapWrap.innerHTML = mapResult.svg;
+        const svgEl = mapWrap.querySelector('svg');
+        if(svgEl){ svgEl.style.width='100%'; svgEl.style.height='auto'; svgEl.style.maxHeight='380px'; }
+        mapCol.appendChild(mapWrap);
+      }
+      dungSplit.appendChild(mapCol);
+      dungeonWrap.appendChild(dungSplit);
+      res.appendChild(dungeonWrap);
+
+      // ── 2-column section helper ──
+      const twoCol = (label, items) => {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'padding:4px 8px 6px;border-bottom:1px solid var(--border);';
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);padding:4px 0 4px;';
+        lbl.textContent = label;
+        wrap.appendChild(lbl);
+        const grid = document.createElement('div');
+        grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;';
+        items.forEach(el => { el.style.padding='6px 8px'; el.style.gap='2px'; grid.appendChild(el); });
+        wrap.appendChild(grid);
+        res.appendChild(wrap);
+      };
+
+      // ── 3 Monsters ──
+      const monsters = [];
+      for(let i=0;i<nMon;i++){
+        const useDb = monSrc==='database' || (monSrc==='mix' && Math.random()<0.5);
+        if(useDb && typeof SD_MONSTERS !== 'undefined') {
+          const m=SD_MONSTERS[Math.floor(Math.random()*SD_MONSTERS.length)];
+          monsters.push(card(
+            '<div class="gen-card-header"><span class="gen-card-name">'+esc(m.name)+'</span><span class="gen-card-tag">LV '+m.lv+' · AL '+m.al+'</span></div>'+
+            '<div class="gen-card-row" style="flex-wrap:wrap;gap:4px 12px;"><span class="gen-card-row-label">AC</span><span>'+esc(m.ac)+'</span><span class="gen-card-row-label">HP</span><span>'+esc(m.hp)+'</span><span class="gen-card-row-label">MV</span><span>'+esc(m.mv)+'</span></div>'+
+            '<div class="gen-card-row" style="flex-wrap:wrap;gap:2px 8px;font-size:11px;"><span class="gen-card-row-label">STR</span><span>'+esc(m.s)+'</span><span class="gen-card-row-label">DEX</span><span>'+esc(m.d)+'</span><span class="gen-card-row-label">CON</span><span>'+esc(m.c)+'</span><span class="gen-card-row-label">INT</span><span>'+esc(m.i)+'</span><span class="gen-card-row-label">WIS</span><span>'+esc(m.w)+'</span><span class="gen-card-row-label">CHA</span><span>'+esc(m.ch)+'</span></div>'+
+            '<div class="gen-card-row"><span class="gen-card-row-label">ATK</span><span style="font-size:11px;">'+esc(m.atk)+'</span></div>'+
+            (m.notes?'<div class="gen-card-row"><span class="gen-card-row-label">Traits</span><span style="font-size:11px;">'+esc(m.notes)+'</span></div>':'')
+          ));
+        } else {
+          monsters.push(genMonster(level, Math.random()<0.4?1:0));
+        }
+      }
+      // 3 monsters: first 2 in a row, 3rd spans full (or another 2-col row)
+      {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'padding:4px 8px 6px;border-bottom:1px solid var(--border);';
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);padding:4px 0 4px;';
+        lbl.textContent = 'Monsters';
+        wrap.appendChild(lbl);
+        const grid = document.createElement('div');
+        grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;';
+        monsters.forEach((el,i) => {
+          el.style.padding='6px 8px'; el.style.gap='2px';
+          if(nMon % 2 !== 0 && i===nMon-1) el.style.gridColumn='1/-1';
+          grid.appendChild(el);
+        });
+        wrap.appendChild(grid);
+        res.appendChild(wrap);
+      }
+
+      // Show load button
+      const advBar = root.querySelector('#gen-adv-bar');
+      if(advBar) advBar.style.display = 'flex';
+
+      // ── 2 NPCs ──
+      {
+        const npcs = [];
+        for(let i=0;i<nNpc;i++) npcs.push(genNPC('random','random'));
+        twoCol('NPCs', npcs);
+      }
+
+      // ── 5 Treasures in a compact row ──
+      {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'padding:4px 8px 6px;';
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'font-family:\'Barlow Condensed\',sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);padding:4px 0 4px;';
+        lbl.textContent = 'Treasures';
+        wrap.appendChild(lbl);
+        const grid = document.createElement('div');
+        const tCols = Math.min(nTres, 5);
+        grid.style.cssText = 'display:grid;grid-template-columns:repeat(' + tCols + ',1fr);gap:4px;';
+        for(let i=0;i<nTres;i++){
+          const t=genTreasure(level,'random_all');
+          t.style.padding='5px 6px'; t.style.gap='2px'; t.style.fontSize='11px';
+          grid.appendChild(t);
+        }
+        wrap.appendChild(grid);
+        res.appendChild(wrap);
+      }
 
     } else if(activeTab==='loot') {
       const tier=root.querySelector('#gen-treasure-tier').value;
@@ -5021,6 +5293,52 @@ window.init_gen = function(root) {
       }, 150);
     });
     if(regenBtn) regenBtn.style.display = 'none';
+  })();
+
+
+  // Wire Adventure Generator → Load to Adventure pane
+  (function() {
+    const loadBtn = root.querySelector('#gen-adv-load-btn');
+    if(!loadBtn) return;
+    loadBtn.addEventListener('click', () => {
+      const res = root.querySelector('#gen-adv-results');
+      if(!res || res.querySelector('.gen-empty')) return;
+
+      // Collect sections as HTML
+      let bodyHtml = '';
+      res.childNodes.forEach(node => {
+        if(node.nodeType === 1) {
+          bodyHtml += node.outerHTML;
+        }
+      });
+
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Generated Adventure</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:#161616; color:#ede9e1; font-family:sans-serif; font-size:12px; }
+  div[style*="color:var"] { color:#c8a020 !important; }
+  .gen-card { background:#1e1e1e; border:1px solid #2a2a2a; border-left:3px solid #c8a020; padding:6px 8px; margin-bottom:4px; }
+  .gen-card-header { display:flex; align-items:baseline; gap:8px; margin-bottom:3px; }
+  .gen-card-name { font-weight:700; font-size:13px; color:#ede9e1; }
+  .gen-card-tag { font-size:10px; color:#c8a020; text-transform:uppercase; letter-spacing:.1em; }
+  .gen-card-row { font-size:11px; color:#ccc; line-height:1.5; display:flex; gap:6px; flex-wrap:wrap; }
+  .gen-card-row-label { font-size:10px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:.08em; min-width:48px; }
+  .gen-item-name { font-weight:700; color:#c8a020; font-size:12px; margin-bottom:2px; }
+  .gen-item-desc { font-size:11px; color:#ccc; line-height:1.5; }
+  svg { max-width:100%; height:auto; }
+</style>
+</head><body>${bodyHtml}</body></html>`;
+
+      const dataUrl = 'data:text/html;base64,' + btoa(unescape(encodeURIComponent(html)));
+      const paneNum = parseInt(Object.keys(paneTools).find(k => paneTools[k]==='gen') || 1);
+      setPaneTool(paneNum, 'adventure');
+      setTimeout(() => {
+        const inst = instances['adventure'];
+        if(inst && inst._loadDataUrl) inst._loadDataUrl(dataUrl, 'adventure.html');
+      }, 150);
+    });
   })();
 
   root._getState = () => ({});
@@ -5538,6 +5856,88 @@ document.addEventListener('input', function(e) {
     if(window.__ddScheduleSave) setTimeout(window.__ddScheduleSave, 1000);
   }
 });
+
+const SD_MONSTERS = [
+  {name:'Aboleth',         ac:'16', hp:'39',  atk:'2 tentacle +5 (1d8+curse) or 1 tail +5 (3d6)', mv:'near (swim)', lv:'8',  al:'C', s:'+4',d:'-1',c:'+3',i:'+4',w:'+2',ch:'+2', notes:'Curse: DC 15 CON or turn into deep one over 2d10 days. Enslave: DC 15 WIS or controlled 1d4 rounds. Telepathic within far.'},
+  {name:'Acolyte',         ac:'12', hp:'4',   atk:'1 mace +1 (1d6) or 1 spell +2',              mv:'near',          lv:'1',  al:'L', s:'+1',d:'-1',c:'+0',i:'-1',w:'+2',ch:'+0', notes:'Healing Touch (WIS DC 11): Heal 1d4 HP close.'},
+  {name:'Animated Armor',  ac:'15', hp:'11',  atk:'1 longsword +3 (1d8)',                        mv:'near',          lv:'2',  al:'C', s:'+3',d:'-1',c:'+2',i:'-1',w:'+1',ch:'+0', notes:'Statue: Looks like normal armor when still.'},
+  {name:'Ankheg',          ac:'14', hp:'14',  atk:'1 bite +4 (1d6) or 1 acid spray (near) +4 (2d6)', mv:'near (burrow)', lv:'3', al:'N', s:'+2',d:'+2',c:'+1',i:'-2',w:'+1',ch:'-2', notes:''},
+  {name:'Ape',             ac:'12', hp:'10',  atk:'1 fist +2 (1d6) or 1 rock (far) +2 (1d4)',   mv:'near (climb)',  lv:'2',  al:'N', s:'+2',d:'+2',c:'+1',i:'-2',w:'+1',ch:'+0', notes:''},
+  {name:'Ape, Snow',       ac:'13', hp:'19',  atk:'2 fist +4 (1d6) or 1 rock (far) +4 (2d6)',   mv:'near (climb)',  lv:'4',  al:'N', s:'+3',d:'+1',c:'+1',i:'-2',w:'+1',ch:'+0', notes:'Thick Fur: Cold immune.'},
+  {name:'Apprentice',      ac:'11', hp:'3',   atk:'1 dagger +1 (1d4) or 1 spell +2',             mv:'near',          lv:'1',  al:'N', s:'-1',d:'+1',c:'-1',i:'+2',w:'+0',ch:'+0', notes:'Beguile (INT DC 11): Stupify LV 2 or less in near. Magic Bolt (INT DC 11): 1d4 damage far.'},
+  {name:'Archangel',       ac:'18', hp:'76',  atk:'3 flaming greatsword +10 (2d12)',             mv:'double near (fly)', lv:'16', al:'L', s:'+5',d:'+2',c:'+4',i:'+4',w:'+5',ch:'+5', notes:'Command: DC 18 CHA to resist. Crown of Fire: Hostile spells are extreme (DC 18).'},
+  {name:'Archmage',        ac:'12', hp:'44',  atk:'2 spell +7',                                  mv:'near',          lv:'10', al:'L', s:'-1',d:'+2',c:'-1',i:'+4',w:'+2',ch:'+1', notes:'Death Bolt DC 15, Enervate DC 14, Fireblast 4d6 DC 14, Float DC 14, Mithralskin DC 14, Void Step DC 15.'},
+  {name:'Assassin',        ac:'15', hp:'38',  atk:'2 poisoned dagger +6 (2d4)',                  mv:'near (climb)',  lv:'8',  al:'C', s:'+2',d:'+4',c:'+2',i:'+2',w:'+3',ch:'+3', notes:'Execute: x3 damage vs surprised targets.'},
+  {name:'Azer',            ac:'15', hp:'15',  atk:'2 flaming warhammer +3 (1d10) or 1 crossbow (far) +0 (1d6)', mv:'near', lv:'3', al:'L', s:'+3',d:'+0',c:'+2',i:'+0',w:'+0',ch:'+0', notes:'Impervious: Fire immune.'},
+  {name:'Badger',          ac:'11', hp:'5',   atk:'2 claw +2 (1d4)',                             mv:'near (burrow)', lv:'1',  al:'N', s:'+2',d:'+0',c:'+1',i:'-3',w:'+1',ch:'-2', notes:'Rage 1/day: Immune to morale, +1d4 damage for 3 rounds.'},
+  {name:'Bandit',          ac:'13', hp:'4',   atk:'1 club +1 (1d4) or 1 shortbow (far) +0 (1d4)', mv:'near',        lv:'1',  al:'C', s:'+1',d:'+0',c:'+0',i:'-1',w:'+0',ch:'-1', notes:'Ambush: Extra die damage when undetected.'},
+  {name:'Basilisk',        ac:'14', hp:'25',  atk:'2 bite +4 (2d6+petrify)',                     mv:'near',          lv:'5',  al:'N', s:'+3',d:'+1',c:'+3',i:'-3',w:'+1',ch:'-3', notes:'Petrify: Touch or gaze, DC 15 CON or petrified.'},
+  {name:'Bat, Giant',      ac:'12', hp:'9',   atk:'1 bite +2 (1d6)',                             mv:'near (fly)',    lv:'2',  al:'N', s:'-1',d:'+2',c:'+0',i:'-3',w:'+1',ch:'-3', notes:''},
+  {name:'Bat, Swarm',      ac:'12', hp:'18',  atk:'3 bite +2 (1d6)',                             mv:'near (fly)',    lv:'4',  al:'N', s:'-3',d:'+2',c:'+0',i:'-3',w:'+1',ch:'-3', notes:''},
+  {name:'Bear, Brown',     ac:'13', hp:'25',  atk:'2 claw +4 (1d8)',                             mv:'near (climb)',  lv:'5',  al:'N', s:'+4',d:'+1',c:'+3',i:'-2',w:'+1',ch:'-2', notes:'Crush: Extra die if both claws hit same target.'},
+  {name:'Bear, Polar',     ac:'13', hp:'34',  atk:'2 claw +6 (2d6)',                             mv:'near (climb)',  lv:'7',  al:'N', s:'+4',d:'+1',c:'+3',i:'-2',w:'+1',ch:'-2', notes:'Crush: Extra die if both claws hit. Thick Fur: Cold immune.'},
+  {name:'Beastman',        ac:'12', hp:'5',   atk:'1 spear +2 (1d6+1)',                          mv:'near',          lv:'1',  al:'C', s:'+2',d:'+1',c:'+1',i:'-2',w:'+1',ch:'-1', notes:'Brutal: +1 melee damage (included).'},
+  {name:'Berserker',       ac:'12', hp:'10',  atk:'1 greataxe +2 (1d10) or 1 spear +2 (1d6)',   mv:'near',          lv:'2',  al:'N', s:'+2',d:'+1',c:'+1',i:'+0',w:'+1',ch:'+0', notes:'Rage 1/day: Immune to morale, +1d4 damage for 3 rounds.'},
+  {name:'Black Pudding',   ac:'9',  hp:'30',  atk:'3 tentacle +4 (2d6)',                         mv:'near (climb)',  lv:'6',  al:'N', s:'+2',d:'-1',c:'+3',i:'-4',w:'-3',ch:'-4', notes:'Impervious: Only damaged by fire. Corrosive: Metal/wood dissolves on d6 roll 1-3.'},
+  {name:'Boar',            ac:'12', hp:'14',  atk:'2 tusk +3 (1d6)',                             mv:'near',          lv:'3',  al:'N', s:'+3',d:'+0',c:'+1',i:'-2',w:'+1',ch:'-2', notes:'Gore: Extra die if both tusks hit same target.'},
+  {name:'Brain Eater',     ac:'14', hp:'36',  atk:'4 tentacle +5 (1d8+latch) or 1 mind blast or 1 mind control', mv:'near', lv:'8', al:'C', s:'+2',d:'+3',c:'+0',i:'+4',w:'+2',ch:'+4', notes:'Hear Thoughts within near. Latch: tentacles auto-hit next round. Mind Blast: DC 15 INT or 3d6 + paralyzed 1d4 rounds. Mind Control: DC 15 CHA or controlled 1d4 rounds.'},
+  {name:'Bugbear',         ac:'13', hp:'14',  atk:'2 spiked mace +3 (1d6)',                      mv:'near',          lv:'3',  al:'C', s:'+3',d:'+0',c:'+1',i:'-1',w:'+0',ch:'-2', notes:'Stealthy: ADV on sneak/hide.'},
+  {name:'Bulette',         ac:'17', hp:'40',  atk:'3 bite +5 (2d6) or 1 leap',                  mv:'near (burrow)', lv:'8',  al:'N', s:'+5',d:'+1',c:'+4',i:'-3',w:'+1',ch:'-2', notes:'Leap: Jump near high/double near distance, then 2 bite attacks.'},
+  {name:'Cave Brute',      ac:'14', hp:'28',  atk:'2 claw +5 (1d8) and 1 mandible +5 (1d10)',   mv:'near (burrow)', lv:'6',  al:'N', s:'+4',d:'+1',c:'+1',i:'-3',w:'+1',ch:'-3', notes:'Bewilder: DC 12 CHA or dazed and no action.'},
+  {name:'Cave Creeper',    ac:'12', hp:'18',  atk:'1 bite +3 (1d6) and 1 tentacles +3 (1d8+toxin)', mv:'near (climb)', lv:'4', al:'N', s:'+2',d:'+2',c:'+0',i:'-3',w:'+1',ch:'-3', notes:'Toxin: DC 12 CON or paralyzed 1d4 rounds.'},
+  {name:'Goblin',          ac:'13', hp:'4',   atk:'1 scimitar +1 (1d6) or 1 shortbow (far) +1 (1d4)', mv:'near',    lv:'1',  al:'C', s:'+0',d:'+1',c:'+0',i:'-1',w:'+0',ch:'-1', notes:'Crafty: +1 to attack rolls against larger creatures.'},
+  {name:'Hobgoblin',       ac:'15', hp:'11',  atk:'1 longsword +2 (1d8) or 1 longbow (far) +2 (1d6)', mv:'near',   lv:'2',  al:'C', s:'+2',d:'+1',c:'+1',i:'+0',w:'+1',ch:'+0', notes:'Phalanx: +1 attack and AC when adjacent to another hobgoblin.'},
+  {name:'Kobold',          ac:'13', hp:'3',   atk:'1 spear +1 (1d6) or 1 sling (near) +1 (1d4)', mv:'near',         lv:'0',  al:'C', s:'-1',d:'+2',c:'+0',i:'+0',w:'+0',ch:'-1', notes:'Pack Fighter: +1 attack when adjacent to another kobold.'},
+  {name:'Orc',             ac:'13', hp:'9',   atk:'1 greataxe +2 (1d10) or 1 javelin (near) +2 (1d6)', mv:'near',   lv:'1',  al:'C', s:'+3',d:'+0',c:'+1',i:'-1',w:'+0',ch:'-1', notes:'Ferocity: 1/day, stay at 1 HP instead of dropping to 0.'},
+  {name:'Orc Warchief',    ac:'16', hp:'38',  atk:'2 battle-axe +5 (1d10) or 1 javelin (near) +5 (1d6)', mv:'near', lv:'5',  al:'C', s:'+4',d:'+1',c:'+2',i:'+0',w:'+1',ch:'+2', notes:'Warcry: Allies within near gain +1 to attacks for 3 rounds.'},
+  {name:'Skeleton',        ac:'12', hp:'8',   atk:'1 shortsword +2 (1d6) or 1 shortbow (far) +2 (1d4)', mv:'near',  lv:'1',  al:'C', s:'+1',d:'+2',c:'+0',i:'-3',w:'-2',ch:'-3', notes:'Undead: Immune to sleep, charm, poison, disease.'},
+  {name:'Zombie',          ac:'9',  hp:'16',  atk:'1 slam +2 (1d6)',                             mv:'near (slow)',   lv:'2',  al:'C', s:'+3',d:'-2',c:'+2',i:'-4',w:'-3',ch:'-4', notes:'Undead: Immune to sleep, charm, poison. Mindless: Cannot be morale-checked.'},
+  {name:'Ghoul',           ac:'13', hp:'16',  atk:'2 claw +2 (1d4+paralyze) and 1 bite +2 (1d8)', mv:'near',       lv:'3',  al:'C', s:'+1',d:'+2',c:'+0',i:'-2',w:'+0',ch:'-2', notes:'Paralyze: DC 12 CON or paralyzed 1d4 rounds. Undead: Immune to sleep, charm, poison.'},
+  {name:'Wight',           ac:'14', hp:'32',  atk:'2 life drain +4 (1d6+drain)',                 mv:'near',          lv:'5',  al:'C', s:'+3',d:'+0',c:'+2',i:'+0',w:'+1',ch:'-2', notes:'Life Drain: Target loses 1 max HP until rest. Undead immunities.'},
+  {name:'Vampire',         ac:'16', hp:'50',  atk:'2 claw +6 (1d8) or 1 blood drain +6 (2d6)',  mv:'double near',   lv:'9',  al:'C', s:'+4',d:'+3',c:'+3',i:'+3',w:'+2',ch:'+4', notes:'Charm: DC 15 CHA or charmed. Regenerate: 10 HP/round unless in sunlight. Stake kills. Gaseous form at 0 HP.'},
+  {name:'Lich',            ac:'17', hp:'89',  atk:'1 rot touch +8 (1d10+necrosis) and 3 spell +8', mv:'near',       lv:'16', al:'C', s:'+1',d:'+2',c:'+2',i:'+5',w:'+4',ch:'+3', notes:'Necrosis: DC 15 CON or max HP reduced by damage dealt. Phylactery: Returns in 1d10 days unless phylactery destroyed. Undead immunities.'},
+  {name:'Troll',           ac:'13', hp:'45',  atk:'2 claw +5 (1d6) and 1 bite +5 (1d8)',        mv:'near',          lv:'7',  al:'C', s:'+4',d:'+0',c:'+4',i:'-2',w:'+0',ch:'-2', notes:'Regenerate: 5 HP/round unless damaged by fire or acid. If at 0 HP and no fire/acid damage, rises in 1d4 rounds.'},
+  {name:'Giant, Hill',     ac:'13', hp:'57',  atk:'3 stomp +7 (2d8) or 1 boulder (far) +5 (2d6)', mv:'double near', lv:'8',  al:'C', s:'+5',d:'+0',c:'+4',i:'-2',w:'+0',ch:'-2', notes:''},
+  {name:'Giant, Stone',    ac:'14', hp:'60',  atk:'3 slam +8 (2d8) or 1 boulder (far) +7 (2d10)', mv:'double near', lv:'9',  al:'N', s:'+5',d:'+1',c:'+4',i:'-1',w:'+1',ch:'+0', notes:'Stone Hide: Half damage from non-magical weapons.'},
+  {name:'Dragon, Young',   ac:'16', hp:'43',  atk:'2 claw +6 (1d8) and 1 bite +6 (2d8) or 1 breath', mv:'double near (fly)', lv:'8', al:'C', s:'+4',d:'+1',c:'+3',i:'+2',w:'+1',ch:'+3', notes:'Breath: Near cone, 4d8 damage DC 15 DEX half.'},
+  {name:'Dragon, Adult',   ac:'18', hp:'75',  atk:'3 claw +8 (2d8) and 1 bite +8 (2d12) or 1 breath', mv:'double near (fly)', lv:'12', al:'C', s:'+5',d:'+2',c:'+4',i:'+3',w:'+2',ch:'+4', notes:'Breath: Near cone, 8d8 damage DC 18 DEX half. Legendary Resistance 3/day.'},
+  {name:'Werewolf',        ac:'13', hp:'30',  atk:'2 claw +4 (1d8) or 1 bite +4 (2d6+lycanthropy)', mv:'near',      lv:'5',  al:'C', s:'+3',d:'+2',c:'+2',i:'+0',w:'+1',ch:'-1', notes:'Lycanthropy: DC 15 CON or infected. Impervious: Only hurt by silver or magic.'},
+  {name:'Mimic',           ac:'13', hp:'30',  atk:'2 pseudopod +4 (1d8+adhesive)',               mv:'near',          lv:'5',  al:'N', s:'+3',d:'+1',c:'+2',i:'-2',w:'+1',ch:'-1', notes:'Adhesive: DC 12 STR to detach. Shape: Appears as chest or door.'},
+  {name:'Minotaur',        ac:'14', hp:'38',  atk:'1 greataxe +5 (2d6) and 1 gore +5 (1d8)',    mv:'near',          lv:'6',  al:'C', s:'+4',d:'+0',c:'+3',i:'-2',w:'+0',ch:'-1', notes:'Charge: Bonus gore attack if moved near distance before attacking.'},
+  {name:'Harpy',           ac:'12', hp:'20',  atk:'2 talon +3 (1d6) or 1 luring song',          mv:'near (fly)',    lv:'4',  al:'C', s:'+1',d:'+2',c:'+1',i:'+0',w:'+0',ch:'+3', notes:'Luring Song: DC 12 WIS or move toward harpy. Immune if ears plugged.'},
+  {name:'Medusa',          ac:'15', hp:'25',  atk:'2 snake bite +4 (1d4+poison) or 1 gaze',     mv:'near',          lv:'6',  al:'C', s:'+1',d:'+3',c:'+1',i:'+2',w:'+2',ch:'+3', notes:'Petrifying Gaze: DC 15 CON or petrified. Poison: DC 12 CON or 1d6/round for 3 rounds.'},
+  {name:'Manticore',       ac:'14', hp:'29',  atk:'2 claw +4 (1d6) and 1 bite +4 (2d6) or 3 spike (far) +4 (1d8)', mv:'near (fly)', lv:'6', al:'C', s:'+3',d:'+1',c:'+2',i:'-1',w:'+1',ch:'-1', notes:''},
+  {name:'Owlbear',         ac:'14', hp:'25',  atk:'2 claw +4 (1d6) and 1 beak +4 (1d8)',        mv:'near',          lv:'5',  al:'N', s:'+4',d:'+0',c:'+2',i:'-3',w:'+1',ch:'-2', notes:'Keen Senses: Can\'t be surprised.'},
+  {name:'Gargoyle',        ac:'15', hp:'28',  atk:'2 claw +4 (1d6) and 1 bite +4 (1d4)',        mv:'near (fly)',    lv:'5',  al:'C', s:'+3',d:'+0',c:'+3',i:'-3',w:'+0',ch:'-3', notes:'Stone: Looks like statue when still. Impervious: Only hurt by magical weapons.'},
+  {name:'Beholder',        ac:'17', hp:'85',  atk:'2d4 eyestalk rays',                           mv:'near (fly)',    lv:'13', al:'C', s:'+4',d:'+5',c:'+4',i:'+5',w:'+4',ch:'+3', notes:'Central Eye: Anti-magic cone. Eyestalks: Various ray effects (charm, slow, sleep, disintegrate, death, etc.).'},
+  {name:'Banshee',         ac:'13', hp:'47',  atk:'3 rot touch +8',                              mv:'near (fly)',    lv:'7',  al:'C', s:'+0',d:'+3',c:'+0',i:'+3',w:'+3',ch:'+3', notes:'Wail: DC 15 CON or drop to 0 HP. Impervious: Only hurt by magical weapons. Undead immunities.'},
+  {name:'Ogre',            ac:'11', hp:'30',  atk:'2 greatclub +6 (2d6)',                        mv:'near',          lv:'5',  al:'C', s:'+4',d:'-1',c:'+3',i:'-2',w:'+0',ch:'-2', notes:''},
+  {name:'Mind Flayer',     ac:'14', hp:'44',  atk:'4 tentacle +5 (1d6+latch) or 1 mind blast',  mv:'near',          lv:'8',  al:'C', s:'+0',d:'+3',c:'+0',i:'+5',w:'+3',ch:'+4', notes:'Mind Blast: Near cone, DC 15 INT or stunned 1d4 rounds. Brain Extraction: Latched 4 rounds = death. Psionic Shield.'},
+  {name:'Rust Monster',    ac:'14', hp:'20',  atk:'1 antennae touch +2',                         mv:'near',          lv:'3',  al:'N', s:'+1',d:'+3',c:'+1',i:'-3',w:'+1',ch:'-3', notes:'Corrode: Metal touching antenna rusts and crumbles. Lure: Attracted to metal odors.'},
+  {name:'Phase Spider',    ac:'14', hp:'22',  atk:'1 bite +4 (1d10+poison)',                     mv:'near',          lv:'5',  al:'N', s:'+2',d:'+3',c:'+1',i:'-2',w:'+1',ch:'-3', notes:'Phase: 1/round can shift to ethereal. Poison: DC 15 CON or paralyzed 1d6 rounds.'},
+  {name:'Gelatinous Cube', ac:'9',  hp:'35',  atk:'3 slam +3 (1d8+engulf)',                      mv:'near',          lv:'4',  al:'N', s:'+2',d:'-4',c:'+3',i:'-4',w:'-3',ch:'-4', notes:'Engulf: Engulfed creatures take 3d6/round and are paralyzed. Invisible at rest.'},
+  {name:'Hydra',           ac:'13', hp:'45',  atk:'1 bite per head +3 (1d8)',                    mv:'near (swim)',   lv:'6',  al:'N', s:'+4',d:'+0',c:'+3',i:'-3',w:'+0',ch:'-3', notes:'Heads: 5 heads, each LV 2 AC 13. Severed head regrows 2 next round unless cauterized.'},
+  {name:'Cockatrice',      ac:'11', hp:'9',   atk:'1 beak +2 (1d4+petrify)',                     mv:'near (fly)',    lv:'2',  al:'N', s:'-1',d:'+2',c:'+0',i:'-3',w:'+1',ch:'-3', notes:'Petrify: DC 12 CON or petrified in stone.'},
+  {name:'Griffon',         ac:'13', hp:'25',  atk:'2 talon +4 (2d4) and 1 beak +4 (1d8)',       mv:'double near (fly)', lv:'5', al:'N', s:'+4',d:'+2',c:'+2',i:'-2',w:'+1',ch:'+0', notes:''},
+  {name:'Hippogriff',      ac:'11', hp:'19',  atk:'2 talon +3 (1d6) and 1 bite +3 (1d4)',       mv:'double near (fly)', lv:'3', al:'N', s:'+3',d:'+2',c:'+1',i:'-3',w:'+1',ch:'+0', notes:''},
+  {name:'Wyvern',          ac:'14', hp:'40',  atk:'1 bite +6 (2d8) and 1 stinger +6 (1d8+poison)', mv:'double near (fly)', lv:'7', al:'N', s:'+4',d:'+2',c:'+2',i:'-2',w:'+1',ch:'-1', notes:'Poison: DC 15 CON or 3d6 damage.'},
+  {name:'Imp',             ac:'12', hp:'10',  atk:'1 sting +2 (1d4+poison)',                     mv:'near (fly)',    lv:'2',  al:'C', s:'-1',d:'+3',c:'+0',i:'+1',w:'+1',ch:'+1', notes:'Poison: DC 12 CON or 1d4 damage next round. Shapechanger: Takes animal forms.'},
+  {name:'Hell Hound',      ac:'14', hp:'22',  atk:'2 bite +4 (1d6+1d6 fire)',                   mv:'near',          lv:'4',  al:'C', s:'+3',d:'+1',c:'+2',i:'-2',w:'+1',ch:'-1', notes:'Fire Breath 1/round: Near cone, 2d6 fire DC 13 DEX half. Impervious: Fire immune.'},
+  {name:'Sprite',          ac:'14', hp:'3',   atk:'1 short sword +2 (1d4+poison)',               mv:'near (fly)',    lv:'1',  al:'N', s:'-3',d:'+4',c:'+0',i:'+1',w:'+2',ch:'+1', notes:'Poison: DC 12 CON or sleep 1d4 rounds. Invisibility 1/day.'},
+  {name:'Treant',          ac:'16', hp:'60',  atk:'2 slam +7 (3d6)',                             mv:'near',          lv:'9',  al:'L', s:'+5',d:'-1',c:'+4',i:'+2',w:'+3',ch:'+2', notes:'Vulnerable to fire. Animate Trees: 2 trees/minute, treat as treant LV 6.'},
+  {name:'Giant Spider',    ac:'13', hp:'11',  atk:'1 bite +2 (1d8+poison)',                      mv:'near (climb)',  lv:'2',  al:'N', s:'+1',d:'+3',c:'+0',i:'-3',w:'+1',ch:'-4', notes:'Poison: DC 12 CON or 1d6 damage and slowed. Web: Near range, DC 12 STR or restrained.'},
+  {name:'Wraith',          ac:'15', hp:'32',  atk:'2 life drain +5 (1d8)',                       mv:'near (fly)',    lv:'6',  al:'C', s:'+0',d:'+3',c:'+0',i:'+1',w:'+2',ch:'+2', notes:'Life Drain: Reduce max HP by damage dealt until rest. Impervious: Only hurt by magical weapons. Sunlight vulnerability.'},
+  {name:'Specter',         ac:'12', hp:'20',  atk:'1 touch +3 (1d6+drain)',                      mv:'near (fly)',    lv:'4',  al:'C', s:'+0',d:'+2',c:'+0',i:'+0',w:'+1',ch:'+1', notes:'Drain: DC 12 CON or lose 1 max HP. Incorporeal: Half damage from non-magical weapons.'},
+  {name:'Soldier',         ac:'15', hp:'11',  atk:'1 longsword +2 (1d8) or 1 spear +2 (1d6)',   mv:'near',          lv:'2',  al:'L', s:'+2',d:'+1',c:'+1',i:'+0',w:'+1',ch:'+0', notes:'Formation: +1 attack and AC in groups of 3+.'},
+  {name:'Knight',          ac:'17', hp:'28',  atk:'2 longsword +5 (1d8) or 1 lance (near) +5 (1d12)', mv:'near',   lv:'4',  al:'L', s:'+3',d:'+0',c:'+2',i:'+1',w:'+2',ch:'+2', notes:'Mounted Charge: Double damage with lance on first attack when mounted.'},
+  {name:'Priest, High',    ac:'16', hp:'30',  atk:'1 mace +3 (1d6) or 2 spell +6',              mv:'near',          lv:'6',  al:'L', s:'+1',d:'+0',c:'+1',i:'+2',w:'+4',ch:'+3', notes:'Turn Undead DC 16. Healing, Smite, Command spells.'},
+  {name:'Mage',            ac:'12', hp:'25',  atk:'2 spell +5',                                  mv:'near',          lv:'6',  al:'N', s:'-1',d:'+2',c:'+0',i:'+4',w:'+2',ch:'+1', notes:'Fireball, Lightning Bolt, Magic Missile, Shield.'},
+  {name:'Thug',            ac:'12', hp:'7',   atk:'1 club +2 (1d4) or 1 dagger +2 (1d4)',       mv:'near',          lv:'1',  al:'C', s:'+2',d:'+1',c:'+1',i:'+0',w:'+0',ch:'-1', notes:'Mob: When 3 or more attack same target, +1 damage each.'},
+  {name:'Dire Wolf',       ac:'13', hp:'19',  atk:'2 bite +4 (1d8)',                             mv:'near',          lv:'3',  al:'N', s:'+3',d:'+2',c:'+2',i:'-3',w:'+1',ch:'-2', notes:'Pack Tactics: ADV on attacks if ally adjacent to target.'},
+  {name:'Giant Eagle',     ac:'13', hp:'13',  atk:'2 talon +3 (1d6) and 1 beak +3 (1d4)',       mv:'double near (fly)', lv:'2', al:'N', s:'+3',d:'+3',c:'+1',i:'-2',w:'+2',ch:'+1', notes:'Keen Sight: ADV on perception involving sight.'},
+  {name:'Crocodile',       ac:'13', hp:'16',  atk:'1 bite +4 (2d6)',                             mv:'near (swim)',   lv:'3',  al:'N', s:'+4',d:'+1',c:'+2',i:'-4',w:'+1',ch:'-3', notes:'Stealth in water. Grab: DC 12 STR on bite hit or grappled.'},
+  {name:'Mummy',           ac:'13', hp:'38',  atk:'2 fist +4 (1d6+rot)',                         mv:'near',          lv:'6',  al:'C', s:'+3',d:'-1',c:'+2',i:'-2',w:'+0',ch:'-2', notes:'Rot: DC 15 CON or HP max reduced by damage until remove curse. Fire vulnerability. Undead immunities.'},
+];
 </script>
 </body>
 </html>
