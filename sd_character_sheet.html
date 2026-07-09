@@ -154,10 +154,8 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .talents-area{min-height:120px;padding:6px 10px;border-bottom:1px solid var(--rule);}
 .talents-area textarea{width:100%;min-height:110px;border:none;background:transparent;resize:none;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);}
 .spells-list{padding:0;}
-.spells-bottom{grid-column:1/3;grid-row:2;border-top:2px solid var(--border);}
 /* Spell rows use grid for perfect column alignment */
-.spell-row{display:grid;grid-template-columns:16px 1fr 26px 20px 20px 24px;align-items:start;gap:2px;padding:1px 6px;border-bottom:1px solid var(--rule);}
-.spell-desc{border:none;background:transparent;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:500;outline:none;color:var(--muted);padding:1px 2px 3px;min-width:0;width:100%;resize:none;grid-column:2/7;height:auto;min-height:18px;}
+.spell-row{display:grid;grid-template-columns:16px 1fr 26px 48px 92px 20px 20px 24px;align-items:center;gap:2px;padding:1px 6px;border-bottom:1px solid var(--rule);}
 .spell-row.lost{opacity:.4;}
 .spell-row.lost .spell-input{text-decoration:line-through;color:var(--muted);}
 .spell-input{border:none;background:transparent;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);padding:3px 2px;min-width:0;}
@@ -171,6 +169,13 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .atk-adv-btn{padding:2px 4px;background:transparent;border:1px solid var(--rule);cursor:pointer;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:900;color:var(--muted);}
 .atk-adv-btn.on{background:#1a3a1a;border-color:#2d7a2d;color:#6dbf6d;}
 
+.spells-bottom{grid-column:1/3;grid-row:2;border-top:2px solid var(--border);}
+.spell-desc{border:none;background:transparent;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:500;outline:none;color:var(--muted);padding:1px 2px;resize:none;min-height:16px;width:100%;}
+.gear-slot-disabled .gear-name{text-decoration:line-through;opacity:0.35;color:var(--muted);pointer-events:none;}
+.gear-slot-disabled .gear-qty{opacity:0.35;pointer-events:none;}
+.gear-slot-disabled{background:repeating-linear-gradient(135deg,transparent,transparent 4px,rgba(128,128,128,0.07) 4px,rgba(128,128,128,0.07) 5px);}
+.gear-disable-btn{padding:1px 3px;background:transparent;border:1px solid var(--rule);cursor:pointer;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;color:var(--muted);border-radius:2px;flex-shrink:0;}
+.gear-disable-btn.on{background:#3a1a1a;border-color:#7a2d2d;color:#df6a6a;}
 /* FREE TO CARRY */
 .free-carry{border-top:2px solid var(--border);}
 .free-carry-inner{padding:6px 10px;}
@@ -283,7 +288,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
 
     </div><!-- end left-col -->
 
-    <!-- CENTER: Attacks + Talents below -->
+    <!-- CENTER: Attacks + Talents & Spells below -->
     <div class="center-col">
       <div class="sl">Attacks</div>
       <table class="attacks-table">
@@ -302,17 +307,17 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
       <button onclick="addAttackRow()" style="margin:4px 8px;padding:3px 8px;background:var(--black);color:white;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;">+ Add</button>
 
       <!-- TALENTS & SPELLS below attacks -->
-      <div class="sl" style="margin-top:4px;">Talents</div>
+      <div class="sl" style="margin-top:4px;">Talents &amp; Spells</div>
       <div class="talents-area" style="flex:1;">
         <textarea id="talents-text" placeholder="List talents, features, and special abilities here..." style="width:100%;height:100%;min-height:160px;border:none;background:transparent;resize:none;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);padding:6px 10px;"></textarea>
       </div>
     </div><!-- end center-col -->
 
-    <!-- SPELLS: spans left + center columns -->
+    <!-- SPELLS: spans left+center -->
     <div class="spells-bottom">
-      <div class="sl">Talents</div>
+      <div class="sl">Spells</div>
       <div id="spells-list"></div>
-    </div><!-- end spells-bottom -->
+    </div>
 
     <!-- RIGHT: Gear + Free to Carry -->
     <div class="right-col">
@@ -350,7 +355,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
     <button class="log-clear" onclick="clearLog()">Clear</button>
   </div>
   <div class="log-actions">
-    <button class="log-action-btn save" onclick="saveSheet()">💾 Save</button>
+    <button class="log-action-btn save" onclick="saveSheet(true)">💾 Save</button>
     <button class="log-action-btn export" onclick="exportSheet()">↓ Export</button>
     <label class="log-action-btn import" style="display:flex;align-items:center;justify-content:center;cursor:pointer;">↑ Import<input type="file" accept=".json" style="display:none" onchange="importSheet(this)"></label>
     <button class="log-action-btn newchar" onclick="newCharacter()">✦ New</button>
@@ -457,24 +462,72 @@ function addAttackRow() {
 }
 
 // ── SPELLS ──
+let _spellCount = 5;
+
+function addSpellRow(num) {
+  const list = document.getElementById('spells-list');
+  const row = document.createElement('div');
+  row.className = 'spell-row';
+  row.innerHTML =
+    `<span class="spell-num">${num}.</span>` +
+    `<input type="text" class="spell-input" placeholder="Spell name">` +
+    `<select class="spell-level" title="Spell Level (DC=10+lvl)" style="font-size:10px;padding:1px 0;border:1px solid var(--rule);background:var(--input-bg);color:var(--ink);font-family:Montserrat,sans-serif;font-weight:700;outline:none;width:28px;"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>` +
+    `<select class="spell-range" title="Range" style="font-size:10px;border:none;border-bottom:1px solid var(--rule);background:var(--input-bg);color:var(--ink);font-family:Montserrat,sans-serif;outline:none;width:46px;"><option value="">Rng</option><option value="Self">Self</option><option value="Close">Close</option><option value="Near">Near</option><option value="Far">Far</option></select>` +
+    `<input type="text" class="spell-duration" placeholder="Dur" title="Duration" style="font-size:10px;border:none;border-bottom:1px solid var(--rule);background:transparent;color:var(--ink);font-family:Montserrat,sans-serif;outline:none;padding:0 2px;width:100%;">` +
+    `<button class="spell-adv-btn" onclick="toggleSpellAdv(this)" title="Advantage">▲</button>` +
+    `<button class="spell-lost-btn" onclick="toggleSpellLost(this)" title="Mark lost">✗</button>` +
+    `<button class="spell-cast-btn" onclick="rollSpell(this)" title="Cast / Roll">✦</button>` +
+    
+    `<div style="grid-column:2/-1;padding:1px 0 4px;">` +
+    `<textarea class="spell-desc" placeholder="Description..." rows="1" oninput="autoResizeDesc(this)"></textarea>` +
+    `</div>`;
+  const addBtn = list.querySelector('.spell-add-btn');
+  if(addBtn) list.insertBefore(row, addBtn);
+  else list.appendChild(row);
+  return row;
+}
+
 function buildSpells() {
   const list = document.getElementById('spells-list');
-  // Header row
   const hdr = document.createElement('div');
-  hdr.style.cssText = 'display:grid;grid-template-columns:16px 1fr 26px 20px 20px 24px;align-items:center;gap:2px;padding:2px 6px;border-bottom:2px solid var(--border);background:var(--box);';
-  hdr.innerHTML = '<span style="font-size:7px;font-weight:700;color:var(--muted);">#</span><span style="font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Talent / Spell</span><span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);text-align:center;">Lvl</span><span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Always Advantage">▲</span><span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Lost">✗</span><span style="font-size:7px;font-weight:700;color:var(--muted);">Roll</span>';
+  hdr.style.cssText = 'display:grid;grid-template-columns:16px 1fr 26px 48px 92px 20px 20px 24px;align-items:center;gap:2px;padding:2px 6px;border-bottom:2px solid var(--border);background:var(--box);';
+  hdr.innerHTML = '<span style="font-size:7px;font-weight:700;color:var(--muted);">#</span><span style="font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Spell</span><span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);text-align:center;">Lvl</span><span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);">Range</span><span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);">Dur</span><span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Advantage">▲</span><span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Lost">✗</span><span style="font-size:7px;font-weight:700;color:var(--muted);">Roll</span><span></span>';
   list.appendChild(hdr);
-  for(let i=1;i<=20;i++) {
-    const row = document.createElement('div');
-    row.className = 'spell-row';
-    row.innerHTML = `<span class="spell-num">${i}.</span><input type="text" class="spell-input" placeholder=""><input type="text" class="spell-level" placeholder="—" title="Spell Level (DC = 10 + level)"><button class="spell-adv-btn" onclick="toggleSpellAdv(this)" title="Always roll with advantage">▲</button><button class="spell-lost-btn" onclick="toggleSpellLost(this)" title="Mark as lost until rest">✗</button><button class="spell-cast-btn" onclick="rollSpell(this)" title="Cast / Roll">✦</button><textarea class="spell-desc" placeholder="Description..." rows="1" oninput="autoResizeDesc(this)"></textarea>`;
-    list.appendChild(row);
-  }
+  _spellCount = 5;
+  for(let i=1;i<=_spellCount;i++) addSpellRow(i);
+  const btn = document.createElement('button');
+  btn.className = 'spell-add-btn';
+  btn.style.cssText = 'margin:4px 4px 4px 8px;padding:3px 8px;background:var(--black);color:white;border:none;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;';
+  btn.textContent = '+ Add Spell';
+  btn.onclick = function() { _spellCount++; addSpellRow(_spellCount); };
+  list.appendChild(btn);
+  const rmBtn = document.createElement('button');
+  rmBtn.className = 'spell-remove-btn';
+  rmBtn.style.cssText = 'margin:4px 4px;padding:3px 8px;background:transparent;color:var(--muted);border:1px solid var(--rule);cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;';
+  rmBtn.textContent = '- Remove Spell';
+  rmBtn.onclick = function() {
+    const rows = list.querySelectorAll('.spell-row');
+    if(rows.length > 1) { rows[rows.length-1].remove(); _spellCount = Math.max(1, _spellCount-1); }
+  };
+  list.appendChild(rmBtn);
 }
 
 function autoResizeDesc(el) {
   el.style.height = 'auto';
   el.style.height = el.scrollHeight + 'px';
+}
+
+function toggleGearSlot(btn) {
+  const row = btn.closest('div');
+  row.classList.toggle('gear-slot-disabled');
+  const on = row.classList.contains('gear-slot-disabled');
+  btn.classList.toggle('on', on);
+  btn.title = on ? 'Enable slot' : 'Disable slot (exceeds STR limit)';
+  const nameEl = row.querySelector('.gear-name');
+  const qtyEl  = row.querySelector('.gear-qty');
+  if(nameEl) nameEl.disabled = on;
+  if(qtyEl)  qtyEl.disabled  = on;
+  saveSheet();
 }
 
 function toggleAtkAdv(btn) {
@@ -505,6 +558,7 @@ function buildGear() {
       <span style="font-size:8px;font-weight:700;color:var(--muted);width:16px;">${i}.</span>
       <input type="text" class="gear-name" style="flex:1;border:none;background:transparent;font-family:Montserrat,sans-serif;font-size:11px;color:var(--ink);outline:none;padding:3px 0;">
       <input type="text" class="gear-qty" style="width:30px;border:none;border-bottom:1px solid var(--rule);background:transparent;font-family:Montserrat,sans-serif;font-size:11px;font-weight:700;text-align:center;color:var(--ink);outline:none;padding:2px 0;" placeholder="1">
+      <button class="gear-disable-btn" onclick="toggleGearSlot(this)" title="Disable slot (exceeds STR limit)">✕</button>
     `;
     list.appendChild(row);
   }
@@ -752,11 +806,13 @@ function collectSheet(){
   // Collect spells with level, adv, lost state
   const spellRows = [...document.querySelectorAll('#spells-list .spell-row')];
   const spellData = spellRows.map(row => ({
-    name:  row.querySelector('.spell-input')?.value.trim() || '',
-    level: row.querySelector('.spell-level')?.value.trim() || '1',
-    adv:   row.querySelector('.spell-adv-btn')?.classList.contains('on') || false,
-    lost:  row.querySelector('.spell-lost-btn')?.classList.contains('on') || false,
-    desc:  row.querySelector('.spell-desc')?.value.trim() || '',
+    name:     row.querySelector('.spell-input')?.value.trim() || '',
+    level:    row.querySelector('.spell-level')?.value.trim() || '1',
+    adv:      row.querySelector('.spell-adv-btn')?.classList.contains('on') || false,
+    lost:     row.querySelector('.spell-lost-btn')?.classList.contains('on') || false,
+    desc:     row.querySelector('.spell-desc')?.value.trim() || '',
+    range:    row.querySelector('.spell-range')?.value || '',
+    duration: row.querySelector('.spell-duration')?.value.trim() || '',
   }));
   const spellsList = spellData.filter(s => s.name).map(s => s.name);
   const spellsKnown = spellsList.join(', ');
@@ -854,6 +910,7 @@ function collectSheet(){
       xpNext:    document.getElementById('xp-next')?.value || '',
       spellData: spellData,
       gearQtys: [...document.querySelectorAll('#gear-list .gear-qty')].map(el => el.value || ''),
+      gearDisabled: [...document.querySelectorAll('#gear-list > div')].map(row => row.classList.contains('gear-slot-disabled')),
     }
   };
 }
@@ -915,6 +972,19 @@ function _applySDData(d){
   gearQtyInputs.forEach((el, i) => {
     const qty = d._sheet?.gearQtys?.[i] || (gearSlotted[i]?.quantity > 1 ? String(gearSlotted[i].quantity) : '');
     el.value = qty;
+    const gearDisabledArr = d._sheet?.gearDisabled || [];
+    if(gearDisabledArr[i]) {
+      const gRow = el.closest('div');
+      if(gRow) {
+        gRow.classList.add('gear-slot-disabled');
+        const dbtn = gRow.querySelector('.gear-disable-btn');
+        const nameEl = gRow.querySelector('.gear-name');
+        const qtyEl  = gRow.querySelector('.gear-qty');
+        if(dbtn)   { dbtn.classList.add('on'); dbtn.title='Enable slot'; }
+        if(nameEl) nameEl.disabled = true;
+        if(qtyEl)  qtyEl.disabled  = true;
+      }
+    }
   });
   const freeText = d.freeCary || gearFree.map(g => g.name).join(', ') || '';
   set('free-carry', freeText);
@@ -924,19 +994,25 @@ function _applySDData(d){
   if(d.spellsKnown) spells = d.spellsKnown.split(',').map(s => s.trim()).filter(Boolean);
   else if(d.spells) spells = d.spells;
   else if(d.bonuses) spells = d.bonuses.filter(b => b.name?.startsWith('Spell:')).map(b => b.bonusName).filter(Boolean);
+  // Ensure enough rows exist
+  const neededSpells = Math.max(5, spells.length, (d._sheet?.spellData||[]).filter(s=>s&&s.name).length);
+  while(_spellCount < neededSpells) { _spellCount++; addSpellRow(_spellCount); }
   document.querySelectorAll('#spells-list .spell-row').forEach((row, i) => {
     row.querySelector('.spell-input').value = spells[i] || '';
-    // Restore extra spell data from _sheet if available
     const sd = d._sheet?.spellData?.[i];
     if(sd) {
-      const lvlEl  = row.querySelector('.spell-level');
-      const advBtn = row.querySelector('.spell-adv-btn');
+      const lvlEl   = row.querySelector('.spell-level');
+      const advBtn  = row.querySelector('.spell-adv-btn');
       const lostBtn = row.querySelector('.spell-lost-btn');
-      const descEl = row.querySelector('.spell-desc');
-      if(lvlEl)  lvlEl.value = sd.level || '—';
-      if(advBtn) { advBtn.classList.toggle('on', !!sd.adv); }
+      const descEl  = row.querySelector('.spell-desc');
+      const rangeEl = row.querySelector('.spell-range');
+      const durEl   = row.querySelector('.spell-duration');
+      if(lvlEl)  lvlEl.value = sd.level || '1';
+      if(advBtn)  advBtn.classList.toggle('on', !!sd.adv);
       if(lostBtn) { lostBtn.classList.toggle('on', !!sd.lost); row.classList.toggle('lost', !!sd.lost); }
-      if(descEl && sd.desc) { descEl.value = sd.desc; autoResizeDesc(descEl); }
+      if(descEl && sd.desc)     { descEl.value = sd.desc; autoResizeDesc(descEl); }
+      if(rangeEl && sd.range)   rangeEl.value = sd.range;
+      if(durEl && sd.duration)  durEl.value   = sd.duration;
     }
   });
 
@@ -1019,13 +1095,13 @@ function importShadowdarklings(input) {
   reader.readAsText(file);
 }
 
-function saveSheet(){
+function saveSheet(manual=false){
   const data = collectSheet();
   const toSave = {...data, _sheet: {...(data._sheet||{}), portrait: ''}};
   const json = JSON.stringify(toSave);
   try { localStorage.setItem('sd_sheet', json); } catch(e) {}
   if(window.__ddSave) window.__ddSave({ sd_sheet: json });
-  addLog('Sheet Saved','💾','Saved','normal');
+  if(manual) addLog('Sheet Saved','💾','Saved','normal');
 }
 function exportSheet(){
   const data = collectSheet();
@@ -1101,10 +1177,8 @@ autoLoad();
   .main-body{flex-direction:column;}
   .left-col{width:100%;border-right:none;border-bottom:2px solid var(--border);}
   .stats-grid{grid-template-columns:repeat(3,1fr);}
-  .right-col{width:100%;border-top:2px solid var(--border);border-left:none;grid-column:1;grid-row:auto;}
-  .center-col{border-right:none;border-bottom:2px solid var(--border);grid-column:1;grid-row:auto;}
-  .left-col{grid-column:1;grid-row:auto;}
-  .spells-bottom{grid-column:1;grid-row:auto;}
+  .right-col{width:100%;border-top:2px solid var(--border);}
+  .center-col{border-right:none;border-bottom:2px solid var(--border);}
   .hdr-fields,.hdr-fields-2{grid-template-columns:1fr 1fr;}
   .hdr-field:nth-child(2n){border-right:none;}
   .hdr-field:nth-child(3){border-right:1px solid var(--rule);}
