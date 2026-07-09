@@ -288,28 +288,32 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
 
     </div><!-- end left-col -->
 
-    <!-- CENTER: Attacks + Talents & Spells below -->
+    <!-- CENTER: Attacks + Talents below -->
     <div class="center-col">
-      <div class="sl">Attacks</div>
-      <table class="attacks-table">
-        <thead>
-          <tr>
-            <th>Weapon / Attack</th>
-            <th style="width:50px">Bonus</th>
-            <th style="width:60px">Stat</th>
-            <th style="width:70px">Damage</th>
-            <th style="width:24px;text-align:center;" title="Always Advantage">▲</th>
-            <th style="width:32px"></th>
-          </tr>
-        </thead>
-        <tbody id="attacks-body"></tbody>
-      </table>
-      <button onclick="addAttackRow()" style="margin:4px 8px;padding:3px 8px;background:var(--black);color:white;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;">+ Add</button>
+      <div class="attacks-section-wrap">
+        <div class="sl">Attacks</div>
+        <table class="attacks-table">
+          <thead>
+            <tr>
+              <th>Weapon / Attack</th>
+              <th style="width:50px">Bonus</th>
+              <th style="width:60px">Stat</th>
+              <th style="width:70px">Damage</th>
+              <th style="width:24px;text-align:center;" title="Always Advantage">▲</th>
+              <th style="width:32px"></th>
+            </tr>
+          </thead>
+          <tbody id="attacks-body"></tbody>
+        </table>
+        <button onclick="addAttackRow()" style="margin:4px 8px;padding:3px 8px;background:var(--black);color:white;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;">+ Add</button>
+      </div>
 
-      <!-- TALENTS & SPELLS below attacks -->
-      <div class="sl" style="margin-top:4px;">Talents &amp; Spells</div>
-      <div class="talents-area" style="flex:1;">
-        <textarea id="talents-text" placeholder="List talents, features, and special abilities here..." style="width:100%;height:100%;min-height:160px;border:none;background:transparent;resize:none;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);padding:6px 10px;"></textarea>
+      <!-- TALENTS below attacks -->
+      <div class="talents-section-wrap">
+        <div class="sl" style="margin-top:4px;">Talents</div>
+        <div class="talents-area" style="flex:1;">
+          <textarea id="talents-text" placeholder="List talents, features, and special abilities here..." style="width:100%;height:100%;min-height:160px;border:none;background:transparent;resize:none;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);padding:6px 10px;"></textarea>
+        </div>
       </div>
     </div><!-- end center-col -->
 
@@ -1174,11 +1178,39 @@ autoLoad();
   #log-collapse-btn{position:absolute!important;bottom:100%!important;top:auto!important;left:50%!important;right:auto!important;transform:translateX(-50%)!important;width:80px!important;height:28px!important;border-radius:6px 6px 0 0!important;font-size:11px!important;}
   .log-header{cursor:pointer;}
   body{padding-bottom:48px;}
-  .main-body{flex-direction:column;}
-  .left-col{width:100%;border-right:none;border-bottom:2px solid var(--border);}
+
+  /* Collapse grid to single column, use order to sequence sections */
+  .main-body{
+    display:flex;
+    flex-direction:column;
+  }
+  .left-col{
+    width:100%;border-right:none;border-bottom:2px solid var(--border);
+    order:1; /* Ability Scores */
+  }
+  .attacks-section-wrap{
+    order:2; /* Attacks */
+    border-bottom:1px solid var(--rule);
+  }
+  .spells-bottom{
+    order:3; /* Spells */
+    border-top:none;border-bottom:2px solid var(--border);
+  }
+  .talents-section-wrap{
+    order:4; /* Talents */
+    border-bottom:2px solid var(--border);
+  }
+  .right-col{
+    width:100%;border-left:none;border-top:none;
+    order:5; /* Gold + Gear + Free to Carry */
+  }
+  /* center-col becomes a flex column so order works on its children */
+  .center-col{
+    display:contents; /* lets attacks-section-wrap and talents-section-wrap participate in main-body flex order */
+    border-right:none;
+  }
+
   .stats-grid{grid-template-columns:repeat(3,1fr);}
-  .right-col{width:100%;border-top:2px solid var(--border);}
-  .center-col{border-right:none;border-bottom:2px solid var(--border);}
   .hdr-fields,.hdr-fields-2{grid-template-columns:1fr 1fr;}
   .hdr-field:nth-child(2n){border-right:none;}
   .hdr-field:nth-child(3){border-right:1px solid var(--rule);}
