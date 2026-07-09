@@ -881,10 +881,8 @@ input[type="number"] { -moz-appearance: textfield; }
         <button class="gen-tab" data-tab="monster">Monster</button>
         <button class="gen-tab" data-tab="dungeon">Dungeon</button>
         <button class="gen-tab" data-tab="encounter">Encounter</button>
-        <button class="gen-tab" data-tab="trap">Trap/Hazard</button>
         <button class="gen-tab" data-tab="shop">Shop/Tavern</button>
         <button class="gen-tab" data-tab="loot">Treasure</button>
-        <button class="gen-tab" data-tab="adventure_gen">Adventure</button>
       </div>
       <div class="toolbar-spacer"></div>
       <button class="btn small primary gen-roll">🎲 Generate</button>
@@ -1063,6 +1061,8 @@ input[type="number"] { -moz-appearance: textfield; }
                 <option value="happens">Something Happens!</option>
                 <option value="rumor">Rumor</option>
                 <option value="secret">Secret</option>
+                <option value="trap">Trap</option>
+                <option value="hazard">Hazard</option>
               </optgroup>
               <optgroup label="── Biomes ──">
               <option value="Arctic">Arctic</option>
@@ -1104,20 +1104,6 @@ input[type="number"] { -moz-appearance: textfield; }
       </div>
 
       <!-- RIVAL CRAWLERS PANEL -->
-      <div class="gen-panel" data-panel="trap">
-        <div class="gen-controls">
-          <label class="gen-label">Type
-            <select class="gen-select" id="gen-trap-type">
-              <option value="random">Random</option>
-              <option value="trap">Trap</option>
-              <option value="hazard">Hazard</option>
-            </select>
-          </label>
-        </div>
-        <div class="gen-results" id="gen-trap-results">
-          <div class="gen-empty">Set options and press 🎲 Generate</div>
-        </div>
-      </div>
 
       <!-- 5-ROOM DUNGEON PANEL -->
       <div class="gen-panel" data-panel="shop">
@@ -1189,79 +1175,6 @@ input[type="number"] { -moz-appearance: textfield; }
       <!-- SHOP / TAVERN PANEL -->
 
       <!-- ADVENTURE GENERATOR PANEL -->
-      <div class="gen-panel" data-panel="adventure_gen">
-        <div class="gen-controls">
-          <label class="gen-label">Level
-            <select class="gen-select" id="gen-adv-level">
-              <option value="1">1</option><option value="2">2</option><option value="3">3</option>
-              <option value="4">4</option><option value="5">5</option><option value="6">6</option>
-              <option value="7">7</option><option value="8">8</option><option value="9">9</option>
-              <option value="10">10</option>
-            </select>
-          </label>
-          <label class="gen-label">Party Size
-            <select class="gen-select" id="gen-adv-party">
-              <option value="2">2</option><option value="3">3</option>
-              <option value="4" selected>4</option><option value="5">5</option>
-              <option value="6">6</option>
-            </select>
-          </label>
-          <label class="gen-label">Motif
-            <select class="gen-select" id="gen-adv-motif">
-              <option value="random">Random</option>
-              <optgroup label="── Classic ──">
-                <option value="Abandoned">Abandoned</option>
-                <option value="Undead">Undead</option>
-                <option value="Aberrant">Aberrant</option>
-                <option value="Giant">Giant</option>
-                <option value="Vermin">Vermin</option>
-                <option value="Aquatic">Aquatic</option>
-                <option value="Desert">Desert</option>
-                <option value="Underdark">Underdark</option>
-                <option value="Arcane">Arcane</option>
-                <option value="Fire">Fire</option>
-                <option value="Cold">Cold</option>
-                <option value="Infernal">Infernal</option>
-              </optgroup>
-              <optgroup label="── Locations ──">
-                <option value="Sewers">Sewers</option>
-                <option value="Mansion">Mansion</option>
-                <option value="Caves">Caves</option>
-                <option value="Crypts">Crypts</option>
-                <option value="Shipwreck">Shipwreck</option>
-                <option value="Prison">Prison</option>
-                <option value="Ruins">Ruins</option>
-                <option value="Vault">Vault</option>
-                <option value="Tower">Tower</option>
-                <option value="Dungeon">Dungeon</option>
-                <option value="City Building">City Building</option>
-                <option value="Wilderness">Wilderness</option>
-              </optgroup>
-            </select>
-          </label>
-          <label class="gen-label">Encounters
-            <select class="gen-select" id="gen-adv-encs">
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3" selected>3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
-            </select>
-          </label>
-        </div>
-        <div class="gen-results" id="gen-adv-results">
-          <div class="gen-empty">Set options and press 🎲 Generate</div>
-        </div>
-        <div id="gen-adv-action-bar" style="display:none;padding:10px 14px 12px;background:var(--panel);border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
-          <span style="font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--muted);flex:1;min-width:60px;" id="gen-adv-info"></span>
-          <button class="btn small ghost" id="gen-adv-add-secret">+ Secret</button>
-          <button class="btn small ghost" id="gen-adv-add-npc">+ NPC</button>
-          <button class="btn small ghost" id="gen-adv-add-loot">+ Loot</button>
-          <button class="btn small primary" id="gen-adv-load-btn">📖 Load to Adventure</button>
-        </div>
-      </div>
-
 
     </div>
   </div>
@@ -3726,13 +3639,15 @@ function genEncounterItem(type) {
   if(type==='happens')  return card(`<div class="gen-item-name">Something Happens!</div><div class="gen-item-desc">${esc(R(HAPPENS))}</div>`);
   if(type==='rumor')    return card(`<div class="gen-item-name">Rumor</div><div class="gen-item-desc">${esc(R(RUMORS))}</div>`);
   if(type==='secret')   return card(`<div class="gen-item-name">Secret</div><div class="gen-item-desc">${esc(R(SECRETS_D1))} ${esc(R(SECRETS_D2))}</div>`);
+  if(type==='trap')     return genTrap('trap');
+  if(type==='hazard')   return genTrap('hazard');
   // Biome
   const pool = BIOME_ENC_TABLES[type];
   if(pool) return card(`<div class="gen-card-header"><span class="gen-card-name">${esc(type)} Encounter</span></div><div class="gen-item-desc">${esc(R(pool))}</div>`);
   return card(`<div class="gen-empty">Unknown type</div>`);
 }
 
-const ALL_ENC_TYPES = ['happens','rumor','secret',
+const ALL_ENC_TYPES = ['happens','rumor','secret','trap','hazard',
   'Arctic','Artisan District','Castle District','Cave','Deep Tunnels',
   'Desert','Forest','Grassland','High District','Jungle','Low District',
   'Market','Mountain','Ocean','River & Coast','Ruins','Slums','Swamp',
@@ -4930,298 +4845,6 @@ window._genDungeonMap = generateDungeonMap;
 
 })();
 
-// ── Adventure Generator ────────────────────────────────────────────────────
-(function(){
-
-const ADV_TONES = ['Grim','Heroic','Dark','Mysterious','Desperate','Gonzo'];
-
-const ADV_TITLES_A = ['The','A','The Lost','The Fallen','The Forgotten','The Cursed',
-  'The Broken','The Hidden','The Last','The Hollow','The Sunken','The Stolen'];
-const ADV_TITLES_B = ['Seal of','Tomb of','Vault of','Eye of','Heart of','Blood of',
-  'Hand of','Throne of','Mask of','Name of','Lair of','Crown of'];
-const ADV_TITLES_C = ['the Damned','the Forgotten King','the Dying God','the Black Moon',
-  'the Plague Priest','the Shattered Saint','the Lich Queen','the Hollow Prophet',
-  'the Crimson Hand','the Bound Devil','the Last Flame','the Void Walker'];
-
-const ADV_HOOKS = {
-  Grim:        ["A child arrives with a severed hand and a name. She'll say nothing else.",
-    "Three villages went dark in a week. The fourth is barricading its doors tonight.",
-    "The body of a famous hero was found — stripped of everything, including their bones.",
-    "A dying courier delivers half a map. The other half is still in enemy hands.",
-    "The church is offering triple the usual rate. They won't say why."],
-  Heroic:      ["A kidnapped noble's family has exhausted every legal option. They're begging now.",
-    "A relic that could end a generations-long war has been located. Someone else is also looking.",
-    "A village elder sacrifices himself to buy time. The party arrives in time to see the aftermath.",
-    "The king's personal seal on a letter reads: 'Trust no one except the bearers of this note.'",
-    "A legendary sword was stolen from its shrine. The god it belongs to is not pleased."],
-  Dark:        ["Something is living in the old cistern. The well-water tastes wrong. Children won't go outside.",
-    "A well-respected merchant is offering fortunes for one simple task: find his wife. He won't say what happened to her.",
-    "The asylum released a patient last month. Three people have since disappeared. The patient left town yesterday.",
-    "A confession was found nailed to the church door. The priest named in it died two years ago.",
-    "Someone has been leaving candles at doorsteps. Every door that gets a candle loses someone by morning."],
-  Mysterious:  ["A painting in the mayor's hall shows a building that won't be built for fifty years — and a fire.",
-    "Every person who entered the ruin last month returned speaking a language no one recognizes.",
-    "The stars above a specific valley have been wrong for six nights. Not subtly wrong. Wrong.",
-    "A sealed room in the city archive is listed in no index. The door is warm to the touch.",
-    "A merchant paid in coins that don't exist. The mint they're from was destroyed before anyone alive was born."],
-  Desperate:   ["There are six days of food left in the city. The caravan was due four days ago.",
-    "A plague has been spreading for two weeks. The cure requires a component from the most dangerous place in the region.",
-    "Someone has been killing off healers. The party is the last thing standing between a city and a very bad winter.",
-    "The ransom note gives three days. The party has one horse, forty silver, and a bad map.",
-    "A dam is failing. The people downstream don't know yet. There's no fast way to warn them except through the dungeon."],
-  Gonzo:       ["A demon is demanding rent from a city block. His lease is, technically, legally valid.",
-    "A dragon has offered to solve everything — for exactly one favor, terms to be determined later.",
-    "The dungeon sent a formal written complaint about adventurers. It wants them to stop or submit a waiver.",
-    "A bard claims to have a map tattooed on a fish. The fish is alive. The fish does not cooperate.",
-    "An angel fell into a tavern. It's fine. It just needs someone to pick up a package. It's also on fire."],
-};
-
-const ADV_GOALS = [
-  'Recover a stolen relic before it is used',
-  'Destroy an artifact that cannot leave the dungeon intact',
-  'Rescue a prisoner from the depths',
-  'Assassinate the dungeon master before they complete a ritual',
-  'Map the dungeon for a powerful patron',
-  'Retrieve a specific piece of information and return alive',
-  'Survive long enough to warn the surface',
-  'Steal the treasure before a rival party does',
-  'Break a curse that has been laid on a person or place',
-  'Find out what happened to the previous expedition',
-  'Seal whatever is being summoned before it completes',
-  'Escort a VIP through and out the other side',
-];
-
-const ADV_TWISTS = [
-  "The person who hired them is the actual villain.",
-  "The 'monster' they were sent to kill is the last guardian of something important.",
-  "There is no treasure. There never was. It was bait.",
-  "A rival party is here for the same reason — but they've gone quiet.",
-  "One of the dungeon's inhabitants offers help. Their price is reasonable. That's the suspicious part.",
-  "The target is already dead. Has been for weeks. Something is using its face.",
-  "The dungeon was built to keep something in. It's still working.",
-  "The patron is inside the dungeon. They were never on the outside.",
-  "Completing the goal triggers a secondary, worse problem.",
-  "The dungeon is alive. It has been listening. It has opinions.",
-  "The previous expedition didn't fail. They chose to stay.",
-  "The real enemy has been in the party's blind spot the entire time.",
-];
-
-const ADV_COMPLICATIONS = [
-  "A second faction arrives with conflicting orders and no interest in compromise.",
-  "The only exit collapses. There is allegedly another way out.",
-  "A magical effect is suppressing all spellcasting in a specific section.",
-  "One NPC the party trusted turns out to have a personal reason for being here.",
-  "Time pressure: something bad happens at the end of the third session in here.",
-  "A wandering monster is tracking the party specifically — not randomly.",
-  "The map is wrong. Deliberately wrong.",
-  "A resource the party counted on (light, food, rope) is gone.",
-  "An innocent is inside who cannot be left behind and cannot keep up.",
-  "A trap resets every time it's triggered. Someone has been maintaining it.",
-];
-
-const ADV_OPENING_SCENES = {
-  Grim:        ["The party arrives at the edge of the affected area at dusk. The silence is wrong. Animals have fled. The only sounds are their own footsteps and, somewhere ahead, something dripping.",
-    "A survivor stumbles out of the entrance as the party approaches. She's alive. She won't say what she saw. She keeps looking back.",
-    "The door to the dungeon is already open. Fresh tracks lead in. None lead out."],
-  Heroic:      ["The party crests a hill to see the location below — larger than expected, more heavily guarded than described. The hostage was seen at a window three hours ago. There is no good plan. They go anyway.",
-    "A crowd has gathered at the gate. They've been waiting for someone to do something. The party is the someone.",
-    "The client meets them at the threshold and says: 'I can't go back in. I can describe everything. Please.'"],
-  Dark:        ["The party finds the location by following the smell. Something has been burning for days. The fire is cold now.",
-    "The locals won't look at the place directly. When asked about it, they change the subject. When pressed, they leave.",
-    "Rain has started. Inside the entrance, there is no sound of rain. There is no echo. There is no sound at all."],
-  Mysterious:  ["The entrance wasn't here yesterday. Three people saw it appear. One of them refuses to discuss it. One is gone.",
-    "A child drew a picture of the interior three weeks before anyone found the entrance. The party is shown the drawing as they descend.",
-    "The lantern light behaves differently here — shadows fall in the wrong direction, toward the light source."],
-  Desperate:   ["They have one night to get in, get it, and get out. The gate opens at dawn and closes at dusk. It is currently dusk.",
-    "There's no time for a plan. The first complication has already started. They enter at a run.",
-    "The party passes another group coming out — empty-handed, two members fewer than they went in with, shaking their heads."],
-  Gonzo:       ["The dungeon has a front desk. There is a goblin behind it. It asks if they have a reservation.",
-    "A skeleton waves hello. It is carrying a sign that reads 'PLEASE DON'T.' It waves the sign specifically at the party.",
-    "Everything looks normal until the party notices the ceiling is breathing. Slowly. Rhythmically. It's been doing this for years."],
-};
-
-const ADV_SECRETS = [
-  'The dungeon was built by a civilization that no longer exists — and they built it to last.',
-  'There is something in the lowest level that was sealed here deliberately. The seal is old. It has been weakening.',
-  'The treasure is cursed. It always has been. Everyone who has taken it has returned it — or not returned at all.',
-  'Someone on the surface wants the party to fail. They have a contact inside the dungeon.',
-  'The dungeon is a test. It has always been a test. The party was chosen.',
-  'The previous expedition solved the problem. The solution created a worse one.',
-  'One of the dungeon inhabitants is not what they appear to be. They have been waiting for someone trustworthy.',
-  'The patron has been inside the dungeon before. They did not leave empty-handed last time.',
-  'The dungeon was built around a person, not a place. That person is still here.',
-  'The way out is not the way in. The party will learn this the hard way.',
-];
-
-function genAdventure(level, partySize, motif, encCount) {
-  const plInt = parseInt(level)||1;
-  const psInt = parseInt(partySize)||4;
-  const encInt = parseInt(encCount)||3;
-  const mot = (!motif || motif === 'random')
-    ? R(DUN_MOTIFS.filter(m => m !== 'none'))
-    : motif;
-
-  // Map motif to a tone for hooks/opening scenes
-  const MOTIF_TONE = {
-    Abandoned:'Grim', Undead:'Dark', Aberrant:'Mysterious', Giant:'Heroic',
-    Vermin:'Desperate', Aquatic:'Mysterious', Desert:'Desperate', Underdark:'Dark',
-    Arcane:'Mysterious', Fire:'Heroic', Cold:'Grim', Infernal:'Dark',
-    Sewers:'Grim', Mansion:'Dark', Caves:'Grim', Crypts:'Dark',
-    Shipwreck:'Mysterious', Prison:'Desperate', Ruins:'Mysterious', Vault:'Heroic',
-    Tower:'Arcane', Dungeon:'Grim', 'City Building':'Dark', Wilderness:'Heroic',
-  };
-  const tone = MOTIF_TONE[mot] || R(ADV_TONES);
-
-  const title = `${R(ADV_TITLES_A)} ${R(ADV_TITLES_B)} ${R(ADV_TITLES_C)}`;
-  const hook         = R(ADV_HOOKS[tone] || ADV_HOOKS.Grim);
-  const goal         = R(ADV_GOALS);
-  const twist        = R(ADV_TWISTS);
-  const complication = R(ADV_COMPLICATIONS);
-  const openScene    = R(ADV_OPENING_SCENES[tone] || ADV_OPENING_SCENES.Dark);
-
-  // Secrets (always 2 to start)
-  const s1 = R(ADV_SECRETS);
-  const secrets = [s1, R(ADV_SECRETS.filter(s=>s!==s1))];
-
-  // NPCs (1 to start)
-  const npcs = [genAdvNPC()];
-
-  // Encounters — use biome tables if available, fallback to HAPPENS/RUMORS
-  const encounters = [];
-  const biomePool = BIOME_ENC_TABLES[mot];
-  for(let i=0; i<encInt; i++) {
-    if(biomePool) encounters.push(R(biomePool));
-    else encounters.push(i % 2 === 0 ? R(HAPPENS) : R(RUMORS));
-  }
-
-  // Treasure (2 to start, scaled to level)
-  const tierPool = plInt >= 7 ? TREASURE_T7 : plInt >= 4 ? TREASURE_T4 : TREASURE_T1;
-  const treasures = [R(tierPool), R(plInt >= 4 ? TREASURE_T4 : TREASURE_T1)];
-
-  return {
-    title, motif: mot, tone, level: plInt, partySize: psInt,
-    hook, goal, twist, complication, openScene,
-    secrets, npcs, encounters, treasures,
-  };
-}
-
-function genAdvNPC() {
-  const anc  = R(['Human','Human','Human','Dwarf','Elf','Halfling','Half-Orc','Goblin']);
-  const name = R(NPC_NAMES[anc]||NPC_NAMES.Human);
-  const role = R(['Villain','Quest Giver','Rival','Ally','Wild Card','Informant','Prisoner','Guardian']);
-  const want = R(WANTS);
-  const secr = R(SECRETS);
-  return { name, ancestry: anc, role, wants: want, secret: secr };
-}
-
-function genAdvSecret() { return R(ADV_SECRETS); }
-function genAdvLoot(level) {
-  const plInt = parseInt(level)||1;
-  const pool = plInt >= 7 ? TREASURE_T7 : plInt >= 4 ? TREASURE_T4 : TREASURE_T1;
-  return R(pool);
-}
-
-function renderAdvCard(type, data, level) {
-  const section = (t, color) =>
-    `<div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${color||'var(--muted)'};background:var(--panel-2);padding:4px 10px;margin:12px -14px 8px;border-left:3px solid ${color||'var(--border)'};">${t}</div>`;
-  const row = (label, val) =>
-    `<div style="display:flex;gap:8px;margin-bottom:6px;font-size:13px;">
-      <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);min-width:90px;flex-shrink:0;padding-top:2px;">${label}</span>
-      <span style="color:var(--light);line-height:1.5;">${esc(data[label.toLowerCase()]||data||'')}</span>
-    </div>`;
-
-  const el = document.createElement('div');
-  el.className = 'gen-card';
-  el.dataset.advCardType = type;
-
-  if(type === 'secret') {
-    el.innerHTML = section('Secret / Clue','#8080c0') +
-      `<div style="color:var(--light);font-size:13px;line-height:1.5;">${esc(data)}</div>`;
-  } else if(type === 'npc') {
-    el.innerHTML = section('NPC','var(--red)') +
-      `<div style="display:flex;gap:8px;margin-bottom:6px;font-size:13px;"><span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);min-width:90px;flex-shrink:0;padding-top:2px;">Name</span><span style="color:var(--light);line-height:1.5;">${esc(data.name)} (${esc(data.ancestry)})</span></div>` +
-      `<div style="display:flex;gap:8px;margin-bottom:6px;font-size:13px;"><span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);min-width:90px;flex-shrink:0;padding-top:2px;">Role</span><span style="color:var(--light);line-height:1.5;">${esc(data.role)}</span></div>` +
-      `<div style="display:flex;gap:8px;margin-bottom:6px;font-size:13px;"><span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);min-width:90px;flex-shrink:0;padding-top:2px;">Wants</span><span style="color:var(--light);line-height:1.5;">${esc(data.wants)}</span></div>` +
-      `<div style="display:flex;gap:8px;margin-bottom:6px;font-size:13px;"><span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);min-width:90px;flex-shrink:0;padding-top:2px;">Secret</span><span style="color:var(--light);line-height:1.5;">${esc(data.secret)}</span></div>`;
-  } else if(type === 'loot') {
-    el.innerHTML = section('Loot / Reward','var(--gold)') +
-      `<div style="color:var(--light);font-size:13px;line-height:1.5;">${esc(data)}</div>`;
-  }
-  return el;
-}
-
-function renderAdventure(adv) {
-  const el = document.createElement('div');
-  const section = (title, color) =>
-    `<div style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${color||'var(--muted)'};background:var(--panel-2);padding:4px 10px;margin:12px -14px 8px;border-left:3px solid ${color||'var(--border)'};">${title}</div>`;
-  const row = (label, val) =>
-    `<div style="display:flex;gap:8px;margin-bottom:6px;font-size:13px;">
-      <span style="font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);min-width:90px;flex-shrink:0;padding-top:2px;">${label}</span>
-      <span style="color:var(--light);line-height:1.5;">${esc(val)}</span>
-    </div>`;
-
-  // Header card
-  el.innerHTML += `<div class="gen-card" style="border-color:var(--gold)">
-    <div class="gen-card-header">
-      <span class="gen-card-name" style="font-family:'Cinzel',serif;font-size:16px;color:var(--gold)">${esc(adv.title)}</span>
-    </div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;">
-      <span class="gen-card-tag">${esc(adv.motif)}</span>
-      <span class="gen-card-tag">Level ${adv.level}</span>
-      <span class="gen-card-tag">${adv.partySize} Players</span>
-      <span class="gen-card-tag">${adv.encounters.length} Encounters</span>
-    </div>
-  </div>`;
-
-  // Hook & Goal card
-  el.innerHTML += `<div class="gen-card">
-    ${section('Hook & Strong Open','var(--gold)')}
-    ${row('Hook', adv.hook)}
-    ${row('Opening', adv.openScene)}
-    ${section('Goal & Complications','#c87040')}
-    ${row('Goal', adv.goal)}
-    ${row('Twist', adv.twist)}
-    ${row('Complication', adv.complication)}
-  </div>`;
-
-  // Secrets card
-  let secsHtml = section('Secrets & Clues','#8080c0');
-  adv.secrets.forEach((s,i) => { secsHtml += row(`Secret ${i+1}`, s); });
-  el.innerHTML += `<div class="gen-card" data-adv-card-type="secrets">${secsHtml}</div>`;
-
-  // NPCs
-  adv.npcs.forEach(npc => {
-    el.innerHTML += `<div class="gen-card" data-adv-card-type="npc">
-      ${section('NPC','var(--red)')}
-      ${row('Name', `${npc.name} (${npc.ancestry})`)}
-      ${row('Role', npc.role)}
-      ${row('Wants', npc.wants)}
-      ${row('Secret', npc.secret)}
-    </div>`;
-  });
-
-  // Encounters
-  let encHtml = section('Encounters','#40a060');
-  adv.encounters.forEach((e,i) => { encHtml += row(`Encounter ${i+1}`, e); });
-  el.innerHTML += `<div class="gen-card">${encHtml}</div>`;
-
-  // Loot
-  let lootHtml = section('Loot & Rewards','var(--gold)');
-  adv.treasures.forEach((t,i) => { lootHtml += row(`Reward ${i+1}`, t); });
-  el.innerHTML += `<div class="gen-card" data-adv-card-type="loot">${lootHtml}</div>`;
-
-  return el;
-}
-
-window._genAdventure    = genAdventure;
-window._genAdvNPC       = genAdvNPC;
-window._genAdvSecret    = genAdvSecret;
-window._genAdvLoot      = genAdvLoot;
-window._renderAdventure = renderAdventure;
-window._renderAdvCard   = renderAdvCard;
-
-})();
-
 window.init_gen = function(root) {
   const tabs   = root.querySelectorAll('.gen-tab');
   const panels = root.querySelectorAll('.gen-panel');
@@ -5250,53 +4873,6 @@ window.init_gen = function(root) {
       const count=parseInt(root.querySelector('#gen-loot-count').value)||1;
       const res=root.querySelector('#gen-loot-results'); res.innerHTML='';
       for(let i=0;i<count;i++) res.appendChild(genTreasure(tier,type));
-
-    } else if(activeTab==='adventure_gen') {
-      const level     = root.querySelector('#gen-adv-level').value;
-      const partySize = root.querySelector('#gen-adv-party').value;
-      const motif     = root.querySelector('#gen-adv-motif').value;
-      const encCount  = root.querySelector('#gen-adv-encs').value;
-      const res       = root.querySelector('#gen-adv-results');
-      const bar       = root.querySelector('#gen-adv-action-bar');
-      const info      = root.querySelector('#gen-adv-info');
-      res.innerHTML = '';
-      const adv = window._genAdventure(level, partySize, motif, encCount);
-      root._lastAdventure = adv;
-      res.appendChild(window._renderAdventure(adv));
-      bar.style.display = 'flex';
-      info.textContent = `${adv.title}`;
-
-    } else if(activeTab==='shop') {
-      const type=root.querySelector('#gen-shop-type').value;
-      const tier=root.querySelector('#gen-shop-tier').value;
-      const res=root.querySelector('#gen-shop-results'); res.innerHTML='';
-      res.appendChild(genShop(type,tier));
-
-    } else if(activeTab==='encounter') {
-      const type=root.querySelector('#gen-enc-type').value;
-      const count=parseInt(root.querySelector('#gen-enc-count').value)||1;
-      const res=root.querySelector('#gen-enc-results'); res.innerHTML='';
-      for(let i=0;i<count;i++) {
-        const t=(type==='random_all')?R(ALL_ENC_TYPES):type;
-        res.appendChild(genEncounterItem(t));
-      }
-
-    } else if(activeTab==='rival') {
-      const size=root.querySelector('#gen-rival-size').value;
-      const disp=root.querySelector('#gen-rival-disp').value;
-      const res=root.querySelector('#gen-rival-results'); res.innerHTML='';
-      res.appendChild(genRivalCrawler(size,disp));
-
-    } else if(activeTab==='monster') {
-      const pl=root.querySelector('#gen-mon-pl').value;
-      const mut=root.querySelector('#gen-mon-mut').value;
-      const res=root.querySelector('#gen-mon-results'); res.innerHTML='';
-      res.appendChild(genMonster(pl,mut));
-
-    } else if(activeTab==='trap') {
-      const type=root.querySelector('#gen-trap-type').value;
-      const res=root.querySelector('#gen-trap-results'); res.innerHTML='';
-      res.appendChild(genTrap(type));
 
     } else if(activeTab==='dungeon') {
       const level  = root.querySelector('#gen-dun-level').value;
@@ -5349,109 +4925,7 @@ window.init_gen = function(root) {
     }
   });
 
-  // Wire Adventure + add buttons
-  (function() {
-    const res       = root.querySelector('#gen-adv-results');
-    const addSecret = root.querySelector('#gen-adv-add-secret');
-    const addNpc    = root.querySelector('#gen-adv-add-npc');
-    const addLoot   = root.querySelector('#gen-adv-add-loot');
-    const getLevel  = () => root.querySelector('#gen-adv-level')?.value || '1';
 
-    if(addSecret) addSecret.addEventListener('click', () => {
-      if(!res || !window._genAdvSecret) return;
-      res.appendChild(window._renderAdvCard('secret', window._genAdvSecret()));
-      res.lastElementChild.scrollIntoView({behavior:'smooth', block:'nearest'});
-    });
-    if(addNpc) addNpc.addEventListener('click', () => {
-      if(!res || !window._genAdvNPC) return;
-      res.appendChild(window._renderAdvCard('npc', window._genAdvNPC()));
-      res.lastElementChild.scrollIntoView({behavior:'smooth', block:'nearest'});
-    });
-    if(addLoot) addLoot.addEventListener('click', () => {
-      if(!res || !window._genAdvLoot) return;
-      res.appendChild(window._renderAdvCard('loot', window._genAdvLoot(getLevel())));
-      res.lastElementChild.scrollIntoView({behavior:'smooth', block:'nearest'});
-    });
-  })();
-
-  // Wire Adventure generator load button
-  (function() {
-    const loadBtn = root.querySelector('#gen-adv-load-btn');
-    if(!loadBtn) return;
-    loadBtn.addEventListener('click', () => {
-      const adv = root._lastAdventure;
-      if(!adv) return;
-      const res = root.querySelector('#gen-adv-results');
-      const e = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-      const sec = (title, color) =>
-        `<div class="sh" style="border-left-color:${color||'#888'}">${title}</div>`;
-      const rw = (label, val) =>
-        `<div class="row"><span class="label">${label}</span><span class="val">${e(val)}</span></div>`;
-
-      // Scrape all current gen-cards from the results panel (includes + added extras)
-      const allCards = res ? [...res.querySelectorAll('.gen-card')] : [];
-
-      // Build sections HTML by scraping rendered cards
-      let sectionsHtml = '';
-      allCards.forEach(card => {
-        const rows = [...card.querySelectorAll('[style*="display:flex"]')];
-        const shdrs = [...card.querySelectorAll('[style*="border-left"]')];
-        if(!rows.length && !shdrs.length) return;
-
-        // Re-render via the card's innerHTML text content
-        let cardHtml = '<div class="card">';
-        // Section headers
-        card.querySelectorAll('div').forEach(div => {
-          const s = div.style;
-          if(s.letterSpacing && s.textTransform === 'uppercase' && s.borderLeftWidth) {
-            cardHtml += `<div class="sh" style="border-left-color:${s.borderLeftColor||'#888'}">${div.textContent}</div>`;
-          } else if(s.display === 'flex' && div.children.length >= 2) {
-            const label = div.children[0]?.textContent || '';
-            const val   = div.children[1]?.textContent || '';
-            if(label && val) cardHtml += rw(label, val);
-          } else if(!div.children.length && div.textContent.trim() && div.style.color) {
-            cardHtml += `<div style="color:#ccc;font-size:14px;line-height:1.6;">${e(div.textContent.trim())}</div>`;
-          }
-        });
-        cardHtml += '</div>';
-        sectionsHtml += cardHtml;
-      });
-
-      const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${e(adv.title)}</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0;}
-body{background:#161616;color:#ede9e1;font-family:sans-serif;padding:20px;max-width:860px;}
-h1{font-family:serif;font-size:22px;color:#c8a020;margin-bottom:4px;}
-.tags{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;}
-.tag{font-family:monospace;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#c8a020;}
-.card{background:#161616;border:1px solid #262626;padding:14px 16px;margin-bottom:10px;border-radius:4px;}
-.sh{font-family:monospace;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;background:#1c1c1c;padding:4px 10px;margin:10px -16px 8px;border-left:3px solid #888;}
-.row{display:flex;gap:8px;margin-bottom:7px;font-size:14px;line-height:1.6;}
-.label{font-family:monospace;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#4a4a4a;min-width:100px;flex-shrink:0;padding-top:3px;}
-.val{color:#cccccc;}
-</style>
-</head><body>
-<h1>${e(adv.title)}</h1>
-<div class="tags">
-  <span class="tag">${e(adv.motif)}</span>
-  <span class="tag">Level ${adv.level}</span>
-  <span class="tag">${adv.partySize} Players</span>
-  <span class="tag">${adv.encounters.length} Encounters</span>
-</div>
-${sectionsHtml}
-</body></html>`;
-
-      const dataUrl = 'data:text/html;base64,' + btoa(unescape(encodeURIComponent(html)));
-      const paneNum = parseInt(Object.keys(paneTools).find(k => paneTools[k]==='gen') || 1);
-      setPaneTool(paneNum, 'adventure');
-      setTimeout(() => {
-        const inst = instances['adventure'];
-        if(inst && inst._loadDataUrl) inst._loadDataUrl(dataUrl, 'adventure.html');
-      }, 150);
-    });
-  })();
 
   // Wire Load to Maps button
   (function() {
