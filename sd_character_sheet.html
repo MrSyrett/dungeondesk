@@ -155,7 +155,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .talents-area textarea{width:100%;min-height:110px;border:none;background:transparent;resize:none;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);}
 .spells-list{padding:0;}
 /* Spell rows use grid for perfect column alignment */
-.spell-row{display:grid;grid-template-columns:16px 1fr 26px 48px 92px 20px 20px 24px;align-items:center;gap:2px;padding:1px 6px;border-bottom:1px solid var(--rule);}
+.spell-row{display:grid;grid-template-columns:16px 1fr 26px 30px 48px 92px 60px 20px 20px 24px;align-items:center;gap:2px;padding:1px 6px;border-bottom:1px solid var(--rule);}
 .spell-row.lost{opacity:.4;}
 .spell-row.lost .spell-input{text-decoration:line-through;color:var(--muted);}
 .spell-input{border:none;background:transparent;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);padding:3px 2px;min-width:0;}
@@ -476,8 +476,10 @@ function addSpellRow(num) {
     `<span class="spell-num">${num}.</span>` +
     `<input type="text" class="spell-input" placeholder="Spell name">` +
     `<select class="spell-level" title="Spell Level (DC=10+lvl)" style="font-size:10px;padding:1px 0;border:1px solid var(--rule);background:var(--input-bg);color:var(--ink);font-family:Montserrat,sans-serif;font-weight:700;outline:none;width:28px;"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option></select>` +
+    `<input type="text" class="spell-bonus" placeholder="+0" title="Bonus to casting check" style="font-size:10px;border:none;border-bottom:1px solid var(--rule);background:transparent;color:var(--ink);font-family:Montserrat,sans-serif;font-weight:700;outline:none;padding:0 2px;width:100%;text-align:center;">` +
     `<select class="spell-range" title="Range" style="font-size:10px;border:none;border-bottom:1px solid var(--rule);background:var(--input-bg);color:var(--ink);font-family:Montserrat,sans-serif;outline:none;width:46px;"><option value="">Rng</option><option value="Self">Self</option><option value="Close">Close</option><option value="Near">Near</option><option value="Far">Far</option></select>` +
     `<input type="text" class="spell-duration" placeholder="Dur" title="Duration" style="font-size:10px;border:none;border-bottom:1px solid var(--rule);background:transparent;color:var(--ink);font-family:Montserrat,sans-serif;outline:none;padding:0 2px;width:100%;">` +
+    `<input type="text" class="spell-damage" placeholder="1d6" title="Damage dice (e.g. 2d8+3)" style="font-size:10px;border:none;border-bottom:1px solid var(--rule);background:transparent;color:var(--ink);font-family:Montserrat,sans-serif;outline:none;padding:0 2px;width:100%;">` +
     `<button class="spell-adv-btn" onclick="toggleSpellAdv(this)" title="Advantage">▲</button>` +
     `<button class="spell-lost-btn" onclick="toggleSpellLost(this)" title="Mark lost">✗</button>` +
     `<button class="spell-cast-btn" onclick="rollSpell(this)" title="Cast / Roll">✦</button>` +
@@ -494,9 +496,19 @@ function addSpellRow(num) {
 function buildSpells() {
   const list = document.getElementById('spells-list');
   const hdr = document.createElement('div');
-  hdr.style.cssText = 'display:grid;grid-template-columns:16px 1fr 26px 48px 92px 20px 20px 24px;align-items:center;gap:2px;padding:2px 6px;border-bottom:2px solid var(--border);background:var(--box);';
-  hdr.innerHTML = '<span style="font-size:7px;font-weight:700;color:var(--muted);">#</span><span style="font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Spell</span><span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);text-align:center;">Lvl</span><span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);">Range</span><span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);">Dur</span><span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Advantage">▲</span><span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Lost">✗</span><span style="font-size:7px;font-weight:700;color:var(--muted);">Roll</span><span></span>';
-  list.appendChild(hdr);
+  hdr.style.cssText = 'display:grid;grid-template-columns:16px 1fr 26px 30px 48px 92px 60px 20px 20px 24px;align-items:center;gap:2px;padding:2px 6px;border-bottom:2px solid var(--border);background:var(--box);';
+  hdr.innerHTML =
+    '<span style="font-size:7px;font-weight:700;color:var(--muted);">#</span>' +
+    '<span style="font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Spell</span>' +
+    '<span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);text-align:center;">Lvl</span>' +
+    '<span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);text-align:center;">+Bon</span>' +
+    '<span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);">Range</span>' +
+    '<span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);">Dur</span>' +
+    '<span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);">Dmg</span>' +
+    '<span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Advantage">▲</span>' +
+    '<span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Lost">✗</span>' +
+    '<span style="font-size:7px;font-weight:700;color:var(--muted);">Roll</span>';
+    list.appendChild(hdr);
   _spellCount = 5;
   for(let i=1;i<=_spellCount;i++) addSpellRow(i);
   const btn = document.createElement('button');
@@ -683,29 +695,34 @@ function rollAttack(btn) {
 
 function rollSpell(btn) {
   const row = btn.closest('.spell-row');
-  const name = row.querySelector('.spell-input').value || 'Spell';
+  const name       = row.querySelector('.spell-input').value || 'Spell';
   const spellLevel = parseInt(row.querySelector('.spell-level')?.value) || 1;
-  const dc = 10 + spellLevel;
+  const bonusStr   = row.querySelector('.spell-bonus')?.value.trim() || '';
+  const dmgStr     = row.querySelector('.spell-damage')?.value.trim() || '';
+  const dc         = 10 + spellLevel;
   const isAdvSpell = row.querySelector('.spell-adv-btn')?.classList.contains('on');
-  const isLost = row.querySelector('.spell-lost-btn')?.classList.contains('on');
+  const isLost     = row.querySelector('.spell-lost-btn')?.classList.contains('on');
 
   if(isLost) {
     addLog(`${name}`, '✗ LOST', 'This spell is lost until you rest', 'fumble');
     return;
   }
 
+  // Parse bonus (accepts "+3", "3", "-1")
+  const bonus = parseInt(bonusStr.replace(/^\+/, '')) || 0;
+
   // Spell advantage stacks with global adv state
   const prevAdv = advState;
   if(isAdvSpell && !advState) advState = 'advantage';
-
   const {result:roll, detail:advDetail} = rollWithAdv(20);
-  advState = prevAdv; // restore global state
+  advState = prevAdv;
 
-  const total = roll;
+  const total   = roll + bonus;
   const success = total >= dc;
-  let type = success ? (roll===20?'crit':'normal') : (roll===1?'fumble':'fumble');
-  const base = advDetail || `d20(${roll})`;
-  const verdict = success ? `✓ SUCCESS (DC ${dc})` : `✗ FAILED (DC ${dc}) — spell lost!`;
+  const type    = !success ? 'fumble' : roll===20 ? 'crit' : 'normal';
+  const base    = advDetail || `d20(${roll})`;
+  const verdict = success ? `✓ HIT (DC ${dc})` : `✗ MISS (DC ${dc}) — spell lost!`;
+  const bonusPart = bonus !== 0 ? `${bonus>=0?'+':''}${bonus}` : '';
 
   // Mark as lost if failed
   if(!success) {
@@ -713,8 +730,25 @@ function rollSpell(btn) {
     row.classList.add('lost');
   }
 
-  addLog(`${name} (Tier ${spellLevel})${isAdvSpell?' ▲':''}`, `${roll} — ${verdict}`,
-    `${base} vs DC ${dc} (10+${spellLevel})`, type);
+  // Roll damage if spell succeeded and damage field has a dice string
+  let dmgTotal = null, dmgBreakdown = '';
+  if(success && dmgStr) {
+    const dm = dmgStr.match(/^(\d*)d(\d+)([+-]\d+)?$/i);
+    if(dm) {
+      const num = parseInt(dm[1]||'1'), sides = parseInt(dm[2]), mod = parseInt(dm[3]||'0');
+      const rolls = Array.from({length:num}, ()=>d(sides));
+      dmgTotal = rolls.reduce((a,b)=>a+b,0) + mod;
+      dmgBreakdown = `${dmgStr}(${rolls.join('+')})${mod?(mod>0?'+':'')+mod:''}=${dmgTotal}`;
+    }
+  }
+
+  const resultStr = dmgTotal !== null
+    ? `${total} — ${verdict}  |  Dmg: ${dmgTotal}`
+    : `${total} — ${verdict}`;
+  const detailStr = `${base}${bonusPart} vs DC ${dc} (10+${spellLevel})`
+    + (dmgBreakdown ? `  |  ${dmgBreakdown}` : '');
+
+  addLog(`${name} (Tier ${spellLevel})${isAdvSpell?' ▲':''}`, resultStr, detailStr, type);
 }
 
 // ── DICE TRAY ──
@@ -815,6 +849,8 @@ function collectSheet(){
     adv:      row.querySelector('.spell-adv-btn')?.classList.contains('on') || false,
     lost:     row.querySelector('.spell-lost-btn')?.classList.contains('on') || false,
     desc:     row.querySelector('.spell-desc')?.value.trim() || '',
+    bonus:    row.querySelector('.spell-bonus')?.value.trim() || '',
+    damage:   row.querySelector('.spell-damage')?.value.trim() || '',
     range:    row.querySelector('.spell-range')?.value || '',
     duration: row.querySelector('.spell-duration')?.value.trim() || '',
   }));
@@ -1015,8 +1051,12 @@ function _applySDData(d){
       if(advBtn)  advBtn.classList.toggle('on', !!sd.adv);
       if(lostBtn) { lostBtn.classList.toggle('on', !!sd.lost); row.classList.toggle('lost', !!sd.lost); }
       if(descEl && sd.desc)     { descEl.value = sd.desc; autoResizeDesc(descEl); }
-      if(rangeEl && sd.range)   rangeEl.value = sd.range;
-      if(durEl && sd.duration)  durEl.value   = sd.duration;
+      const bonusEl  = row.querySelector('.spell-bonus');
+      const damageEl = row.querySelector('.spell-damage');
+      if(bonusEl && sd.bonus)   bonusEl.value  = sd.bonus;
+      if(damageEl && sd.damage) damageEl.value = sd.damage;
+      if(rangeEl && sd.range)   rangeEl.value  = sd.range;
+      if(durEl && sd.duration)  durEl.value    = sd.duration;
     }
   });
 
