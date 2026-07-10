@@ -2758,6 +2758,23 @@ function ccwClass() {
     h += '<button class="ccw-choice'+sel+'" onclick="_ccw.cls=\''+c+'\';_ccw.spells=[];_ccw.langCommon=[];_ccw.langRare=[];_ccw.langPriest=\'\';_ccw.tres=null;_ccw.tres2=null;_ccw.talent=null;ccwRender()"><div class="ccw-choice-name">'+c+'</div><div class="ccw-choice-desc">HP: '+ci.hd+' / lvl · '+ci.weapons.split(',').slice(0,3).join(',')+'…</div></button>';
   });
   h += '</div>';
+  // Details panel always visible, following the selected class
+  const infoCls = _ccw.cls || null;
+  h += '<div style="background:#0f0f0f;border:1px solid #7a5a00;padding:10px 12px;margin-top:10px;min-height:120px;">';
+  if(infoCls && RC_CLASS_INFO[infoCls]) {
+    const ci = RC_CLASS_INFO[infoCls];
+    h += '<div style="font-family:Montserrat,sans-serif;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#c8a020;margin-bottom:6px;">'+infoCls+'</div>';
+    h += '<div style="font-family:Montserrat,sans-serif;font-size:10px;color:#ccc;line-height:1.5;">';
+    h += '<div><b style="color:#eee;">Hit Die:</b> '+ci.hd+' per level</div>';
+    h += '<div><b style="color:#eee;">Weapons:</b> '+ci.weapons+'</div>';
+    h += '<div><b style="color:#eee;">Armor:</b> '+ci.armor+'</div>';
+    h += '<div style="margin-top:5px;"><b style="color:#eee;">Features:</b></div>';
+    (ci.features||[]).forEach(f=>{ h += '<div style="padding-left:8px;">• '+f+'</div>'; });
+    h += '</div>';
+  } else {
+    h += '<div style="font-family:Montserrat,sans-serif;font-size:10px;color:#666;font-style:italic;">Select a class to see its full details.</div>';
+  }
+  h += '</div>';
   return h;
 }
 
