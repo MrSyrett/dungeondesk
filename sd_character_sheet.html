@@ -280,7 +280,15 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
         </div>
         <div class="ac-box">
           <span class="hpac-label">AC</span>
-          <input type="text" class="hpac-input" id="ac-val" placeholder="0">
+          <div style="display:flex;align-items:flex-start;gap:8px;justify-content:center;">
+            <input type="text" class="hpac-input" id="ac-val" placeholder="0">
+            <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+              <input type="text" id="ac-bonus" placeholder="0" title="Bonus (shield, Mage Armor...)" style="width:24px;border:none;border-bottom:1px solid var(--rule);background:transparent;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;text-align:center;color:var(--ink);outline:none;padding:1px 0;">
+              <div id="ac-bonus-toggle" onclick="toggleAcBonus()" title="Apply bonus" style="width:26px;height:14px;border-radius:7px;background:var(--rule);cursor:pointer;position:relative;transition:background .15s;flex-shrink:0;">
+                <div id="ac-bonus-knob" style="position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:var(--muted);transition:left .15s, background .15s;"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -368,7 +376,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
         <div class="coin-cell"><span class="coin-label">SP</span><input type="text" class="coin-input" id="coin-sp" placeholder="0"></div>
         <div class="coin-cell"><span class="coin-label">CP</span><input type="text" class="coin-input" id="coin-cp" placeholder="0"></div>
       </div>
-      <div class="sl">Gear</div>
+      <div class="sl" style="display:flex;align-items:center;justify-content:space-between;"><span>Gear</span><button onclick="openShop()" style="padding:2px 10px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:8px;letter-spacing:.08em;text-transform:uppercase;" onmouseover="this.style.background='#7a5a00';this.style.color='white'" onmouseout="this.style.background='#241f10';this.style.color='#c8a020'">+ Add Item</button></div>
       <div id="gear-list"></div>
 
       <div class="free-carry">
@@ -836,6 +844,7 @@ function toggleGearSlot(btn) {
   saveSheet();
 }
 
+
 function toggleAtkAdv(btn) {
   btn.classList.toggle('on');
 }
@@ -1245,6 +1254,8 @@ function collectSheet(){
       spellData: spellData,
       gearQtys: [...document.querySelectorAll('#gear-list .gear-qty')].map(el => el.value || ''),
       gearDisabled: [...document.querySelectorAll('#gear-list > div')].map(row => row.classList.contains('gear-slot-disabled')),
+      acBonus: document.getElementById('ac-bonus')?.value || '',
+      acBonusOn: _acBonusOn,
     }
   };
 }
@@ -1323,6 +1334,10 @@ function _applySDData(d){
   });
   const freeText = d.freeCary || gearFree.map(g => g.name).join(', ') || '';
   set('free-carry', freeText);
+    const acBonusEl = document.getElementById('ac-bonus');
+    if(acBonusEl) acBonusEl.value = d._sheet?.acBonus || '';
+    _acBonusOn = !!(d._sheet?.acBonusOn);
+    if(typeof _acToggleVisual==='function') _acToggleVisual(_acBonusOn);
 
   // Spells
   let spells = [];
@@ -1436,6 +1451,33 @@ function importShadowdarklings(input) {
   reader.readAsText(file);
 }
 
+
+// ── AC Bonus toggle (shield, Mage Armor, etc.) ─────────────────────────────
+let _acBonusOn = false;
+function _acToggleVisual(on) {
+  const sw = document.getElementById('ac-bonus-toggle');
+  const knob = document.getElementById('ac-bonus-knob');
+  if(!sw || !knob) return;
+  sw.style.background = on ? '#2d7a2d' : 'var(--rule)';
+  knob.style.left = on ? '14px' : '2px';
+  knob.style.background = on ? '#6adf6a' : 'var(--muted)';
+}
+function toggleAcBonus() {
+  const bonusEl = document.getElementById('ac-bonus');
+  const acEl = document.getElementById('ac-val');
+  const bonus = parseInt(bonusEl?.value) || 0;
+  if(!acEl) return;
+  const ac = parseInt(acEl.value) || 0;
+  if(!_acBonusOn) {
+    acEl.value = String(ac + bonus);
+    _acBonusOn = true;
+  } else {
+    acEl.value = String(ac - bonus);
+    _acBonusOn = false;
+  }
+  _acToggleVisual(_acBonusOn);
+  saveSheet(false);
+}
 
 // ── Rest: restore HP to max, regain lost spells ───────────────────────────
 function takeRest() {
@@ -3012,6 +3054,7 @@ function ccwApply() {
   // Gear slots: max(10, STR) available; disable the rest from slot 20 downward
   ccwSetGearSlots(eff.STR);
 
+
   // Attack rows for purchased weapons
   const _fillAtkRow = (name, w, dmgOverride) => {
     addAttackRow();
@@ -3320,6 +3363,209 @@ function updateHeaderButton() {
 updateHeaderButton();
 document.getElementById('f-name')?.addEventListener('input', updateHeaderButton);
 document.getElementById('f-class')?.addEventListener('input', updateHeaderButton);
+</script>
+
+<!-- ═══ ITEM SHOP ═══ -->
+<div id="shop-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#1a1a1a;border:2px solid #c8a020;max-width:520px;width:100%;height:85vh;display:flex;flex-direction:column;">
+    <div style="background:#0a0a0a;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-family:'UnifrakturMaguntia',cursive;font-size:20px;color:#c8a020;line-height:1;">Item Shop</div>
+        <div id="shop-coins" style="font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;letter-spacing:.1em;color:#888;margin-top:3px;"></div>
+      </div>
+      <button onclick="closeShop()" style="background:transparent;border:none;color:#888;font-size:20px;cursor:pointer;padding:0 4px;">✕</button>
+    </div>
+    <div id="shop-tabs" style="display:flex;flex-shrink:0;"></div>
+    <div id="shop-body" style="padding:6px 14px;overflow-y:auto;flex:1;"></div>
+  </div>
+</div>
+
+<script>
+// ═══ ITEM SHOP ═════════════════════════════════════════════════════════════
+const SHOP_WEAPONS = [
+  {name:'Bastard Sword', gp:10, note:'1d8/1d10, Versatile, 2 slots'},
+  {name:'Club',          cp:5,  note:'1d4'},
+  {name:'Crossbow',      gp:8,  note:'1d6, Two-handed, Loading'},
+  {name:'Dagger',        gp:1,  note:'1d4, Finesse, Thrown'},
+  {name:'Greataxe',      gp:10, note:'1d8/1d10, Versatile, 2 slots'},
+  {name:'Greatsword',    gp:12, note:'1d12, Two-handed, 2 slots'},
+  {name:'Javelin',       sp:5,  note:'1d4, Thrown'},
+  {name:'Longbow',       gp:8,  note:'1d8, Two-handed'},
+  {name:'Longsword',     gp:9,  note:'1d8'},
+  {name:'Mace',          gp:5,  note:'1d6'},
+  {name:'Shortbow',      gp:6,  note:'1d4, Two-handed'},
+  {name:'Shortsword',    gp:7,  note:'1d6'},
+  {name:'Spear',         sp:5,  note:'1d6, Thrown'},
+  {name:'Staff',         sp:5,  note:'1d4, Two-handed'},
+  {name:'Warhammer',     gp:10, note:'1d10, Two-handed, 2 slots'},
+];
+const SHOP_ARMOR = [
+  {name:'Leather armor', gp:10, note:'AC 11 + DEX'},
+  {name:'Chainmail',     gp:60, note:'AC 13 + DEX, disadv. stealth/swim, 2 slots'},
+  {name:'Plate mail',    gp:130,note:'AC 15, no swim, disadv. stealth, 3 slots'},
+  {name:'Shield',        gp:10, note:'+2 AC, occupies one hand'},
+];
+const SHOP_BASIC = [
+  {name:'Arrows',         qty:'20', gp:1,  note:'Ammo for bows'},
+  {name:'Backpack',       gp:2,  note:'First one free to carry'},
+  {name:'Caltrops',       sp:5,  note:'One bag'},
+  {name:'Crossbow bolts', qty:'20', gp:1,  note:'Ammo for crossbows'},
+  {name:'Crawling Kit',   gp:7,  note:'Backpack, flint & steel, 2 torches, 3 rations, 10 iron spikes, grappling hook, rope', kit:true},
+  {name:'Crowbar',        sp:5,  note:''},
+  {name:'Flask or bottle',sp:3,  note:'Holds one draught'},
+  {name:'Flint & Steel',  sp:5,  note:'Routine fire-lighting succeeds'},
+  {name:'Grappling Hook', gp:1,  note:''},
+  {name:'Iron Spikes',    qty:'10', gp:1,  note:''},
+  {name:'Lantern',        gp:5,  note:'Casts light like torch, shutter, 1 hr/oil'},
+  {name:'Mirror',         gp:10, note:''},
+  {name:'Oil, flask',     sp:5,  note:'Fuel or thrown weapon, 1d4/round'},
+  {name:'Pole',           sp:5,  note:"Wooden, 10' long"},
+  {name:'Rations',        qty:'3', sp:5,  note:'Food + water, one day each'},
+  {name:'Rope (60 ft)',   gp:1,  note:'Hemp'},
+  {name:'Torch',          sp:5,  note:'Near light, 1 hour'},
+];
+const SHOP_TABS = [
+  {id:'weapons', label:'Weapons'},
+  {id:'armor',   label:'Armor'},
+  {id:'basic',   label:'Basic Gear'},
+  {id:'magic',   label:'Magic Items'},
+];
+let _shopTab = 'weapons';
+
+function shopFmtCost(it) {
+  if(it.gp) return it.gp+' gp';
+  if(it.sp) return it.sp+' sp';
+  if(it.cp) return it.cp+' cp';
+  return '—';
+}
+function shopCostCp(it) { return (it.gp||0)*100 + (it.sp||0)*10 + (it.cp||0); }
+
+function openShop() {
+  document.getElementById('shop-overlay').style.display = 'flex';
+  shopRender();
+}
+function closeShop() { document.getElementById('shop-overlay').style.display = 'none'; }
+function shopSetTab(t) { _shopTab = t; shopRender(); }
+
+function shopMagicItems() {
+  return [
+    {name:'Potion of Healing',        gp:150, note:'Restore 1d6+1 HP', magic:true},
+    {name:'Potion of Greater Healing',gp:500, note:'Restore 2d8+2 HP', magic:true},
+    {name:'Potion of Invisibility',   gp:80,  note:'Invisible 10 rounds or until attack/cast', magic:true},
+    {name:'Potion of Giant Strength', gp:200, note:'STR 18 (+4) for 10 rounds', magic:true},
+    {name:'Scroll of Magic Missile',  gp:80,  note:'Cast Magic Missile (T1)', magic:true},
+    {name:'Scroll of Cure Wounds',    gp:80,  note:'Cast Cure Wounds (T1)', magic:true},
+    {name:'Ring of Protection',       gp:250, note:'+1 AC', magic:true},
+    {name:'Bag of Holding',           gp:150, note:'Holds 10 gear slots, weighs 1', magic:true},
+    {name:'+1 Weapon',                gp:200, note:'+1 to attack and damage', magic:true},
+    {name:'+1 Armor',                 gp:150, note:'+1 AC', magic:true},
+  ];
+}
+
+function shopRender() {
+  // Tabs
+  const tabBar = document.getElementById('shop-tabs');
+  tabBar.innerHTML = SHOP_TABS.map(t=>
+    '<button onclick="shopSetTab(\''+t.id+'\')" style="flex:1;padding:8px 4px;background:'+(_shopTab===t.id?'#c8a020':'#141414')+';color:'+(_shopTab===t.id?'#1a1a1a':'#888')+';border:none;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:900;font-size:9px;letter-spacing:.08em;text-transform:uppercase;">'+t.label+'</button>'
+  ).join('');
+
+  // GP display
+  const gp = document.getElementById('coin-gp')?.value || '0';
+  const sp = document.getElementById('coin-sp')?.value || '0';
+  const cp = document.getElementById('coin-cp')?.value || '0';
+  document.getElementById('shop-coins').textContent = '💰 '+(gp||0)+' gp · '+(sp||0)+' sp · '+(cp||0)+' cp';
+
+  // Items
+  const items = _shopTab==='weapons' ? SHOP_WEAPONS
+              : _shopTab==='armor'   ? SHOP_ARMOR
+              : _shopTab==='basic'   ? SHOP_BASIC
+              : shopMagicItems();
+  const body = document.getElementById('shop-body');
+  body.innerHTML = items.map((it,i)=>{
+    const cost = shopFmtCost(it);
+    const canBuy = shopCostCp(it) > 0;
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid #1e1e1e;">'
+      + '<div style="flex:1;min-width:0;">'
+      +   '<div style="font-family:Montserrat,sans-serif;font-size:11px;font-weight:700;color:#eee;">'+it.name+(it.qty?' ('+it.qty+')':'')+'</div>'
+      +   (it.note?'<div style="font-family:Montserrat,sans-serif;font-size:9px;color:#888;line-height:1.3;">'+it.note+'</div>':'')
+      + '</div>'
+      + '<div style="font-family:Montserrat,sans-serif;font-size:10px;font-weight:700;color:#c8a020;width:44px;text-align:right;flex-shrink:0;">'+cost+'</div>'
+      + (canBuy
+          ? '<button onclick="shopBuy(\''+_shopTab+'\','+i+')" style="padding:5px 10px;background:#1a2e3a;color:#6ac8df;border:1px solid #1a5a7a;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;">Buy</button>'
+          : '<span style="width:44px;flex-shrink:0;"></span>')
+      + '<button onclick="shopAdd(\''+_shopTab+'\','+i+')" style="padding:5px 10px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;">Add</button>'
+      + '</div>';
+  }).join('');
+}
+
+function shopGetItem(tab, i) {
+  const items = tab==='weapons' ? SHOP_WEAPONS : tab==='armor' ? SHOP_ARMOR : tab==='basic' ? SHOP_BASIC : shopMagicItems();
+  return items[i];
+}
+
+function shopNextSlot() {
+  const rows = document.querySelectorAll('#gear-list > div');
+  for(let i=1;i<rows.length;i++){
+    const row = rows[i];
+    if(row.classList.contains('gear-slot-disabled')) continue;
+    const nameEl = row.querySelector('.gear-name');
+    if(nameEl && !nameEl.value.trim()) return row;
+  }
+  return null;
+}
+
+function shopAddToGear(it) {
+  if(it.kit) {
+    // Crawling kit: expand into items; Backpack to Free Carry if empty
+    const kit = [{name:'Flint & Steel'},{name:'Torch',qty:'2'},{name:'Rations',qty:'3'},{name:'Iron Spikes',qty:'10'},{name:'Grappling Hook'},{name:'Rope (60 ft)'}];
+    const fc = document.getElementById('free-carry');
+    if(fc && !fc.value.trim()) fc.value = 'Backpack';
+    else kit.unshift({name:'Backpack'});
+    let placed = 0;
+    for(const k of kit) {
+      const row = shopNextSlot();
+      if(!row) break;
+      row.querySelector('.gear-name').value = k.name;
+      const q = row.querySelector('.gear-qty');
+      if(q) q.value = k.qty || '';
+      placed++;
+    }
+    if(placed < kit.length) alert('Not enough free gear slots for the whole kit — added what fits.');
+    return true;
+  }
+  const row = shopNextSlot();
+  if(!row) { alert('No free gear slots available.'); return false; }
+  row.querySelector('.gear-name').value = it.name;
+  const q = row.querySelector('.gear-qty');
+  if(q) q.value = it.qty || '';
+  return true;
+}
+
+function shopAdd(tab, i) {
+  const it = shopGetItem(tab, i);
+  if(!it) return;
+  if(shopAddToGear(it)) { saveSheet(false); closeShop(); }
+}
+
+function shopBuy(tab, i) {
+  const it = shopGetItem(tab, i);
+  if(!it) return;
+  const cost = shopCostCp(it);
+  const gpEl = document.getElementById('coin-gp');
+  const spEl = document.getElementById('coin-sp');
+  const cpEl = document.getElementById('coin-cp');
+  const total = (parseInt(gpEl?.value)||0)*100 + (parseInt(spEl?.value)||0)*10 + (parseInt(cpEl?.value)||0);
+  if(total < cost) { alert('Not enough coin! '+it.name+' costs '+shopFmtCost(it)+'.'); return; }
+  if(!shopAddToGear(it)) return;
+  const left = total - cost;
+  if(gpEl) gpEl.value = String(Math.floor(left/100));
+  if(spEl) spEl.value = String(Math.floor((left%100)/10));
+  if(cpEl) cpEl.value = String(left%10);
+  addLog('Purchase','🛒',it.name+' — '+shopFmtCost(it),'normal');
+  saveSheet(false);
+  closeShop();
+}
+
 </script>
 </body>
 </html>
