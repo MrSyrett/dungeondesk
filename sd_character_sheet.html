@@ -372,6 +372,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
           <option value="wis">WIS</option>
           <option value="cha">CHA</option>
         </select>
+        <input type="text" id="spell-gbonus" placeholder="+0" title="Global bonus to all casting checks" style="width:26px;background:transparent;border:1px solid var(--rule);border-radius:2px;color:var(--ink);font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;padding:1px 2px;outline:none;text-align:center;" onchange="saveSheet(false)">
       </label></div>
       <div id="spells-list"></div>
     </div>
@@ -1020,6 +1021,7 @@ function rollSpell(btn) {
   // Global casting stat mod (INT wizards, WIS priests, CHA bards)
   const castStat = document.getElementById('spell-stat')?.value || '';
   const castMod = castStat ? getStatMod(castStat) : 0;
+  const gBonus = parseInt((document.getElementById('spell-gbonus')?.value||'').replace(/^\+/,'')) || 0;
 
   // Spell advantage stacks with global adv state
   const prevAdv = advState;
@@ -1027,12 +1029,12 @@ function rollSpell(btn) {
   const {result:roll, detail:advDetail} = rollWithAdv(20);
   advState = prevAdv;
 
-  const total   = roll + bonus + castMod;
+  const total   = roll + bonus + castMod + gBonus;
   const success = total >= dc;
   const type    = !success ? 'fumble' : roll===20 ? 'crit' : 'normal';
   const base    = advDetail || `d20(${roll})`;
   const verdict = success ? `✓ HIT (DC ${dc})` : `✗ MISS (DC ${dc}) — spell lost!`;
-  const bonusPart = [bonus !== 0 ? `${bonus>=0?'+':''}${bonus}` : '', castMod !== 0 ? `${castMod>=0?'+':''}${castMod} (${castStat.toUpperCase()})` : ''].filter(Boolean).join(' ');
+  const bonusPart = [bonus !== 0 ? `${bonus>=0?'+':''}${bonus}` : '', castMod !== 0 ? `${castMod>=0?'+':''}${castMod} (${castStat.toUpperCase()})` : '', gBonus !== 0 ? `${gBonus>=0?'+':''}${gBonus}` : ''].filter(Boolean).join(' ');
 
   // Mark as lost if failed
   if(!success) {
@@ -1267,6 +1269,7 @@ function collectSheet(){
       gearDisabled: [...document.querySelectorAll('#gear-list > div')].map(row => row.classList.contains('gear-slot-disabled')),
       acBonus: document.getElementById('ac-bonus')?.value || '',
       spellStat: document.getElementById('spell-stat')?.value || '',
+      spellGBonus: document.getElementById('spell-gbonus')?.value || '',
       acBonusOn: _acBonusOn,
     }
   };
@@ -1350,6 +1353,8 @@ function _applySDData(d){
     if(acBonusEl) acBonusEl.value = d._sheet?.acBonus || '';
     const spellStatEl = document.getElementById('spell-stat');
     if(spellStatEl) spellStatEl.value = d._sheet?.spellStat || '';
+    const spellGBEl = document.getElementById('spell-gbonus');
+    if(spellGBEl) spellGBEl.value = d._sheet?.spellGBonus || '';
     _acBonusOn = !!(d._sheet?.acBonusOn);
     if(typeof _acToggleVisual==='function') _acToggleVisual(_acBonusOn);
 
@@ -3023,7 +3028,13 @@ function ccwApply() {
   else if(c.buyArmor.includes('Chainmail')) armoredAC = 13 + dexMod;
   else if(c.buyArmor.includes('Leather armor')) armoredAC = 11 + dexMod;
   if(c.buyArmor.includes('Shield')) armoredAC += 2;
-  const acBonus = Math.max(0, armoredAC - baseAC);
+  let _armorTalent = 0;
+  [c.tres, c.tres2].forEach(p=>{
+    const f = (p && p.final) || '';
+    const m = f.match(/Choose one armor type, get \+1 AC from it — (.+)$/i);
+    if(m && c.buyArmor.includes(m[1].trim())) _armorTalent += 1;
+  });
+  const acBonus = Math.max(0, armoredAC - baseAC) + _armorTalent;
   set('ac-val', baseAC + acBonus);
   set('ac-bonus', acBonus > 0 ? String(acBonus) : '');
   _acBonusOn = acBonus > 0;
@@ -3106,16 +3117,32 @@ function ccwApply() {
   ccwSetGearSlots(eff.STR);
 
 
-  // Talent/ancestry attack bonuses (stat mod comes from the Stat dropdown, not here)
+  // Talent/ancestry attack + spell bonuses (stat mod comes from the Stat dropdown, not here)
   const atkBonus = { melee:0, ranged:0, meleeDmg:0, rangedDmg:0 };
+  const masterySet = new Set();   // Weapon Mastery: +1 atk/dmg with weapon
+  const d12Set = new Set();       // Ranger: d12 damage with weapon
+  let spellChkBonus = 0;
+  let backstabExtraDice = 0;
+  let armorTalentAC = 0;
   if(c.ancestry==='Half-Orc') { atkBonus.melee += 1; atkBonus.meleeDmg += 1; } // Mighty
-  if(c.elfFarsight==='ranged') atkBonus.ranged += 1; // Farsight
+  if(c.elfFarsight==='ranged') atkBonus.ranged += 1;      // Farsight
+  if(c.elfFarsight==='spell')  spellChkBonus += 1;        // Farsight
   [c.tres, c.tres2].forEach(p=>{
     const f = (p && p.final) || '';
     if(/\+1 to melee and ranged attacks/i.test(f) || /\+1 to melee\/ranged attacks/i.test(f)) { atkBonus.melee+=1; atkBonus.ranged+=1; }
     else if(/\+1 to melee attacks/i.test(f)) { atkBonus.melee+=1; if(/and damage/i.test(f)) atkBonus.meleeDmg+=1; }
     else if(/\+1 to ranged attacks/i.test(f)) { atkBonus.ranged+=1; if(/and damage/i.test(f)) atkBonus.rangedDmg+=1; }
+    if(/\+1 to (priest )?spellcasting checks/i.test(f) || /Magical Dabbler/i.test(f)) spellChkBonus += 1;
+    if(/Backstab deals \+1 dice/i.test(f)) backstabExtraDice += 1;
+    let m = f.match(/Weapon Mastery with one additional weapon type — (.+)$/i);
+    if(m) masterySet.add(m[1].trim());
+    m = f.match(/d12 damage with one weapon type you choose — (.+)$/i);
+    if(m) d12Set.add(m[1].trim());
+    m = f.match(/Choose one armor type, get \+1 AC from it — (.+)$/i);
+    if(m && c.buyArmor.includes(m[1].trim())) armorTalentAC += 1;
   });
+  // Global spell check bonus field
+  set('spell-gbonus', spellChkBonus > 0 ? '+'+spellChkBonus : '');
 
   // Attack rows for purchased weapons
   const _fillAtkRow = (name, w, dmgOverride) => {
@@ -3128,9 +3155,11 @@ function ccwApply() {
     const isFinesse = w.props.toLowerCase().includes('finesse');
     const useDex = (w.type==='R') || (isFinesse && _rc_mod(eff.DEX) > _rc_mod(eff.STR));
     const isRangedWeapon = w.type==='R';
-    const bonus = isRangedWeapon ? atkBonus.ranged : atkBonus.melee;
-    const dmgBonus = isRangedWeapon ? atkBonus.rangedDmg : atkBonus.meleeDmg;
+    let bonus = isRangedWeapon ? atkBonus.ranged : atkBonus.melee;
+    let dmgBonus = isRangedWeapon ? atkBonus.rangedDmg : atkBonus.meleeDmg;
+    if(masterySet.has(w.name)) { bonus += 1; dmgBonus += 1; }
     let dmg = dmgOverride || w.damage;
+    if(d12Set.has(w.name)) dmg = dmg.replace(/d\d+/g, 'd12');
     if(dmgBonus > 0) dmg = dmg.split('/').map(d=>d+'+'+dmgBonus).join('/');
     if(inputs[0]) inputs[0].value = name;
     if(inputs[1]) inputs[1].value = bonus > 0 ? '+'+bonus : '';
@@ -3143,10 +3172,15 @@ function ccwApply() {
     const w = SD_WEAPONS.find(x=>x.name===wname);
     if(w) _fillAtkRow(w.name, w);
   });
-  // Thief: Backstab attack (extra weapon die vs unaware targets)
+  // Thief: Backstab attack (extra weapon die vs unaware targets, +talent dice)
   if(c.cls==='Thief' && uniqueWeapons.length) {
     const bw = SD_WEAPONS.find(x=>x.name===uniqueWeapons[0]);
-    if(bw) _fillAtkRow('Backstab ('+bw.name+')', bw, bw.damage.replace(/1d/g,'2d'));
+    if(bw) {
+      const bsDice = 2 + backstabExtraDice;
+      let bsDmg = d12Set.has(bw.name) ? bw.damage.replace(/d\d+/g,'d12') : bw.damage;
+      bsDmg = bsDmg.replace(/1d/g, bsDice+'d');
+      _fillAtkRow('Backstab ('+bw.name+')', bw, bsDmg);
+    }
   }
 
   saveSheet(false);
@@ -3405,6 +3439,103 @@ function lvlApply() {
     const dmg=q('.spell-damage'); if(dmg) dmg.value=s.damage||'';
     const dsc=q('.spell-desc'); if(dsc){dsc.value=s.desc;autoResizeDesc(dsc);}
   });
+  // Apply talent attack / spell / AC bonuses to the existing sheet
+  (function(){
+    const f = (_lvl.tres && _lvl.tres.final) || '';
+    if(!f) return;
+    const bumpVal = (el, n) => {
+      if(!el) return;
+      const cur = parseInt((el.value||'').replace(/^\+/,'')) || 0;
+      const v = cur + n;
+      el.value = v > 0 ? '+'+v : (v < 0 ? String(v) : '');
+    };
+    const bumpDmg = (d, n) => d.split('/').map(part=>{
+      const m = part.match(/^(.*?)([+-]\d+)?$/);
+      const mod = (parseInt(m[2]||'0')) + n;
+      return m[1] + (mod > 0 ? '+'+mod : (mod < 0 ? String(mod) : ''));
+    }).join('/');
+    const rowWeaponType = (row) => {
+      let nm = row.querySelectorAll('td input')[0]?.value.trim() || '';
+      const bs = nm.match(/^Backstab \((.+)\)$/i);
+      if(bs) nm = bs[1];
+      const w = (typeof SD_WEAPONS!=='undefined') ? SD_WEAPONS.find(x=>x.name.toLowerCase()===nm.toLowerCase()) : null;
+      if(w) return w.type==='R' ? 'ranged' : 'melee';
+      const rng = row.querySelectorAll('td select')[1]?.value || '';
+      return rng==='Close' ? 'melee' : (rng ? 'ranged' : 'melee');
+    };
+    const rows = [...document.querySelectorAll('#attacks-body tr')];
+
+    // Melee / ranged attack bonuses
+    let mB=0, rB=0, mD=0, rD=0;
+    if(/\+1 to melee and ranged attacks/i.test(f) || /\+1 to melee\/ranged attacks/i.test(f)) { mB=1; rB=1; }
+    else if(/\+1 to melee attacks/i.test(f)) { mB=1; if(/and damage/i.test(f)) mD=1; }
+    else if(/\+1 to ranged attacks/i.test(f)) { rB=1; if(/and damage/i.test(f)) rD=1; }
+    if(mB||rB) rows.forEach(row=>{
+      const t = rowWeaponType(row);
+      const inputs = row.querySelectorAll('td input');
+      const b = t==='melee' ? mB : rB;
+      const d = t==='melee' ? mD : rD;
+      if(b) bumpVal(inputs[1], b);
+      if(d && inputs[2] && inputs[2].value.trim()) inputs[2].value = bumpDmg(inputs[2].value.trim(), d);
+    });
+
+    // Spellcasting check bonus
+    if(/\+1 to (priest )?spellcasting checks/i.test(f) || /Magical Dabbler/i.test(f)) {
+      bumpVal(document.getElementById('spell-gbonus'), 1);
+    }
+
+    // Weapon Mastery — chosen weapon: +1 atk & dmg on matching rows
+    let m = f.match(/Weapon Mastery with one additional weapon type — (.+)$/i);
+    if(m) {
+      const wn = m[1].trim().toLowerCase();
+      rows.forEach(row=>{
+        const inputs = row.querySelectorAll('td input');
+        let nm = (inputs[0]?.value||'').trim();
+        const bs = nm.match(/^Backstab \((.+)\)$/i);
+        if(bs) nm = bs[1];
+        if(nm.toLowerCase()===wn) {
+          bumpVal(inputs[1], 1);
+          if(inputs[2] && inputs[2].value.trim()) inputs[2].value = bumpDmg(inputs[2].value.trim(), 1);
+        }
+      });
+    }
+
+    // Ranger d12 — chosen weapon: damage dice become d12
+    m = f.match(/d12 damage with one weapon type you choose — (.+)$/i);
+    if(m) {
+      const wn = m[1].trim().toLowerCase();
+      rows.forEach(row=>{
+        const inputs = row.querySelectorAll('td input');
+        let nm = (inputs[0]?.value||'').trim();
+        const bs = nm.match(/^Backstab \((.+)\)$/i);
+        if(bs) nm = bs[1];
+        if(nm.toLowerCase()===wn && inputs[2] && inputs[2].value.trim()) {
+          inputs[2].value = inputs[2].value.replace(/d\d+/g, 'd12');
+        }
+      });
+    }
+
+    // Thief: Backstab +1 dice
+    if(/Backstab deals \+1 dice/i.test(f)) {
+      rows.forEach(row=>{
+        const inputs = row.querySelectorAll('td input');
+        if(/^Backstab/i.test(inputs[0]?.value||'') && inputs[2] && inputs[2].value.trim()) {
+          inputs[2].value = inputs[2].value.replace(/(\d+)d/g, (_,n)=>(parseInt(n)+1)+'d');
+        }
+      });
+    }
+
+    // Armor talent: +1 AC — into the AC bonus box
+    m = f.match(/Choose one armor type, get \+1 AC from it — (.+)$/i);
+    if(m) {
+      bumpVal(document.getElementById('ac-bonus'), 1);
+      if(_acBonusOn) {
+        const acEl = document.getElementById('ac-val');
+        if(acEl) acEl.value = String((parseInt(acEl.value)||0) + 1);
+      }
+    }
+  })();
+
   // Auto-toggle advantage: talent-chosen spell + Magic Missile
   const lvlAdvSpells = new Set(['Magic Missile']);
   [(_lvl.tres), (_lvl.tres && _lvl.tres.sub)].forEach(p=>{
