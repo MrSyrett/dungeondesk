@@ -1416,9 +1416,11 @@ function importSheet(input) {
 function autoLoad() {
   // Try server state first (injected by app), then fall back to localStorage
   var saved = null;
-  if(window.__ddState && window.__ddState['dcc_sheet']) {
-    saved = window.__ddState['dcc_sheet'];
+  if(window.__ddState !== undefined) {
+    // Deck mode: only use server state; a new document starts empty
+    saved = window.__ddState['dcc_sheet'] || null;
   } else {
+    // Standalone mode: use localStorage
     saved = localStorage.getItem('dcc_sheet');
   }
   if(!saved) return;

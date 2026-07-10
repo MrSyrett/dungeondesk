@@ -1501,9 +1501,11 @@ function newCharacter(){
 
 function autoLoad(){
   var saved = null;
-  if(window.__ddState && window.__ddState['sd_sheet']) {
-    saved = window.__ddState['sd_sheet'];
+  if(window.__ddState !== undefined) {
+    // Deck mode: only use server state; a new document starts empty
+    saved = window.__ddState['sd_sheet'] || null;
   } else {
+    // Standalone mode: use localStorage
     saved = localStorage.getItem('sd_sheet');
   }
   if(!saved) return;

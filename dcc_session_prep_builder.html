@@ -609,9 +609,11 @@ let saveTimer = null;
 
 function loadState() {
   var saved = null;
-  if (window.__ddState && window.__ddState['dcc_session']) {
-    saved = window.__ddState['dcc_session'];
+  if (window.__ddState !== undefined) {
+    // Deck mode: only use server state; a new document starts empty
+    saved = window.__ddState['dcc_session'] || null;
   } else {
+    // Standalone mode: use localStorage
     saved = localStorage.getItem('dcw_builder_v5');
   }
   if (saved) try { state = {...DEFAULT_STATE,...JSON.parse(saved)}; } catch(e){}
