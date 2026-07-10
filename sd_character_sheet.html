@@ -365,7 +365,14 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
 
     <!-- SPELLS: spans left+center -->
     <div class="spells-bottom">
-      <div class="sl">Spells</div>
+      <div class="sl" style="display:flex;align-items:center;justify-content:space-between;"><span>Spells</span><label style="display:flex;align-items:center;gap:4px;font-size:7px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">Cast Mod
+        <select id="spell-stat" onchange="saveSheet(false)" style="background:transparent;border:1px solid var(--rule);border-radius:2px;color:var(--ink);font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;padding:1px 2px;outline:none;">
+          <option value="">—</option>
+          <option value="int">INT</option>
+          <option value="wis">WIS</option>
+          <option value="cha">CHA</option>
+        </select>
+      </label></div>
       <div id="spells-list"></div>
     </div>
 
@@ -731,7 +738,7 @@ function addAttackRow() {
     <td><select class="atk-range" style="width:100%;border:1px solid var(--rule);background:var(--input-bg);color:var(--ink);font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;padding:2px 2px;outline:none;" title="Range"><option value="">—</option><option value="Close">Close</option><option value="Near">Near</option><option value="Far">Far</option></select></td>
     <td><input type="text" placeholder="1d8+2"></td>
     <td><button class="atk-adv-btn" onclick="toggleAtkAdv(this)" title="Always roll with advantage">▲</button></td>
-    <td><button class="atk-roll-btn" onclick="rollAttack(this)">Roll</button></td>
+    <td><button class="atk-roll-btn" onclick="rollAttack(this)" title="Roll Attack">⚔</button></td>
   `;
   tbody.appendChild(tr);
 }
@@ -1010,18 +1017,22 @@ function rollSpell(btn) {
   // Parse bonus (accepts "+3", "3", "-1")
   const bonus = parseInt(bonusStr.replace(/^\+/, '')) || 0;
 
+  // Global casting stat mod (INT wizards, WIS priests, CHA bards)
+  const castStat = document.getElementById('spell-stat')?.value || '';
+  const castMod = castStat ? getStatMod(castStat) : 0;
+
   // Spell advantage stacks with global adv state
   const prevAdv = advState;
   if(isAdvSpell && !advState) advState = 'advantage';
   const {result:roll, detail:advDetail} = rollWithAdv(20);
   advState = prevAdv;
 
-  const total   = roll + bonus;
+  const total   = roll + bonus + castMod;
   const success = total >= dc;
   const type    = !success ? 'fumble' : roll===20 ? 'crit' : 'normal';
   const base    = advDetail || `d20(${roll})`;
   const verdict = success ? `✓ HIT (DC ${dc})` : `✗ MISS (DC ${dc}) — spell lost!`;
-  const bonusPart = bonus !== 0 ? `${bonus>=0?'+':''}${bonus}` : '';
+  const bonusPart = [bonus !== 0 ? `${bonus>=0?'+':''}${bonus}` : '', castMod !== 0 ? `${castMod>=0?'+':''}${castMod} (${castStat.toUpperCase()})` : ''].filter(Boolean).join(' ');
 
   // Mark as lost if failed
   if(!success) {
@@ -1255,6 +1266,7 @@ function collectSheet(){
       gearQtys: [...document.querySelectorAll('#gear-list .gear-qty')].map(el => el.value || ''),
       gearDisabled: [...document.querySelectorAll('#gear-list > div')].map(row => row.classList.contains('gear-slot-disabled')),
       acBonus: document.getElementById('ac-bonus')?.value || '',
+      spellStat: document.getElementById('spell-stat')?.value || '',
       acBonusOn: _acBonusOn,
     }
   };
@@ -1336,6 +1348,8 @@ function _applySDData(d){
   set('free-carry', freeText);
     const acBonusEl = document.getElementById('ac-bonus');
     if(acBonusEl) acBonusEl.value = d._sheet?.acBonus || '';
+    const spellStatEl = document.getElementById('spell-stat');
+    if(spellStatEl) spellStatEl.value = d._sheet?.spellStat || '';
     _acBonusOn = !!(d._sheet?.acBonusOn);
     if(typeof _acToggleVisual==='function') _acToggleVisual(_acBonusOn);
 
@@ -2215,7 +2229,7 @@ function ccwTalentChoiceUI(p, stateRef, knownSpells, cls) {
   else if(p.kind==='spellknown') {
     h += '<select style="'+selStyle+'" onchange="'+stateRef+'.picked=this.value;ccwResolve('+stateRef+');ccwRerender()">';
     h += '<option value="">— Choose a spell you know —</option>';
-    (knownSpells||[]).forEach(sp=>{ h += '<option value="'+sp+'"'+(p.picked===sp?' selected':'')+'>'+sp+'</option>'; });
+    (knownSpells||[]).filter(sp=>sp!=='Magic Missile').forEach(sp=>{ h += '<option value="'+sp+'"'+(p.picked===sp?' selected':'')+'>'+sp+'</option>'; });
     h += '</select>';
     if(!(knownSpells||[]).length) h += '<p class="ccw-hint" style="font-size:9px;color:#df6a6a;">No known spells yet — you can note this later.</p>';
   }
@@ -2445,7 +2459,7 @@ function startCharWizard() {
            ancestry: null, cls: null, background: null,
            alignment: null, deity: '', talent: null, talent2: null,
            talentRoll: null, talent2Roll: null, tres: null, tres2: null,
-           langCommon: [], langRare: [], langPriest: '',
+           langCommon: [], langRare: [], langPriest: '', elfFarsight: null,
            spells: [], gold: null, buyKit: true, buyWeapons: [], buyArmor: [],
            name: '', hp: null };
   document.getElementById('ccw-overlay').style.display = 'flex';
@@ -2521,10 +2535,12 @@ function ccwRandResolve(p, cls, knownSpells) {
     case 'distribute': p.picked = rand(CCW_ALL_STATS); p.picked2 = rand(CCW_ALL_STATS); break;
     case 'meleeranged':p.picked = rand(['melee','ranged']); break;
     case 'weapon':     p.picked = rand(SD_WEAPONS.map(w=>w.name)); break;
-    case 'spellknown':
-      if((knownSpells||[]).length) p.picked = rand(knownSpells);
+    case 'spellknown': {
+      const eligible = (knownSpells||[]).filter(sp=>sp!=='Magic Missile');
+      if(eligible.length) p.picked = rand(eligible);
       else { p.final = p.text; return; }
       break;
+    }
     case 'wizspell':   p.picked = rand(SD_SPELLS.filter(s=>s.caster==='Wizard'||s.caster==='Both').map(s=>s.name)); break;
     case 'armor':      p.picked = rand(CCW_ARMOR_TYPES); break;
     case 'remedy':     p.picked = rand(CCW_REMEDIES); break;
@@ -2557,6 +2573,7 @@ function ccwRandomize() {
 
   // Ancestry / class / background / alignment / deity
   _ccw.ancestry  = _rc_weighted(RC_ANCESTRY.table);
+  _ccw.elfFarsight = _ccw.ancestry==='Elf' ? rand(['ranged','spell']) : null;
   _ccw.cls       = _rc_roll(RC_CLASSES);
   _ccw.background= rand(RC_BACKGROUNDS);
   _ccw.alignment = rand(['Lawful','Neutral','Chaotic']);
@@ -2623,7 +2640,10 @@ function ccwNext() {
   const name = steps[_ccw.step];
   if(name==='Method') { alert('Choose Random or Design to continue.'); return; }
   if(name==='Ability Scores' && !_ccw.stats) { alert('Roll your ability scores first.'); return; }
-  if(name==='Ancestry' && !_ccw.ancestry) { alert('Choose an ancestry.'); return; }
+  if(name==='Ancestry') {
+    if(!_ccw.ancestry) { alert('Choose an ancestry.'); return; }
+    if(_ccw.ancestry==='Elf' && !_ccw.elfFarsight) { alert('Choose your Farsight option.'); return; }
+  }
   if(name==='Class' && !_ccw.cls) { alert('Choose a class.'); return; }
   if(name==='Background' && !_ccw.background) { alert('Choose a background.'); return; }
   if(name==='Alignment & Deity' && !_ccw.alignment) { alert('Choose an alignment.'); return; }
@@ -2727,9 +2747,18 @@ function ccwAncestry() {
   h += '<div class="ccw-choice-grid">';
   ['Human','Elf','Dwarf','Halfling','Half-Orc','Goblin'].forEach(a=>{
     const sel = _ccw.ancestry===a ? ' selected' : '';
-    h += '<button class="ccw-choice'+sel+'" onclick="_ccw.ancestry=\''+a+'\';_ccw.langCommon=[];_ccw.langRare=[];ccwRender()"><div class="ccw-choice-name">'+a+'</div><div class="ccw-choice-desc">'+RC_ANCESTRY.ability[a]+'</div></button>';
+    h += '<button class="ccw-choice'+sel+'" onclick="_ccw.ancestry=\''+a+'\';_ccw.langCommon=[];_ccw.langRare=[];_ccw.elfFarsight=null;ccwRender()"><div class="ccw-choice-name">'+a+'</div><div class="ccw-choice-desc">'+RC_ANCESTRY.ability[a]+'</div></button>';
   });
   h += '</div>';
+  if(_ccw.ancestry==='Elf') {
+    h += '<div style="background:#0f0f0f;border:1px solid #7a5a00;padding:10px 12px;margin-top:10px;">';
+    h += '<div style="font-family:Montserrat,sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#c8a020;margin-bottom:6px;">⚑ Farsight — choose one</div>';
+    [['ranged','+1 to ranged attack rolls'],['spell','+1 to spellcasting checks']].forEach(([v,label])=>{
+      const sel = _ccw.elfFarsight===v ? ' selected' : '';
+      h += '<button class="ccw-choice'+sel+'" style="width:49%;margin-right:1%;text-align:center;" onclick="_ccw.elfFarsight=\''+v+'\';ccwRender()"><div class="ccw-choice-name" style="font-size:10px;">'+label+'</div></button>';
+    });
+    h += '</div>';
+  }
   return h;
 }
 function ccwRandAncestry() { _ccw.ancestry = _rc_weighted(RC_ANCESTRY.table); _ccw.langCommon=[]; _ccw.langRare=[]; ccwRender(); }
@@ -2978,6 +3007,7 @@ function ccwApply() {
   set('f-deity', c.deity||'');
   set('f-level', '1');
   set('xp-level', '1');
+  set('spell-stat', c.cls==='Wizard' ? 'int' : c.cls==='Priest' ? 'wis' : c.cls==='Bard' ? 'cha' : '');
 
   const statIds = {STR:'str-val',DEX:'dex-val',CON:'con-val',INT:'int-val',WIS:'wis-val',CHA:'cha-val'};
   Object.entries(statIds).forEach(([k,id])=>{ set(id, eff[k]); });
@@ -2985,14 +3015,19 @@ function ccwApply() {
 
   set('hp-current', c.hp); set('hp-max', c.hp);
 
-  // AC from purchased armor
+  // AC: base 10 + DEX; armor/shield contribution goes into the bonus box, toggled on
   const dexMod = _rc_mod(eff.DEX);
-  let ac = 10 + dexMod;
-  if(c.buyArmor.includes('Plate mail')) ac = 15;
-  else if(c.buyArmor.includes('Chainmail')) ac = 13 + dexMod;
-  else if(c.buyArmor.includes('Leather armor')) ac = 11 + dexMod;
-  if(c.buyArmor.includes('Shield')) ac += 2;
-  set('ac-val', ac);
+  const baseAC = 10 + dexMod;
+  let armoredAC = baseAC;
+  if(c.buyArmor.includes('Plate mail')) armoredAC = 15;
+  else if(c.buyArmor.includes('Chainmail')) armoredAC = 13 + dexMod;
+  else if(c.buyArmor.includes('Leather armor')) armoredAC = 11 + dexMod;
+  if(c.buyArmor.includes('Shield')) armoredAC += 2;
+  const acBonus = Math.max(0, armoredAC - baseAC);
+  set('ac-val', baseAC + acBonus);
+  set('ac-bonus', acBonus > 0 ? String(acBonus) : '');
+  _acBonusOn = acBonus > 0;
+  if(typeof _acToggleVisual === 'function') _acToggleVisual(_acBonusOn);
 
   // Languages line
   const extraLangs = [...c.langCommon, ...c.langRare, ...(c.langPriest?[c.langPriest]:[])];
@@ -3002,7 +3037,10 @@ function ccwApply() {
   const talentFinal  = (c.tres && c.tres.final) || c.talent;
   const talent2Final = (c.tres2 && c.tres2.final) || c.talent2;
   const lines = ['— Class Features —', ...ci.features, '',
-    '— Ancestry: '+c.ancestry+' —', RC_ANCESTRY.ability[c.ancestry], '',
+    '— Ancestry: '+c.ancestry+' —',
+    (c.ancestry==='Elf' && c.elfFarsight
+      ? 'Farsight: +1 to '+(c.elfFarsight==='ranged'?'ranged attack rolls':'spellcasting checks')+'.'
+      : RC_ANCESTRY.ability[c.ancestry]), '',
     '— Languages —', langLine, '',
     '— Talent Roll —', talentFinal,
     ...(talent2Final?['','— Bonus Talent (Human) —',talent2Final]:[])];
@@ -3027,6 +3065,19 @@ function ccwApply() {
     const dur=q('.spell-duration'); if(dur&&data.duration) dur.value=data.duration;
     const dmg=q('.spell-damage'); if(dmg&&data.damage) dmg.value=data.damage;
     const dsc=q('.spell-desc'); if(dsc&&data.desc){dsc.value=data.desc;autoResizeDesc(dsc);}
+  });
+
+  // Auto-toggle advantage: talent-chosen spells + Magic Missile (always adv)
+  const advSpells = new Set(['Magic Missile']);
+  [c.tres, c.tres2, c.tres && c.tres.sub, c.tres2 && c.tres2.sub].forEach(p=>{
+    if(p && p.kind==='spellknown' && p.picked) advSpells.add(p.picked);
+  });
+  document.querySelectorAll('#spells-list .spell-row').forEach(row=>{
+    const nm = row.querySelector('.spell-input')?.value.trim();
+    if(nm && advSpells.has(nm)) {
+      const ab = row.querySelector('.spell-adv-btn');
+      if(ab) ab.classList.add('on');
+    }
   });
 
   // Gold remaining after purchases
@@ -3055,6 +3106,17 @@ function ccwApply() {
   ccwSetGearSlots(eff.STR);
 
 
+  // Talent/ancestry attack bonuses (stat mod comes from the Stat dropdown, not here)
+  const atkBonus = { melee:0, ranged:0, meleeDmg:0, rangedDmg:0 };
+  if(c.ancestry==='Half-Orc') { atkBonus.melee += 1; atkBonus.meleeDmg += 1; } // Mighty
+  if(c.elfFarsight==='ranged') atkBonus.ranged += 1; // Farsight
+  [c.tres, c.tres2].forEach(p=>{
+    const f = (p && p.final) || '';
+    if(/\+1 to melee and ranged attacks/i.test(f) || /\+1 to melee\/ranged attacks/i.test(f)) { atkBonus.melee+=1; atkBonus.ranged+=1; }
+    else if(/\+1 to melee attacks/i.test(f)) { atkBonus.melee+=1; if(/and damage/i.test(f)) atkBonus.meleeDmg+=1; }
+    else if(/\+1 to ranged attacks/i.test(f)) { atkBonus.ranged+=1; if(/and damage/i.test(f)) atkBonus.rangedDmg+=1; }
+  });
+
   // Attack rows for purchased weapons
   const _fillAtkRow = (name, w, dmgOverride) => {
     addAttackRow();
@@ -3064,12 +3126,15 @@ function ccwApply() {
     const inputs = row.querySelectorAll('td input');
     const selects = row.querySelectorAll('td select');
     const isFinesse = w.props.toLowerCase().includes('finesse');
-    const isRanged = w.type==='R';
-    const useDex = isRanged || (isFinesse && _rc_mod(eff.DEX) > _rc_mod(eff.STR));
-    const atkMod = useDex ? _rc_mod(eff.DEX) : _rc_mod(eff.STR);
+    const useDex = (w.type==='R') || (isFinesse && _rc_mod(eff.DEX) > _rc_mod(eff.STR));
+    const isRangedWeapon = w.type==='R';
+    const bonus = isRangedWeapon ? atkBonus.ranged : atkBonus.melee;
+    const dmgBonus = isRangedWeapon ? atkBonus.rangedDmg : atkBonus.meleeDmg;
+    let dmg = dmgOverride || w.damage;
+    if(dmgBonus > 0) dmg = dmg.split('/').map(d=>d+'+'+dmgBonus).join('/');
     if(inputs[0]) inputs[0].value = name;
-    if(inputs[1]) inputs[1].value = (atkMod>=0?'+':'')+atkMod;
-    if(inputs[2]) inputs[2].value = dmgOverride || w.damage;
+    if(inputs[1]) inputs[1].value = bonus > 0 ? '+'+bonus : '';
+    if(inputs[2]) inputs[2].value = dmg;
     if(selects[0]) selects[0].value = useDex ? 'dex' : 'str';
     if(selects[1]) { const parts=w.range.split('/'); selects[1].value = parts[parts.length-1].trim(); }
   };
@@ -3153,8 +3218,8 @@ function lvlClose() { document.getElementById('lvl-overlay').style.display = 'no
 
 function lvlSteps() {
   const steps = ['Hit Points'];
-  if(_lvl.gainsTalent) steps.push('Talent');
   if(_lvl.spellsNeeded > 0) steps.push('New Spells');
+  if(_lvl.gainsTalent) steps.push('Talent');
   steps.push('Finish');
   return steps;
 }
@@ -3227,7 +3292,8 @@ function lvlTalent() {
   if(_lvl.talent) {
     h += '<div class="ccw-result">🎲 Rolled '+_lvl.talentRoll+': '+_lvl.talent+'</div>';
     const known = [...document.querySelectorAll('#spells-list .spell-row .spell-input')].map(el=>el.value.trim()).filter(Boolean);
-    h += ccwTalentChoiceUI(_lvl.tres, '_lvl.tres', known, _lvl.cls);
+    const allKnown = [...new Set([...known, ..._lvl.newSpells])].filter(sp=>sp!=='Magic Missile');
+    h += ccwTalentChoiceUI(_lvl.tres, '_lvl.tres', allKnown, _lvl.cls);
   }
   return h;
 }
@@ -3339,6 +3405,19 @@ function lvlApply() {
     const dmg=q('.spell-damage'); if(dmg) dmg.value=s.damage||'';
     const dsc=q('.spell-desc'); if(dsc){dsc.value=s.desc;autoResizeDesc(dsc);}
   });
+  // Auto-toggle advantage: talent-chosen spell + Magic Missile
+  const lvlAdvSpells = new Set(['Magic Missile']);
+  [(_lvl.tres), (_lvl.tres && _lvl.tres.sub)].forEach(p=>{
+    if(p && p.kind==='spellknown' && p.picked) lvlAdvSpells.add(p.picked);
+  });
+  document.querySelectorAll('#spells-list .spell-row').forEach(row=>{
+    const nm = row.querySelector('.spell-input')?.value.trim();
+    if(nm && lvlAdvSpells.has(nm)) {
+      const ab = row.querySelector('.spell-adv-btn');
+      if(ab) ab.classList.add('on');
+    }
+  });
+
   saveSheet(false);
   addLog('Level Up','⬆','Now level '+_lvl.newLevel+' (+'+_lvl.hpRoll+' HP'+(_lvl.talent?', new talent':'')+(_lvl.newSpells.length?', '+_lvl.newSpells.length+' new spell'+(_lvl.newSpells.length>1?'s':''):'')+')','normal');
   lvlClose();
