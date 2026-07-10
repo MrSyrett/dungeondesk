@@ -2897,6 +2897,23 @@ function ccwRollHP() {
   ccwRender();
 }
 
+// ── Gear slots: available = max(10, STR); disable slots above that ──
+function ccwSetGearSlots(str) {
+  const slots = Math.max(10, parseInt(str)||10);
+  const rows = document.querySelectorAll('#gear-list > div');
+  // rows[0] is the header; gear slots are rows[1..20]
+  for(let i=1; i<rows.length; i++) {
+    const row = rows[i];
+    const btn = row.querySelector('.gear-disable-btn');
+    const disable = i > slots;
+    row.classList.toggle('gear-slot-disabled', disable);
+    if(btn) {
+      btn.classList.toggle('on', disable);
+      btn.title = disable ? 'Enable slot' : 'Disable slot (exceeds STR limit)';
+    }
+  }
+}
+
 // ── Apply to sheet ──
 function ccwApply() {
   if(!_ccw.hp) ccwRollHP();
@@ -2991,6 +3008,9 @@ function ccwApply() {
   const gq=document.querySelectorAll('#gear-list .gear-qty');
   gearItems.forEach((g,i)=>{ if(gn[i])gn[i].value=g.name; if(gq[i])gq[i].value=g.qty!=='1'?g.qty:''; });
   const fc=document.getElementById('free-carry'); if(fc) fc.value=c.buyKit?'Backpack':'';
+
+  // Gear slots: max(10, STR) available; disable the rest from slot 20 downward
+  ccwSetGearSlots(eff.STR);
 
   // Attack rows for purchased weapons
   const _fillAtkRow = (name, w, dmgOverride) => {
