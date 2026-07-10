@@ -320,7 +320,8 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
       <div class="attacks-section-wrap">
         <div class="sl">Attacks</div>
         <table class="attacks-table">
-          <thead>
+          <th style="width:22px"></th>
+              <thead>
             <tr>
               <th>Weapon / Attack</th>
               <th style="width:50px">Bonus</th>
@@ -329,7 +330,6 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
               <th style="width:70px">Damage</th>
               <th style="width:24px;text-align:center;" title="Always Advantage">▲</th>
               <th style="width:32px"></th>
-              <th style="width:22px"></th>
             </tr>
           </thead>
           <tbody id="attacks-body"></tbody>
@@ -716,6 +716,7 @@ function addAttackRow() {
   const tr = document.createElement('tr');
   const statOpts = `<option value="">—</option>${['str','dex','con','int','wis','cha'].map(s=>`<option value="${s}">${s.toUpperCase()}</option>`).join('')}`;
   tr.innerHTML = `
+    <td><button onclick="this.closest('tr').remove();saveSheet(false);" title="Remove attack" style="width:100%;padding:1px 2px;background:transparent;border:1px solid var(--rule);cursor:pointer;font-family:Montserrat,sans-serif;font-size:10px;font-weight:900;color:var(--muted);">−</button></td>
     <td><input type="text" placeholder="Longsword, Fireball..."></td>
     <td><input type="text" style="width:100%;text-align:center;" placeholder="+0"></td>
     <td><select style="width:100%;border:1px solid var(--rule);background:var(--input-bg);color:var(--ink);font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;padding:2px 2px;outline:none;" title="Stat mod">${statOpts}</select></td>
@@ -723,7 +724,6 @@ function addAttackRow() {
     <td><input type="text" placeholder="1d8+2"></td>
     <td><button class="atk-adv-btn" onclick="toggleAtkAdv(this)" title="Always roll with advantage">▲</button></td>
     <td><button class="atk-roll-btn" onclick="rollAttack(this)" title="Roll Attack">⚔</button></td>
-    <td><button onclick="this.closest('tr').remove();saveSheet(false);" title="Remove attack" style="width:100%;padding:1px 2px;background:transparent;border:1px solid var(--rule);cursor:pointer;font-family:Montserrat,sans-serif;font-size:10px;font-weight:900;color:var(--muted);">−</button></td>
   `;
   tbody.appendChild(tr);
 }
@@ -3918,6 +3918,7 @@ function spellPickChoose(name, tier) {
       <button onclick="closeSpellShop()" style="background:transparent;border:none;color:#888;font-size:20px;cursor:pointer;padding:0 4px;">✕</button>
     </div>
     <div id="spellshop-tabs" style="display:flex;flex-shrink:0;"></div>
+    <div id="spellshop-filters" style="display:flex;gap:16px;padding:7px 14px;background:#0f0f0f;flex-shrink:0;border-bottom:1px solid #2a2a2a;"></div>
     <div id="spellshop-body" style="padding:6px 14px;overflow-y:auto;flex:1;"></div>
   </div>
 </div>
@@ -3926,6 +3927,8 @@ function spellPickChoose(name, tier) {
 
 // ═══ SPELL LEARN SHOP ═══════════════════════════════════════════════════════
 let _spellShopTier = '1';
+let _spellShopWiz = true;
+let _spellShopPri = true;
 
 function openSpellShop() {
   document.getElementById('spellshop-overlay').style.display = 'flex';
@@ -3940,9 +3943,20 @@ function spellShopRender() {
     '<button onclick="spellShopSetTier(\''+t+'\')" style="flex:1;padding:8px 4px;background:'+(_spellShopTier===t?'#5a3a8a':'#141414')+';color:'+(_spellShopTier===t?'#fff':'#888')+';border:none;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:900;font-size:9px;letter-spacing:.08em;text-transform:uppercase;">Tier '+t+'</button>'
   ).join('');
 
+  // Caster filter checkboxes
+  const filterBar = document.getElementById('spellshop-filters');
+  filterBar.innerHTML =
+    '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopWiz?'checked':'')+' onchange="_spellShopWiz=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Wizard</label>'
+    + '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopPri?'checked':'')+' onchange="_spellShopPri=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Priest</label>';
+
   const known = new Set([...document.querySelectorAll('#spells-list .spell-row .spell-input')].map(el=>el.value.trim()).filter(Boolean));
   const body = document.getElementById('spellshop-body');
-  const spells = (typeof SD_SPELLS!=='undefined' ? SD_SPELLS : []).filter(s=>s.tier===_spellShopTier).sort((a,b)=>a.name.localeCompare(b.name));
+  const casterOk = (s) =>
+    s.caster==='Both' ? (_spellShopWiz || _spellShopPri)
+    : s.caster==='Wizard' ? _spellShopWiz
+    : s.caster==='Priest' ? _spellShopPri
+    : true;
+  const spells = (typeof SD_SPELLS!=='undefined' ? SD_SPELLS : []).filter(s=>s.tier===_spellShopTier && casterOk(s)).sort((a,b)=>a.name.localeCompare(b.name));
 
   body.innerHTML = spells.map(s=>{
     const meta = [s.caster, s.range?'Range: '+s.range:'', s.duration?'Dur: '+s.duration:'', s.damage?'Dmg: '+s.damage:''].filter(Boolean).join(' · ');
