@@ -2633,6 +2633,8 @@ function ccwNext() {
   if(name==='Alignment & Deity' && !_ccw.alignment) { alert('Choose an alignment.'); return; }
   if(name==='Talent') {
     if(!_ccw.talent) { alert('Roll your talent first.'); return; }
+    if(_ccw.tres) ccwResolve(_ccw.tres);
+    if(_ccw.tres2) ccwResolve(_ccw.tres2);
     if(_ccw.tres && _ccw.tres.kind!=='none' && !_ccw.tres.final) { alert('Resolve your talent choice first.'); return; }
     if(_ccw.tres2 && _ccw.tres2.kind!=='none' && !_ccw.tres2.final) { alert('Resolve your bonus talent choice first.'); return; }
   }
@@ -2827,6 +2829,8 @@ function ccwTalentRows() {
   ];
 }
 function ccwTalent() {
+  if(_ccw.tres) ccwResolve(_ccw.tres);
+  if(_ccw.tres2) ccwResolve(_ccw.tres2);
   let h = '<p class="ccw-hint">Roll 2d6 on the <b>'+_ccw.cls+'</b> talent table.' + (_ccw.ancestry==='Human'?' Humans roll twice (Ambitious).':'') + '</p>';
   h += '<table style="width:100%;border-collapse:collapse;margin-bottom:10px;">';
   h += '<tr><th style="font-family:Montserrat,sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#c8a020;text-align:left;padding:4px 8px;border-bottom:1px solid #2a2a2a;width:50px;">2d6</th><th style="font-family:Montserrat,sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#c8a020;text-align:left;padding:4px 8px;border-bottom:1px solid #2a2a2a;">Effect</th></tr>';
@@ -3169,15 +3173,16 @@ function ccwApply() {
     const w = SD_WEAPONS.find(x=>x.name===wname);
     if(w) _fillAtkRow(w.name, w);
   });
-  // Thief: Backstab attack (extra weapon die vs unaware targets, +talent dice)
-  if(c.cls==='Thief' && uniqueWeapons.length) {
-    const bw = SD_WEAPONS.find(x=>x.name===uniqueWeapons[0]);
-    if(bw) {
-      const bsDice = 2 + backstabExtraDice;
+  // Thief: Backstab attack for every chosen weapon (extra weapon die vs unaware targets, +talent dice)
+  if(c.cls==='Thief') {
+    const bsDice = 2 + backstabExtraDice;
+    uniqueWeapons.forEach(wname=>{
+      const bw = SD_WEAPONS.find(x=>x.name===wname);
+      if(!bw) return;
       let bsDmg = d12Set.has(bw.name) ? bw.damage.replace(/d\d+/g,'d12') : bw.damage;
       bsDmg = bsDmg.replace(/1d/g, bsDice+'d');
       _fillAtkRow('Backstab ('+bw.name+')', bw, bsDmg);
-    }
+    });
   }
 
   saveSheet(false);
@@ -3276,6 +3281,7 @@ function lvlNext() {
   if(name==='Hit Points' && _lvl.hpRoll===null) { alert('Roll your hit points first.'); return; }
   if(name==='Talent') {
     if(!_lvl.talent) { alert('Roll your talent first.'); return; }
+    if(_lvl.tres) ccwResolve(_lvl.tres);
     if(_lvl.tres && _lvl.tres.kind!=='none' && !_lvl.tres.final) { alert('Resolve your talent choice first.'); return; }
   }
   if(name==='New Spells' && _lvl.newSpells.length < _lvl.spellsNeeded) { alert('Choose '+_lvl.spellsNeeded+' new spell'+(_lvl.spellsNeeded>1?'s':'')+'.'); return; }
@@ -3310,6 +3316,7 @@ function lvlTalentRows() {
   ];
 }
 function lvlTalent() {
+  if(_lvl.tres) ccwResolve(_lvl.tres);
   let h = '<p class="ccw-hint">Level '+_lvl.newLevel+' grants a talent. Roll 2d6 on the <b>'+_lvl.cls+'</b> talent table.</p>';
   h += '<table style="width:100%;border-collapse:collapse;margin-bottom:10px;">';
   h += '<tr><th style="font-family:Montserrat,sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#c8a020;text-align:left;padding:4px 8px;border-bottom:1px solid #2a2a2a;width:50px;">2d6</th><th style="font-family:Montserrat,sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#c8a020;text-align:left;padding:4px 8px;border-bottom:1px solid #2a2a2a;">Effect</th></tr>';
@@ -3978,6 +3985,31 @@ function shopAddAttack(name) {
   if(inputs[2]) inputs[2].value = w.damage;
   if(selects[0]) selects[0].value = useDex ? 'dex' : 'str';
   if(selects[1]) { const parts=(w.range||'').split('/'); selects[1].value = parts[parts.length-1].trim(); }
+
+  // Thief: also add a Backstab row for this weapon
+  const cls = document.getElementById('f-class')?.value.trim().toLowerCase();
+  if(cls === 'thief') {
+    // Match dice count to any existing Backstab rows (covers talent upgrades), default 2
+    let bsDice = 2;
+    document.querySelectorAll('#attacks-body tr').forEach(r=>{
+      const nm = r.querySelectorAll('td input')[0]?.value || '';
+      const dm = r.querySelectorAll('td input')[2]?.value || '';
+      if(/^Backstab/i.test(nm)) {
+        const m = dm.match(/(\d+)d/);
+        if(m) bsDice = Math.max(bsDice, parseInt(m[1]));
+      }
+    });
+    addAttackRow();
+    const bsRow = tbody.lastElementChild;
+    if(bsRow) {
+      const bi = bsRow.querySelectorAll('td input');
+      const bs = bsRow.querySelectorAll('td select');
+      if(bi[0]) bi[0].value = 'Backstab ('+w.name+')';
+      if(bi[2]) bi[2].value = w.damage.replace(/1d/g, bsDice+'d');
+      if(bs[0]) bs[0].value = useDex ? 'dex' : 'str';
+      if(bs[1]) { const parts=(w.range||'').split('/'); bs[1].value = parts[parts.length-1].trim(); }
+    }
+  }
 }
 
 // ── Spell pick for generic Scroll / Wand ──
