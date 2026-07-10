@@ -195,6 +195,9 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 
 /* dark mode inputs */
 body.dark input, body.dark textarea{color:var(--ink);}
+body.dark #spell-stat{background:#141414 !important;color:#eee !important;}
+#spell-stat option{background:#fff;color:#111;}
+body.dark #spell-stat option{background:#141414;color:#eee;}
 body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-input, body.dark .coin-input{background:var(--input-bg);color:var(--ink);}
 
 /* ── Mobile roll toast ── */
@@ -796,30 +799,16 @@ function buildSpells() {
   bar.style.cssText = 'display:flex;align-items:center;gap:4px;padding:4px 6px;flex-wrap:wrap;';
   bar.innerHTML =
     '<button class="spell-add-btn" style="padding:3px 8px;background:var(--black);color:white;border:none;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;">+ Add Spell</button>' +
-    '<select id="spell-picker" style="flex:1;min-width:100px;font-size:10px;padding:3px 4px;border:1px solid var(--rule);background:var(--input-bg);color:var(--ink);font-family:Montserrat,sans-serif;outline:none;"><option value="">— Select Spell —</option></select>' +
+    '<button class="spell-learn-btn" style="flex:1;min-width:100px;padding:3px 8px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;">📖 Learn Spell</button>' +
     '<button class="spell-remove-btn" style="padding:3px 8px;background:transparent;color:var(--muted);border:1px solid var(--rule);cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;">- Remove</button>';
   list.appendChild(bar);
-  // Populate spell picker now that the element exists in the DOM
-  if(typeof populateSpellPicker === 'function') populateSpellPicker();
-
   // Wire buttons
   bar.querySelector('.spell-add-btn').onclick = function() {
-    const sel = document.getElementById('spell-picker');
-    const name = sel ? sel.value : '';
     _spellCount++;
-    const row = addSpellRow(_spellCount);
-    if(name && typeof SD_SPELLS !== 'undefined') {
-      const s = SD_SPELLS.find(x=>x.name===name);
-      if(s && row) {
-        const inp = row.querySelector('.spell-input');   if(inp) inp.value = s.name;
-        const lvl = row.querySelector('.spell-level');   if(lvl) lvl.value = s.tier;
-        const rng = row.querySelector('.spell-range');   if(rng) rng.value = s.range;
-        const dur = row.querySelector('.spell-duration'); if(dur) dur.value = s.duration;
-        const dmg = row.querySelector('.spell-damage');  if(dmg) dmg.value = s.damage||'';
-        const dsc = row.querySelector('.spell-desc');    if(dsc){dsc.value=s.desc;autoResizeDesc(dsc);}
-      }
-    }
-    if(sel) sel.value = '';
+    addSpellRow(_spellCount);
+  };
+  bar.querySelector('.spell-learn-btn').onclick = function() {
+    if(typeof openSpellShop === 'function') openSpellShop();
   };
   bar.querySelector('.spell-remove-btn').onclick = function() {
     const rows = list.querySelectorAll('.spell-row');
@@ -1583,7 +1572,6 @@ buildAttacks();
 buildSpells();
 buildGear();
 autoLoad();
-setTimeout(function(){ populateSpellPicker(); }, 0);
 </script>
 
 <!-- Mobile -->
@@ -2925,7 +2913,8 @@ function ccwSpells() {
   pool.forEach(sp=>{
     const sel = _ccw.spells.includes(sp) ? ' selected' : '';
     const data = RC_SPELL_DATA[sp] || {};
-    h += '<button class="ccw-choice'+sel+'" onclick="ccwToggleSpell(\''+sp.replace(/'/g,"\\'")+'\')"><div class="ccw-choice-name" style="font-size:11px;">'+sp+'</div><div class="ccw-choice-desc">'+(data.desc||'')+'</div></button>';
+    const meta = [data.range?'Range: '+data.range:'', data.duration?'Dur: '+data.duration:'', data.damage?'Dmg: '+data.damage:''].filter(Boolean).join(' · ');
+    h += '<button class="ccw-choice'+sel+'" onclick="ccwToggleSpell(\''+sp.replace(/'/g,"\\'")+'\')"><div class="ccw-choice-name" style="font-size:11px;">'+sp+'</div>'+(meta?'<div class="ccw-choice-desc" style="color:#c8a020;font-size:8px;">'+meta+'</div>':'')+'<div class="ccw-choice-desc">'+(data.desc||'')+'</div></button>';
   });
   h += '</div>';
   return h;
@@ -3355,7 +3344,8 @@ function lvlSpells() {
     h += '<div class="ccw-choice-grid">';
     SD_SPELLS.filter(s=>s.tier===String(tier) && casterMatch(s) && !known.includes(s.name)).forEach(s=>{
       const sel = _lvl.newSpells.includes(s.name) ? ' selected' : '';
-      h += '<button class="ccw-choice'+sel+'" onclick="lvlToggleSpell(\''+s.name.replace(/'/g,"\\'")+'\',\''+tier+'\')"><div class="ccw-choice-name" style="font-size:11px;">'+s.name+'</div><div class="ccw-choice-desc">'+(s.desc||'')+'</div></button>';
+      const meta = [s.range?'Range: '+s.range:'', s.duration?'Dur: '+s.duration:'', s.damage?'Dmg: '+s.damage:''].filter(Boolean).join(' · ');
+      h += '<button class="ccw-choice'+sel+'" onclick="lvlToggleSpell(\''+s.name.replace(/'/g,"\\'")+'\',\''+tier+'\')"><div class="ccw-choice-name" style="font-size:11px;">'+s.name+'</div>'+(meta?'<div class="ccw-choice-desc" style="color:#6ac8df;font-size:8px;">'+meta+'</div>':'')+'<div class="ccw-choice-desc">'+(s.desc||'')+'</div></button>';
     });
     h += '</div>';
   });
@@ -3586,6 +3576,7 @@ document.getElementById('f-class')?.addEventListener('input', updateHeaderButton
       <button onclick="closeShop()" style="background:transparent;border:none;color:#888;font-size:20px;cursor:pointer;padding:0 4px;">✕</button>
     </div>
     <div id="shop-tabs" style="display:flex;flex-shrink:0;"></div>
+    <div id="shop-subtabs" style="display:none;flex-shrink:0;flex-wrap:wrap;background:#0f0f0f;"></div>
     <div id="shop-body" style="padding:6px 14px;overflow-y:auto;flex:1;"></div>
   </div>
 </div>
@@ -3657,20 +3648,132 @@ function openShop() {
 function closeShop() { document.getElementById('shop-overlay').style.display = 'none'; }
 function shopSetTab(t) { _shopTab = t; shopRender(); }
 
-function shopMagicItems() {
-  return [
-    {name:'Potion of Healing',        gp:150, note:'Restore 1d6+1 HP', magic:true},
-    {name:'Potion of Greater Healing',gp:500, note:'Restore 2d8+2 HP', magic:true},
-    {name:'Potion of Invisibility',   gp:80,  note:'Invisible 10 rounds or until attack/cast', magic:true},
-    {name:'Potion of Giant Strength', gp:200, note:'STR 18 (+4) for 10 rounds', magic:true},
-    {name:'Scroll of Magic Missile',  gp:80,  note:'Cast Magic Missile (T1)', magic:true},
-    {name:'Scroll of Cure Wounds',    gp:80,  note:'Cast Cure Wounds (T1)', magic:true},
-    {name:'Ring of Protection',       gp:250, note:'+1 AC', magic:true},
-    {name:'Bag of Holding',           gp:150, note:'Holds 10 gear slots, weighs 1', magic:true},
-    {name:'+1 Weapon',                gp:200, note:'+1 to attack and damage', magic:true},
-    {name:'+1 Armor',                 gp:150, note:'+1 AC', magic:true},
-  ];
-}
+const SHOP_MAGIC = {
+  'Potions': [
+    {name:'Potion of Extirpation', note:'You can pour the potion on one object or creature filling up to a close area. The target is utterly removed from reality and…'},
+    {name:'Potion of Flying', note:'You can fly a near distance for 10 rounds when you drink this potion.'},
+    {name:'Potion of Forgetfulness', note:'If you serve this potion to an intelligent being and that being drinks it, the imbiber permanently forgets one memory of…'},
+    {name:'Potion of Giant Strength', gp:200, note:'Your Strength becomes 18 (+4) and you deal x2 damage on melee attacks for 10 rounds.'},
+    {name:'Potion of Greater Healing', gp:500, note:'Restore 2d8+2 HP'},
+    {name:'Potion of Healing', gp:150, note:'The imbiber of this potion regains hit points based on its level. LV 0-3: 1d6 hit points. LV 4-6: 2d8 hit points. LV 7-9:…'},
+    {name:'Potion of Invisibility', gp:80, note:'When you drink this potion, you become invisible for 10 rounds or until you attack or cast a spell.'},
+    {name:'Potion of Legendary Deeds', note:'When you drink this potion, you gain one level and your XP total resets to zero.'},
+    {name:'Potion of Polymorph', note:'When you drink this potion, it casts the polymorph spell (pg. 67) on you with a duration of 1 hour instead of 10 rounds.'},
+    {name:'Potion of Vitality', note:'When you drink this potion, roll your class\'s hit points die. You permanently gain that many HP.'},
+  ],
+  'Scrolls': [
+    {name:'Scroll of Cure Wounds', gp:80, note:'Cast Cure Wounds (T1)'},
+    {name:'Scroll of Magic Missile', gp:80, note:'Cast Magic Missile (T1)'},
+  ],
+  'Weapons': [
+    {name:'+1 Weapon', gp:200, note:'+1 to attack and damage (any weapon type)'},
+    {name:'Blade of Vengeance', note:'+2 bastard sword. Cannot be wielded by undead. · You have advantage on attacks against undead creatures with this sword. You can use the sword to cast turn undead once per…'},
+    {name:'Dagger of the Goblin Hero', note:'+1 dagger. · You can speak Goblin. All goblinoid creatures react to you with a friendly attitude.'},
+    {name:'Greataxe of the Horde', note:'+2 greataxe. · Once per day, you can turn a regular hit with this weapon into a critical hit. · Curse: Each time you go below half your hit points, make a DC…'},
+    {name:'Longbow of the Elven Kings', note:'+1 longbow. · You have advantage on attacks with this bow against unnatural creatures and outsiders.'},
+    {name:'Memnon\'s Blazing Javelin', note:'+1 javelin. Can only be wielded by a chaotic being. If you also wield · The javelin always returns to your hand after being thrown. Once per day, when you throw this javelin, you can turn it into…'},
+    {name:'Memnon\'s Discordant Blade', note:'+1 greatsword. Can only be wielded by a chaotic being. If you also · Once per day, you can utterly annihilate one creature of level 9 or less that you damage with this blade. The creature can…'},
+    {name:'Necrotic Mace of Withering', note:'+1 mace. Can only be wielded by a chaotic priest. · While holding the mace, you can turn cure wounds spells you cast into harmful magic that instead inflicts the same amount of…'},
+    {name:'Obsidian Witchknife', note:'+2 dagger. Cannot be wielded by a lawful being. · When you cast a spell while holding this dagger, you may wound yourself with it. Add the amount of damage you take to your…'},
+    {name:'Scimitar of the Ash Moon', note:'+3 greatsword. · If you roll a critical hit with this weapon, the target is beheaded. It dies instantly if decapitation would kill it.'},
+    {name:'Shortsword of the Thief', note:'+1 shortsword. +2 if wielded by a halfling or thief. · Once per day, regain a luck token you just spent.'},
+    {name:'Silver Mace of Wrath', note:'+1 mace. · This weapon deals double damage against creatures with lycanthropy.'},
+    {name:'Sword of the Ancients', note:'+2 longsword. · The sword is unbreakable and can carve through any material. The owner can summon the sword to their hand if it\'s on the…'},
+    {name:'Thrice-Blessed Sword', note:'+3 longsword. Only a lawful priest who has achieved the Templar title · You deal double damage against demons, devils, and undead.'},
+    {name:'Trident of the Seas', note:'+2 spear. · You can breathe underwater, as well as speak to and understand wild sea creatures. Once per day, you can cast control water…'},
+    {name:'Warhammer of the Dwarf Lords', note:'+1 warhammer. +2 if wielded by a dwarf. · This weapon has the thrown property (pg. 37) to a near distance. It always returns to your hand after being thrown. Your…'},
+  ],
+  'Armor & Shields': [
+    {name:'+1 Armor', gp:150, note:'+1 AC (any armor type)'},
+    {name:'Armor of Saint Terragnis', note:'+3 plate mail. Only a lawful worshipper of Saint Terragnis can wear · Hostile spells that target you are DC 18 to cast. Once per month, you can summon an Avatar of Saint Terragnis (treat as an…'},
+    {name:'Armor of the Oni', note:'+1 plate mail. · You can speak and understand Diabolic. Your melee weapon attacks deal +1 damage.'},
+    {name:'Memnon\'s Entropic Armor', note:'+1 plate mail. Can only be worn by a chaotic being. If you also wield · Once per day, you can speak the armor\'s command word. Until your next turn, all non-magical weapons that strike you are…'},
+    {name:'Moonwrought Chainmail', note:'+1 mithral chainmail. · Once per day, you can speak the armor\'s command word. You gain a +1 bonus to your next spellcasting check or ranged attack.…'},
+    {name:'Nightcloak Armor', note:'+1 leather armor. · Once per day, you may choose to automatically pass a Dexterity check to hide.'},
+    {name:'Ophidian Armor', note:'+1 leather armor. · You have advantage on checks to avoid the effects of poison.'},
+    {name:'Shield of the Crusader', note:'+1 shield. Can only be wielded by a lawful being. · Once per day, you can speak a prayer to wreathe the shield in holy flames, granting +2 to your AC for 3 rounds.'},
+    {name:'Shield of the Lion', note:'+1 shield. · Once per day, you can command the lion to animate and bellow a ferocious roar. All hostile creatures within near range must…'},
+    {name:'Shield of the Witch-King', note:'+2 shield. Can only be wielded by a chaotic being. · You take half damage from undead creatures.'},
+    {name:'Wraith Chain', note:'+1 mithral chainmail. · Once per day, you may cause an attack that hits you to miss instead.'},
+  ],
+  'Rings': [
+    {name:'Ring of Feather Falling', note:'Once per day, the ring can cast feather fall (pg. 60) on you when you fall.'},
+    {name:'Ring of Fireballs', note:'You can pluck the glass marble from the ring and throw it up to a far distance, causing a fireball spell (pg. 60) to bloom…'},
+    {name:'Ring of Invisibility', note:'Once per day, the ring can cast the invisibility spell (pg. 63) on you. · Curse: There is a cumulative 1% chance each time you rest…'},
+    {name:'Ring of Protection', gp:250, note:'+1 AC'},
+    {name:'Ring of Ramlaat', note:'Once per day, you can enter a rage where you deal double damage for 5 rounds. During the rage, you can\'t cast spells and…'},
+  ],
+  'Wands & Staves': [
+    {name:'Staff of Healing', note:'+1 staff. · Once per day, you can touch a creature with the staff to heal it for 1d6 hit points.'},
+    {name:'Staff of Ord', note:'+3 staff. Can only be wielded by a wizard. · Functions as a wand of dimension door (pg. 59), fireball (pg. 60), sending (pg. 70), and telekinesis (pg. 72). Unlike a…'},
+    {name:'Staff of the Cobra', note:'+1 staff. · All snakes regard you with a friendly attitude unless you do something to upset them. Once per day, you can throw the staff…'},
+    {name:'Wand of Unlife', note:'This wand contains the spells animate dead (pg. 54) and create undead (pg. 58). · Curse: Each time you use the wand to cast a spell, you take…'},
+    {name:'Wand of Warding', note:'This wand contains the spells dispel magic (pg. 59) and protection from energy (pg. 68). · Curse: Each time you fail a spellcasting check with this…'},
+  ],
+  'Apparel': [
+    {name:'Amulet of Secrecy', note:'You can\'t be detected by divination magic such as the scrying spell or a Crystal Ball while wearing this amulet.'},
+    {name:'Amulet of Vitality', note:'Your Constitution stat becomes 18 (+4) while wearing this amulet.'},
+    {name:'Boots of Dancing', note:'Curse: As soon as you don these boots, you begin cavorting…'},
+    {name:'Boots of Hovering', note:'You can walk on an insubstantial surface for 1 turn at a time. You fall through the surface if you end your turn on it.'},
+    {name:'Boots of the Cat', note:'You can jump up to a near distance from a standstill. Your checks to move silently are always easy (DC 9).'},
+    {name:'Bracers of Archery', note:'You deal +1 damage with ranged weapons.'},
+    {name:'Bracers of Defense', note:'You get a +1 bonus to your armor class.'},
+    {name:'Circlet of Wisdom', note:'Your Wisdom stat becomes 18 (+4) while wearing this circlet.'},
+    {name:'Cloak of Elvenkind', note:'Your checks to hide are always easy (DC 9). Once per day, you can become invisible for 5 rounds. The invisibility ends if…'},
+    {name:'Cloak of the Bat', note:'You can fly a near distance as your movement while in a shadowy area. · Curse: Each time you use the cloak to fly, roll a d20. On a…'},
+    {name:'Gauntlets of Might', note:'Your Strength stat becomes 18 (+4) while wearing these gauntlets.'},
+    {name:'Gloves of Agility', note:'Your Dexterity stat becomes 18 (+4) while wearing these gloves.'},
+    {name:'Hat of Intellect', note:'Your Intelligence stat becomes 18 (+4) while wearing this hat.'},
+    {name:'Hat of the Hound', note:'You can transform into a mastiff each day for up to 10 rounds total. Your clothing and possessions transform with you.'},
+    {name:'Helm of Mind Reading', note:'You can cast the detect thoughts spell (pg. 58) three times per day (+4 bonus).'},
+    {name:'Horned Helm of Ramlaat', note:'This helm grants you a +1 bonus to your armor class. You have advantage on any check you make to knock down creatures or…'},
+    {name:'Necklace of Charm', note:'Your Charisma stat becomes 18 (+4) while wearing this necklace.'},
+    {name:'Robe of the Archmage', note:'Only a wizard with the Archmage title can wear this robe. Your unarmored AC becomes 15 plus your Dexterity modifier. Choose…'},
+    {name:'Robe of the Druid', note:'Only a wizard with the Druid title can wear this robe. Your unarmored AC becomes 15 plus your Dexterity modifier. Twice per…'},
+    {name:'Robe of the Sorcerer', note:'Only a wizard with the Sorcerer title can wear this robe. Your unarmored AC becomes 15 plus your Dexterity modifier. When…'},
+    {name:'Scarab of Protection', note:'If you die, make a DC 18 Constitution check. If you succeed, you are unconscious instead of dead.'},
+  ],
+  'Wondrous': [
+    {name:'Alabaster Destrier', note:'Once per day, the wielder can speak the command word to turn the statuette into a pegasus that accepts neutral or lawful…'},
+    {name:'Bag of Badgers', note:'Once per day, you can reach inside the bag and pull out an angry badger. You can throw the badger up to a near distance. The…'},
+    {name:'Bag of Devouring', note:'Curse: This bag devours and destroys anything placed inside…'},
+    {name:'Bag of Holding', gp:150, note:'This bag has an interdimensional space inside that can hold up to 10 gear slots. · Curse: Placing this item inside another Bag of Holding or a…'},
+    {name:'Bead of Force', note:'You can throw this bead at one target up to a near distance. If you hit, the target becomes caught in a resilient sphere…'},
+    {name:'Brak\'s Book of Misspells', note:'Curse: This spellbook contains one scroll each of acid arrow…'},
+    {name:'Brak\'s Cube of Perfection', note:'Roll the cube by rolling a d6. Your corresponding stat permanently increases to 18 (+4). 1. Strength. 2. Dexterity. 3.…'},
+    {name:'Crystal Ball', note:'Only wizards can use a Crystal Ball. You can use it to cast the scrying spell (pg. 70). If you fail the spellcasting check…'},
+    {name:'Egg of the Cockatrice', note:'Once per week, you can speak a command word that causes a cockatrice to hatch and follow your commands for 5 rounds before…'},
+    {name:'Flying Carpet', note:'The carpet fits two riders (one is the driver). It can fly double near on the driver\'s turn.'},
+    {name:'Genie Lamp', note:'Rubbing the lamp causes its resident djinni (50% chance) or efreeti (50% chance) to emerge. A djinni grants its summoner one…'},
+    {name:'Goblin Bomb', note:'You can light the bomb\'s fuse and throw it a near distance. It explodes in 1d4 rounds, dealing 2d8 damage to everything in…'},
+    {name:'Hourglass of the Black Sands', note:'Once per day, you can turn the hourglass when you cast a spell. The spell\'s effects last 1d4 rounds longer.'},
+    {name:'Immovable Rod', note:'When you click the button, the rod becomes fixed in space (holds 5,000 lbs). Clicking the button again ends the effect.'},
+    {name:'Jewel of Barbalt', note:'You roll a critical success on an 18-20. · Curse: You roll a critical failure on a 1-3.'},
+    {name:'Kytherian Cog', note:'You start every session with a luck token.'},
+    {name:'Magic Ink', note:'The ink\'s writing is invisible when cool and can only be seen when warmed up by a nearby source of strong heat. There\'s…'},
+    {name:'Mirror of Mischief', note:'Curse: The first time a humanoid creature looks into this…'},
+    {name:'Onyx Destrier', note:'Once per day, the wielder can speak the command word to turn the statuette into a nightmare that accepts neutral or chaotic…'},
+    {name:'Pearl of Power', note:'Once per day, you may regain the ability to cast a spell you have lost. This cannot restore a spell lost due to a critical…'},
+    {name:'Pipe of the Rolling Hills', note:'Up to three times per day, regain 1d4 hit points when you smoke this pipe. “There\'s nothing better than a -Ralina, halfling…'},
+    {name:'Pipes of the Sewers', note:'Once per day, you can play these pipes to summon 2d6 giant rats. The rats obey you for d6 rounds, and then they scatter and…'},
+    {name:'Portable Hole', note:'The Portable Hole folds open on a flat surface into a 6-foot wide, 6-foot deep hole. It has 20 gear slots of storage. The…'},
+    {name:'Sphere of Annihilation', note:'This sphere utterly destroys all matter it touches. Intelligent beings can move the flying sphere a near distance by passing…'},
+    {name:'Spyglass of True Sight', note:'When you look through the spyglass, you can see invisible creatures and objects. · Curse: The wielder feels a compulsion to look at everything…'},
+    {name:'The Kytherian Mechanism', note:'A handle turns The Kytherian Mechanism\'s mighty wheels, but it doesn\'t function until its seven missing Kytherian Cogs are…'},
+    {name:'The Malediction Infernal', note:'A chaotic being who reads this tome gains a level and learns the Diabolic language. A non-chaotic being who reads this book…'},
+    {name:'Tome Mordanticus', note:'When you read the tome, you learn three True Names (pg. 319) of three beings you choose. Your True Name also appears in the…'},
+    {name:'Tome of Gehemna', note:'Each day, a random wizard spell scroll appears inside the tome, replacing the spell scroll from the prior day.'},
+    {name:'Tome of Hadebe', note:'The tome contains one each of the following scrolls: burning hands (pg. 56), fireball (pg. 60), and prismatic orb (pg. 67).'},
+    {name:'True Name', note:'You have advantage on attack rolls and spellcasting checks targeting a creature whose True Name you utter.'},
+    {name:'Well of Many Worlds', note:'The Well of Many Worlds folds open on a flat surface into a 6-foot wide hole. Creatures can jump into the hole once per day…'},
+  ],
+};
+const SHOP_MAGIC_SUBS = ["Potions", "Scrolls", "Weapons", "Armor & Shields", "Rings", "Wands & Staves", "Apparel", "Wondrous"];
+
+let _shopMagicSub = 'Potions';
+function shopMagicItems() { return SHOP_MAGIC[_shopMagicSub] || []; }
+function shopSetMagicSub(s) { _shopMagicSub = s; shopRender(); }
+
 
 function shopRender() {
   // Tabs
@@ -3678,6 +3781,18 @@ function shopRender() {
   tabBar.innerHTML = SHOP_TABS.map(t=>
     '<button onclick="shopSetTab(\''+t.id+'\')" style="flex:1;padding:8px 4px;background:'+(_shopTab===t.id?'#c8a020':'#141414')+';color:'+(_shopTab===t.id?'#1a1a1a':'#888')+';border:none;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:900;font-size:9px;letter-spacing:.08em;text-transform:uppercase;">'+t.label+'</button>'
   ).join('');
+
+  // Magic subtabs
+  const subBar = document.getElementById('shop-subtabs');
+  if(_shopTab==='magic') {
+    subBar.style.display = 'flex';
+    subBar.innerHTML = SHOP_MAGIC_SUBS.map(s=>
+      '<button onclick="shopSetMagicSub(\''+s.replace(/'/g,"\\'")+'\')" style="flex:1 0 auto;padding:5px 6px;background:'+(_shopMagicSub===s?'#3a3320':'#0f0f0f')+';color:'+(_shopMagicSub===s?'#c8a020':'#666')+';border:none;border-bottom:2px solid '+(_shopMagicSub===s?'#c8a020':'transparent')+';cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:8px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;">'+s+'</button>'
+    ).join('');
+  } else {
+    subBar.style.display = 'none';
+    subBar.innerHTML = '';
+  }
 
   // GP display
   const gp = document.getElementById('coin-gp')?.value || '0';
@@ -3774,6 +3889,81 @@ function shopBuy(tab, i) {
   addLog('Purchase','🛒',it.name+' — '+shopFmtCost(it),'normal');
   saveSheet(false);
   closeShop();
+}
+
+</script>
+
+<!-- ═══ SPELL LEARN SHOP ═══ -->
+<div id="spellshop-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#1a1a1a;border:2px solid #5a3a8a;max-width:520px;width:100%;height:85vh;display:flex;flex-direction:column;">
+    <div style="background:#0a0a0a;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-family:'UnifrakturMaguntia',cursive;font-size:20px;color:#b89ae0;line-height:1;">Learn Spell</div>
+      <button onclick="closeSpellShop()" style="background:transparent;border:none;color:#888;font-size:20px;cursor:pointer;padding:0 4px;">✕</button>
+    </div>
+    <div id="spellshop-tabs" style="display:flex;flex-shrink:0;"></div>
+    <div id="spellshop-body" style="padding:6px 14px;overflow-y:auto;flex:1;"></div>
+  </div>
+</div>
+
+<script>
+
+// ═══ SPELL LEARN SHOP ═══════════════════════════════════════════════════════
+let _spellShopTier = '1';
+
+function openSpellShop() {
+  document.getElementById('spellshop-overlay').style.display = 'flex';
+  spellShopRender();
+}
+function closeSpellShop() { document.getElementById('spellshop-overlay').style.display = 'none'; }
+function spellShopSetTier(t) { _spellShopTier = t; spellShopRender(); }
+
+function spellShopRender() {
+  const tabBar = document.getElementById('spellshop-tabs');
+  tabBar.innerHTML = ['1','2','3','4','5'].map(t=>
+    '<button onclick="spellShopSetTier(\''+t+'\')" style="flex:1;padding:8px 4px;background:'+(_spellShopTier===t?'#5a3a8a':'#141414')+';color:'+(_spellShopTier===t?'#fff':'#888')+';border:none;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:900;font-size:9px;letter-spacing:.08em;text-transform:uppercase;">Tier '+t+'</button>'
+  ).join('');
+
+  const known = new Set([...document.querySelectorAll('#spells-list .spell-row .spell-input')].map(el=>el.value.trim()).filter(Boolean));
+  const body = document.getElementById('spellshop-body');
+  const spells = (typeof SD_SPELLS!=='undefined' ? SD_SPELLS : []).filter(s=>s.tier===_spellShopTier).sort((a,b)=>a.name.localeCompare(b.name));
+
+  body.innerHTML = spells.map(s=>{
+    const meta = [s.caster, s.range?'Range: '+s.range:'', s.duration?'Dur: '+s.duration:'', s.damage?'Dmg: '+s.damage:''].filter(Boolean).join(' · ');
+    const isKnown = known.has(s.name);
+    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid #1e1e1e;">'
+      + '<div style="flex:1;min-width:0;">'
+      +   '<div style="font-family:Montserrat,sans-serif;font-size:11px;font-weight:700;color:#eee;">'+s.name+'</div>'
+      +   '<div style="font-family:Montserrat,sans-serif;font-size:8px;color:#9a7ac8;line-height:1.3;">'+meta+'</div>'
+      +   (s.desc?'<div style="font-family:Montserrat,sans-serif;font-size:9px;color:#888;line-height:1.3;">'+s.desc+'</div>':'')
+      + '</div>'
+      + (isKnown
+          ? '<span style="padding:5px 10px;color:#4a4a4a;border:1px solid #2a2a2a;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;">Known</span>'
+          : '<button onclick="learnSpell(\''+s.name.replace(/'/g,"\\'")+'\')" style="padding:5px 10px;background:#2a1a3a;color:#b89ae0;border:1px solid #5a3a8a;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;">Learn</button>')
+      + '</div>';
+  }).join('') || '<p style="font-family:Montserrat,sans-serif;font-size:10px;color:#888;padding:10px;">No spells at this tier.</p>';
+}
+
+function learnSpell(name) {
+  const s = (typeof SD_SPELLS!=='undefined' ? SD_SPELLS : []).find(x=>x.name===name);
+  if(!s) return;
+  _spellCount++;
+  const row = addSpellRow(_spellCount);
+  if(row) {
+    const q = (cl)=>row.querySelector(cl);
+    const inp=q('.spell-input'); if(inp) inp.value=s.name;
+    const lvl=q('.spell-level'); if(lvl) lvl.value=s.tier;
+    const rng=q('.spell-range'); if(rng) rng.value=s.range;
+    const dur=q('.spell-duration'); if(dur) dur.value=s.duration;
+    const dmg=q('.spell-damage'); if(dmg) dmg.value=s.damage||'';
+    const dsc=q('.spell-desc'); if(dsc){dsc.value=s.desc;autoResizeDesc(dsc);}
+    if(s.name==='Magic Missile') {
+      const ab = q('.spell-adv-btn');
+      if(ab) ab.classList.add('on');
+    }
+  }
+  addLog('Spell Learned','📖',s.name+' (Tier '+s.tier+')','normal');
+  saveSheet(false);
+  closeSpellShop();
 }
 
 </script>
