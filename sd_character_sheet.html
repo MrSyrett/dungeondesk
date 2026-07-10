@@ -240,7 +240,6 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
   <!-- TITLE -->
   <div class="sheet-title">
     <div class="sheet-title-text">Shadowdark</div>
-    <div class="sheet-title-sub">Character Sheet</div>
     <button onclick="takeRest()" style="margin-left:auto;padding:6px 14px;background:#1a2e3a;color:#6ac8df;border:1px solid #1a5a7a;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase;align-self:center;margin-right:6px;" onmouseover="this.style.background='#1a5a7a';this.style.color='white'" onmouseout="this.style.background='#1a2e3a';this.style.color='#6ac8df'">🌙 Rest</button>
     <button id="hdr-create-btn" onclick="startCharWizard()" style="padding:6px 14px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase;align-self:center;" onmouseover="this.style.background='#7a5a00';this.style.color='white'" onmouseout="this.style.background='#241f10';this.style.color='#c8a020'">⚒ Create</button>
   </div>
@@ -2467,9 +2466,112 @@ function ccwMethod() {
   return h;
 }
 function ccwGoRandom() {
-  ccwClose();
-  applyRandomCharacter(true);
-  if(typeof updateHeaderButton==='function') updateHeaderButton();
+  ccwRandomize();
+}
+
+// ── Randomly resolve a pending talent choice ──
+function ccwRandResolve(p, cls, knownSpells) {
+  if(!p || p.kind==='none') return;
+  const rand = (arr) => arr[Math.floor(Math.random()*arr.length)];
+  switch(p.kind) {
+    case 'ortwo':      p.picked = rand(p.options); break;
+    case 'statpick':   p.picked = rand(p.options); break;
+    case 'distribute': p.picked = rand(CCW_ALL_STATS); p.picked2 = rand(CCW_ALL_STATS); break;
+    case 'meleeranged':p.picked = rand(['melee','ranged']); break;
+    case 'weapon':     p.picked = rand(SD_WEAPONS.map(w=>w.name)); break;
+    case 'spellknown':
+      if((knownSpells||[]).length) p.picked = rand(knownSpells);
+      else { p.final = p.text; return; }
+      break;
+    case 'wizspell':   p.picked = rand(SD_SPELLS.filter(s=>s.caster==='Wizard'||s.caster==='Both').map(s=>s.name)); break;
+    case 'armor':      p.picked = rand(CCW_ARMOR_TYPES); break;
+    case 'remedy':     p.picked = rand(CCW_REMEDIES); break;
+    case 'wand':       p.picked = rand(['Priest wand','Wizard wand']); break;
+    case 'meta':
+      if(p.hasStatAlt && Math.random()<0.5) {
+        p.picked = 'stats'; p.pickedA = rand(CCW_ALL_STATS); p.pickedB = rand(CCW_ALL_STATS);
+      } else {
+        p.picked = 'talent';
+        const rows = (RC_CLASS_INFO[cls]?.talent||[]);
+        const opts = [rows[0], rows[1], rows[6], rows[9]].filter(Boolean);
+        p.sub = ccwAnalyzeTalent(rand(opts), cls);
+        ccwRandResolve(p.sub, cls, knownSpells);
+      }
+      break;
+  }
+  ccwResolve(p);
+}
+
+// ── Fully random character through the wizard pipeline ──
+function ccwRandomize() {
+  const rand = (arr) => arr[Math.floor(Math.random()*arr.length)];
+  const roll2d6 = () => Math.ceil(Math.random()*6)+Math.ceil(Math.random()*6);
+
+  // Stats (3d6 in order)
+  _ccw.rolled = [0,0,0,0,0,0].map(()=>_rc_3d6());
+  _ccw.statMode = 'order';
+  _ccw.assign = [0,1,2,3,4,5];
+  ccwSyncStats();
+
+  // Ancestry / class / background / alignment / deity
+  _ccw.ancestry  = _rc_weighted(RC_ANCESTRY.table);
+  _ccw.cls       = _rc_roll(RC_CLASSES);
+  _ccw.background= rand(RC_BACKGROUNDS);
+  _ccw.alignment = rand(['Lawful','Neutral','Chaotic']);
+  const deities  = RC_DEITIES[_ccw.alignment] || [];
+  _ccw.deity     = (_ccw.cls==='Priest' && deities.length) ? rand(deities)
+                 : (deities.length && Math.random()<0.5 ? rand(deities) : '');
+
+  // Spells first (so talent "spell you know" has options)
+  _ccw.spells = [];
+  const spellPool = _ccw.cls==='Priest' ? RC_PRIEST_SPELLS_T1 : _ccw.cls==='Wizard' ? RC_WIZARD_SPELLS_T1 : null;
+  if(spellPool) {
+    const needed = _ccw.cls==='Priest' ? 2 : 3;
+    const pool = [...spellPool];
+    while(_ccw.spells.length < needed && pool.length) {
+      const i = Math.floor(Math.random()*pool.length);
+      _ccw.spells.push(pool.splice(i,1)[0]);
+    }
+  }
+
+  // Talent (+ Human bonus), randomly resolving choices
+  const pickRow = (roll) => { const r = ccwTalentRows().find(x=>roll>=x.lo && roll<=x.hi); return r ? r.text : ''; };
+  _ccw.talentRoll = roll2d6();
+  _ccw.talent = pickRow(_ccw.talentRoll);
+  _ccw.tres = ccwAnalyzeTalent(_ccw.talent, _ccw.cls);
+  ccwRandResolve(_ccw.tres, _ccw.cls, _ccw.spells);
+  if(_ccw.ancestry==='Human') {
+    _ccw.talent2Roll = roll2d6();
+    _ccw.talent2 = pickRow(_ccw.talent2Roll);
+    _ccw.tres2 = ccwAnalyzeTalent(_ccw.talent2, _ccw.cls);
+    ccwRandResolve(_ccw.tres2, _ccw.cls, _ccw.spells);
+  } else { _ccw.talent2 = null; _ccw.tres2 = null; _ccw.talent2Roll = null; }
+
+  // Languages
+  _ccw.langCommon = []; _ccw.langRare = []; _ccw.langPriest = '';
+  const lc = ccwLangChoices();
+  { const pool = [...CCW_COMMON_LANGS];
+    while(_ccw.langCommon.length < lc.common && pool.length) _ccw.langCommon.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); }
+  { const pool = [...CCW_RARE_LANGS];
+    while(_ccw.langRare.length < lc.rare && pool.length) _ccw.langRare.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]); }
+  if(lc.priest) _ccw.langPriest = rand(['Celestial','Diabolic','Primordial']);
+
+  // Gear per official random rule: crawling kit, one weapon, leather armor (if wearable), 5 gp left
+  _ccw.buyKit = true;
+  const weaponChoices = ccwClassWeapons(_ccw.cls);
+  _ccw.buyWeapons = weaponChoices.length ? [rand(weaponChoices)] : [];
+  _ccw.buyArmor = ccwClassArmor(_ccw.cls).includes('Leather armor') ? ['Leather armor'] : [];
+  _ccw.gold = Math.round((ccwGearSpent() + 5) * 100) / 100;
+
+  // Name & HP
+  _ccw.name = _rc_roll(RC_NAMES[_ccw.ancestry] || RC_NAMES.Human);
+  const eff = ccwEffStats();
+  const hdNum = parseInt(RC_CLASS_INFO[_ccw.cls].hd.split('d')[1]);
+  let hp = Math.ceil(Math.random()*hdNum) + _rc_mod(eff.CON);
+  if(_ccw.ancestry==='Dwarf') hp += 2;
+  _ccw.hp = Math.max(1, hp);
+
+  ccwApply();
 }
 
 function ccwBack() { if(_ccw.step > 0) { _ccw.step--; ccwRender(); } }
