@@ -507,7 +507,7 @@ input[type="number"] { -moz-appearance: textfield; }
 }
 
 /* ═══ GENERATORS TOOL ═══ */
-.gen-tabs { display: flex; gap: 2px; overflow-x: auto; flex-shrink: 0; scrollbar-width: none; }
+.gen-tabs { display: flex; gap: 2px; overflow-x: auto; flex-shrink: 1; min-width: 0; max-width: 100%; scrollbar-width: none; }
 .gen-tabs::-webkit-scrollbar { display: none; }
 .gen-tab {
   font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700;
@@ -645,6 +645,8 @@ input[type="number"] { -moz-appearance: textfield; }
   .pane-header { flex-wrap: wrap; gap: 4px; padding: 4px 8px; }
   .pane-select { flex: 0 1 auto; min-width: 0; font-size: 10px; padding: 3px 4px; max-width: 140px; }
   .pane-toolbar-slot { flex-wrap: wrap; gap: 4px; }
+  .gen-tabs { flex: 1 1 100%; width: 100%; order: -1; }
+  .gen-tab { flex-shrink: 0; white-space: nowrap; }
   /* Make sure cbt round display and next round button don't get hidden */
   .cbt-round-display { font-size: 11px; }
 
