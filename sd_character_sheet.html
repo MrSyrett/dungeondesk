@@ -195,7 +195,6 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 
 /* dark mode inputs */
 body.dark input, body.dark textarea{color:var(--ink);}
-body.dark #spell-stat{background:#141414 !important;color:#eee !important;}
 #spell-stat option{background:#fff;color:#111;}
 body.dark #spell-stat option{background:#141414;color:#eee;}
 body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-input, body.dark .coin-input{background:var(--input-bg);color:var(--ink);}
@@ -320,9 +319,9 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
       <div class="attacks-section-wrap">
         <div class="sl">Attacks</div>
         <table class="attacks-table">
-          <th style="width:22px"></th>
-              <thead>
+          <thead>
             <tr>
+              <th style="width:22px"></th>
               <th>Weapon / Attack</th>
               <th style="width:50px">Bonus</th>
               <th style="width:60px">Stat</th>
@@ -348,15 +347,15 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
 
     <!-- SPELLS: spans left+center -->
     <div class="spells-bottom">
-      <div class="sl" style="display:flex;align-items:center;justify-content:space-between;"><span>Spells</span><label style="display:flex;align-items:center;gap:4px;font-size:7px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);">Cast Mod
-        <select id="spell-stat" onchange="saveSheet(false)" style="background:transparent;border:1px solid var(--rule);border-radius:2px;color:var(--ink);font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;padding:1px 2px;outline:none;">
+      <div class="sl" style="display:flex;align-items:center;gap:8px;"><span>Spells</span><label style="display:flex;align-items:center;gap:4px;font-size:7px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#aaa;margin-left:auto;">Cast Mod
+        <select id="spell-stat" onchange="saveSheet(false)" style="background:rgba(255,255,255,0.08);border:1px solid #555;border-radius:2px;color:#f8f8f6;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;padding:1px 2px;outline:none;">
           <option value="">—</option>
           <option value="int">INT</option>
           <option value="wis">WIS</option>
           <option value="cha">CHA</option>
         </select>
-        <input type="text" id="spell-gbonus" placeholder="+0" title="Global bonus to all casting checks" style="width:26px;background:transparent;border:1px solid var(--rule);border-radius:2px;color:var(--ink);font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;padding:1px 2px;outline:none;text-align:center;" onchange="saveSheet(false)">
-      </label></div>
+        <input type="text" id="spell-gbonus" placeholder="+0" title="Global bonus to all casting checks" style="width:26px;background:rgba(255,255,255,0.08);border:1px solid #555;border-radius:2px;color:#f8f8f6;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;padding:1px 2px;outline:none;text-align:center;" onchange="saveSheet(false)">
+      </label><button onclick="openSpellShop()" style="padding:2px 10px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:8px;letter-spacing:.08em;text-transform:uppercase;" onmouseover="this.style.background='#7a5a00';this.style.color='white'" onmouseout="this.style.background='#241f10';this.style.color='#c8a020'">📖 Spellbook</button></div>
       <div id="spells-list"></div>
     </div>
 
@@ -716,7 +715,7 @@ function addAttackRow() {
   const tr = document.createElement('tr');
   const statOpts = `<option value="">—</option>${['str','dex','con','int','wis','cha'].map(s=>`<option value="${s}">${s.toUpperCase()}</option>`).join('')}`;
   tr.innerHTML = `
-    <td><button onclick="this.closest('tr').remove();saveSheet(false);" title="Remove attack" style="width:100%;padding:1px 2px;background:transparent;border:1px solid var(--rule);cursor:pointer;font-family:Montserrat,sans-serif;font-size:10px;font-weight:900;color:var(--muted);">−</button></td>
+    <td style="width:22px;"><button onclick="this.closest('tr').remove();saveSheet(false);" title="Remove attack" style="width:16px;height:16px;line-height:1;padding:0;background:transparent;border:1px solid var(--rule);cursor:pointer;font-family:Montserrat,sans-serif;font-size:10px;font-weight:900;color:var(--muted);border-radius:2px;">−</button></td>
     <td><input type="text" placeholder="Longsword, Fireball..."></td>
     <td><input type="text" style="width:100%;text-align:center;" placeholder="+0"></td>
     <td><select style="width:100%;border:1px solid var(--rule);background:var(--input-bg);color:var(--ink);font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;padding:2px 2px;outline:none;" title="Stat mod">${statOpts}</select></td>
@@ -775,15 +774,6 @@ function buildSpells() {
   list.appendChild(hdr);
   _spellCount = 0; // start with no spells
 
-  // Bottom controls: [+ Add Spell] [spell picker dropdown] [- Remove Spell]
-  const bar = document.createElement('div');
-  bar.style.cssText = 'display:flex;align-items:center;gap:4px;padding:4px 6px;flex-wrap:wrap;';
-  bar.innerHTML =
-    '<button class="spell-learn-btn" style="flex:1;min-width:100px;padding:3px 8px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap;">📖 Spellbook</button>';
-  list.appendChild(bar);
-  bar.querySelector('.spell-learn-btn').onclick = function() {
-    if(typeof openSpellShop === 'function') openSpellShop();
-  };
 
 }
 
