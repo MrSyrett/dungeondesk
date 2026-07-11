@@ -132,20 +132,22 @@ body::before {
   color: var(--muted);
   margin-right: 4px;
 }
-.split-btn {
-  width: 32px; height: 32px;
+.split-select {
+  height: 32px;
   background: var(--panel);
   border: 1px solid var(--border);
-  color: var(--mid);
+  color: var(--white);
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  padding: 0 8px;
+  font-family: 'Barlow Condensed', sans-serif;
   font-size: 13px;
-  transition: all 0.15s;
+  font-weight: 700;
+  letter-spacing: .04em;
+  outline: none;
+  transition: border-color 0.15s;
 }
-.split-btn:hover { color: var(--white); border-color: var(--muted); }
-.split-btn.active { background: var(--red); border-color: var(--red); color: white; }
+.split-select:hover { border-color: var(--muted); }
+.split-select option { background: var(--panel); color: var(--white); }
 
 /* ═══ MAIN AREA ═══ */
 .main-area {
@@ -166,15 +168,78 @@ body::before {
 }
 .pane:last-child { border-right: none; }
 
-/* Quad view — 2×2 grid */
-.main-area.quad { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
-.main-area.quad .pane { border-right: 2px solid var(--border); border-bottom: 2px solid var(--border); }
-.main-area.quad #pane-2, .main-area.quad #pane-4 { border-right: none; }
-.main-area.quad #pane-3, .main-area.quad #pane-4 { border-bottom: none; }
+/* Quad view — four equal vertical columns (stacks on mobile via the rule below) */
+.main-area.quad { display: flex; }
+.main-area.quad .pane { flex: 1; min-width: 0; }
+
+/* The stack wrapper is transparent unless focus mode turns it into a column */
+.focus-stack { display: contents; }
+
+/* Focus view — one large pane on the left, two stacked on the right */
+.main-area.focus { display: flex; }
+.main-area.focus #pane-1 { flex: 1.6; min-width: 0; border-right: 2px solid var(--border); }
+.main-area.focus .focus-stack { flex: 1; min-width: 0; display: flex; flex-direction: column; overflow: hidden; }
+.main-area.focus .focus-stack .pane { flex: 1; min-height: 0; border-right: none; border-bottom: 2px solid var(--border); }
+.main-area.focus .focus-stack .pane:last-child { border-bottom: none; }
+
+/* Mobile: every multi-pane layout becomes a single scrolling column */
+
+/* ── NARROW PANES ──
+   Media queries measure the viewport, so a pane squeezed to 25% width in Four
+   mode still gets desktop layouts. Panes flagged .narrow re-apply the
+   pane-internal mobile rules so tools stack instead of overflowing. */
+.pane.narrow .pane-header { flex-wrap: wrap; gap: 4px; padding: 4px 8px; }
+.pane.narrow .pane-select { flex: 0 1 auto; min-width: 0; font-size: 10px; padding: 3px 4px; max-width: 140px; }
+.pane.narrow .pane-toolbar-slot { flex-wrap: wrap; gap: 4px; width: 100%; min-width: 0; }
+.pane.narrow .pane-content { overflow-y: auto; }
+
+/* Toolbar controls must shrink and wrap rather than run past the pane edge */
+.pane.narrow .pane-toolbar-slot > * { flex-shrink: 1; min-width: 0; max-width: 100%; }
+.pane.narrow .pane-toolbar-slot select,
+.pane.narrow .pane-toolbar-slot input { max-width: 120px; font-size: 10px; }
+.pane.narrow .pane-toolbar-slot .btn,
+.pane.narrow .pane-toolbar-slot button { font-size: 9px; padding: 5px 7px; min-height: 30px; white-space: nowrap; }
+.pane.narrow .pane-toolbar-slot label { font-size: 9px; gap: 3px; }
+
+.pane.narrow .gen-controls { padding: 8px 10px; gap: 6px; }
+.pane.narrow .gen-controls select,
+.pane.narrow .gen-controls input { max-width: 100%; min-width: 0; }
+
+.pane.narrow .toolrow { padding: 8px 10px; gap: 8px; flex-wrap: wrap; }
+.pane.narrow .btn { font-size: 10px; padding: 7px 10px; min-height: 36px; }
+.pane.narrow .btn.small { padding: 6px 8px; min-height: 32px; }
+.pane.narrow .doc-filename { max-width: 120px; font-size: 10px; }
+
+/* Combat & trackers: stack the columns instead of squeezing them side by side */
+.pane.narrow .cbt-body { flex-direction: column; }
+.pane.narrow .cbt-round-display { font-size: 11px; }
+.pane.narrow .npc-hp-btn, .pane.narrow .tracker-adjust-btn { width: 32px; height: 32px; }
+.pane.narrow .npc-seg { min-width: 0; height: 26px; flex: 1 1 0; }
+.pane.narrow .npc-seg-num { font-size: 10px; }
+.pane.narrow .npc-seg-row { gap: 2px; }
+.pane.narrow .npc-hp-input { min-height: 32px; font-size: 14px; }
+.pane.narrow .tracker-name-input, .pane.narrow .npc-name-input { font-size: 14px; }
+
+/* Dice stay on ONE row in narrow panes — shrink them instead of wrapping */
+.pane.narrow .dice-btn-row { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+.pane.narrow .dice-die { padding: 9px 0; font-size: 11px; border-radius: 4px; }
+.pane.narrow .dice-count { min-width: 13px; height: 13px; line-height: 13px; font-size: 8px; top: -5px; right: -4px; }
+.pane.narrow .dice-tray { padding: 6px 6px 3px; }
+.pane.narrow .dice-pool { padding: 3px 6px 6px; }
+.pane.narrow .dice-pool-row { gap: 3px; }
+.pane.narrow .dice-mod { width: 36px; padding: 4px 2px; font-size: 10px; }
+.pane.narrow .dice-advbtn { padding: 5px 5px; font-size: 8px; }
+.pane.narrow .dice-camp-btn, .pane.narrow .dice-hide-btn { padding: 5px 6px; font-size: 9px; }
+.pane.narrow .dice-pool-clear { padding: 5px 7px; }
+.pane.narrow .dice-roll-go { padding: 5px 8px; font-size: 9px; letter-spacing: .02em; }
+.pane.narrow .nts-editor { font-size: 14px; padding: 12px 14px; }
+
 @media (max-width: 760px) {
-  .main-area.quad { grid-template-columns: 1fr; grid-template-rows: repeat(4, minmax(220px, 1fr)); overflow-y: auto; }
-  .main-area.quad .pane { border-right: none; }
-  .main-area.quad #pane-3 { border-bottom: 2px solid var(--border); }
+  .main-area.quad, .main-area.focus { flex-direction: column; overflow-y: auto; }
+  .main-area.quad .pane, .main-area.focus .pane { flex: 0 0 auto; min-height: 260px; border-right: none; border-bottom: 2px solid var(--border); }
+  .main-area.focus #pane-1 { flex: 0 0 auto; }
+  .main-area.focus .focus-stack { display: contents; }
+  .main-area.focus #pane-1 { border-right: none; }
 }
 
 
@@ -273,7 +338,13 @@ input[type="number"] { -moz-appearance: textfield; }
   color: var(--light);
   min-width: 38px;
   text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  line-height: 1;
 }
+.doc-controls { display: flex; align-items: center; gap: 6px; }
 .doc-body {
   flex: 1;
   min-height: 0;
@@ -518,16 +589,15 @@ input[type="number"] { -moz-appearance: textfield; }
 }
 
 /* ═══ GENERATORS TOOL ═══ */
-.gen-tabs { display: flex; gap: 2px; overflow-x: auto; flex-shrink: 1; min-width: 0; max-width: 100%; scrollbar-width: none; }
-.gen-tabs::-webkit-scrollbar { display: none; }
-.gen-tab {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700;
-  letter-spacing: 0.08em; text-transform: uppercase;
-  padding: 4px 10px; background: transparent; border: 1px solid var(--border);
-  color: var(--muted); cursor: pointer; transition: all 0.15s; flex-shrink: 0; white-space: nowrap;
+.gen-tab-select {
+  font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 5px 8px; background: var(--panel); border: 1px solid var(--border);
+  color: var(--white); cursor: pointer; outline: none; min-width: 0; max-width: 100%;
+  transition: border-color 0.15s;
 }
-.gen-tab:hover { color: var(--white); border-color: var(--mid); }
-.gen-tab.active { background: var(--red); border-color: var(--red); color: white; }
+.gen-tab-select:hover { border-color: var(--mid); }
+.gen-tab-select option { background: var(--panel); color: var(--white); }
 .gen-body { flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .gen-panel { display: none; flex: 1; flex-direction: column; min-height: 0; overflow: hidden; }
 .gen-panel.active { display: flex; }
@@ -656,8 +726,6 @@ input[type="number"] { -moz-appearance: textfield; }
   .pane-header { flex-wrap: wrap; gap: 4px; padding: 4px 8px; }
   .pane-select { flex: 0 1 auto; min-width: 0; font-size: 10px; padding: 3px 4px; max-width: 140px; }
   .pane-toolbar-slot { flex-wrap: wrap; gap: 4px; }
-  .gen-tabs { flex: 1 1 100%; width: 100%; order: -1; }
-  .gen-tab { flex-shrink: 0; white-space: nowrap; }
   /* Make sure cbt round display and next round button don't get hidden */
   .cbt-round-display { font-size: 11px; }
 
@@ -712,24 +780,26 @@ input[type="number"] { -moz-appearance: textfield; }
 /* ── DICE TRAY & ROLL LOG ── */
 .dice-tool { overflow: hidden; }
 .dice-tray { flex-shrink: 0; padding: 8px 10px 4px; border-top: 2px solid var(--border); background: rgba(0,0,0,0.25); }
-.dice-btn-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
-.dice-die { position: relative; padding: 12px 2px; background: var(--panel); color: var(--light); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: .04em; transition: border-color .1s, transform .05s; }
+.dice-btn-row { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.dice-die { position: relative; padding: 12px 0; min-width: 0; background: var(--panel); color: var(--light); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: .04em; transition: border-color .1s, transform .05s; overflow: visible; }
 .dice-die:hover { border-color: var(--gold); }
 .dice-die:active { transform: scale(0.94); }
 .dice-die.has { border-color: var(--gold); color: var(--gold); }
 .dice-count { position: absolute; top: -6px; right: -5px; background: var(--gold); color: #1a1a1a; border-radius: 8px; min-width: 16px; height: 16px; line-height: 16px; font-size: 10px; font-weight: 900; font-family: 'Montserrat', sans-serif; }
 .dice-pool { flex-shrink: 0; padding: 4px 10px 8px; background: rgba(0,0,0,0.25); }
-.dice-pool-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.dice-pool-label { flex: 1; min-width: 100px; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: var(--gold); }
+.dice-pool-label-row { padding: 0 0 6px; }
+.dice-pool-label { display: block; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: var(--gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dice-pool-row { display: flex; align-items: center; gap: 5px; }
+.dice-pool-row .dice-mod { flex: 0 1 auto; }
+.dice-roll-go { flex: 1; }
 .dice-mod { width: 44px; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; color: var(--light); font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; padding: 5px 4px; text-align: center; outline: none; }
 .dice-advbtn { padding: 6px 8px; background: var(--panel); color: #888; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 9px; font-weight: 900; letter-spacing: .06em; }
 .dice-advbtn.on-adv { background: #1a3a1a; border-color: #2d7a2d; color: #6dbf6d; }
 .dice-advbtn.on-dis { background: #3a1a1a; border-color: #7a2d2d; color: #df6a6a; }
-.dice-roll-go { padding: 6px 16px; background: var(--gold); color: #1a1a1a; border: none; border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.dice-roll-go { padding: 6px 12px; background: var(--gold); color: #1a1a1a; border: none; border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: .06em; text-transform: uppercase; white-space: nowrap; }
 .dice-roll-go:hover { filter: brightness(1.1); }
-.dice-pool-clear { padding: 6px 12px; background: transparent; color: #999; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 9px; font-weight: 700; white-space: nowrap; }
+.dice-pool-clear { padding: 6px 9px; background: transparent; color: #999; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; white-space: nowrap; }
 .dice-pool-clear:hover { color: #df6a6a; border-color: #7a2d2d; }
-.dice-pool-gap { flex: 1; min-width: 4px; }
 .dice-log { flex: 1; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column-reverse; justify-content: flex-start; gap: 6px; }
 .dice-log-hint { font-family: 'Montserrat', sans-serif; font-size: 10px; color: #666; font-style: italic; padding: 8px 2px; }
 .dice-log-entry { background: #1e1e1e; border: 1px solid #333; padding: 7px 9px; }
@@ -740,11 +810,14 @@ input[type="number"] { -moz-appearance: textfield; }
 .dice-log-entry.crit .roll-result { color: #ffd700; }
 .dice-log-entry.fumble { border-color: #ff4444; }
 .dice-log-entry.fumble .roll-result { color: #ff4444; }
-@media (max-width: 760px) { .dice-btn-row { grid-template-columns: repeat(4, 1fr); } }
+@media (max-width: 760px) {
+  .dice-btn-row { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
+  .dice-die { padding: 10px 0; font-size: 12px; }
+}
 
-.dice-camp-btn { padding: 6px 10px; background: transparent; color: #777; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 9px; font-weight: 700; white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+.dice-camp-btn { padding: 6px 9px; background: transparent; color: #777; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 12px; line-height: 1; white-space: nowrap; }
 .dice-camp-btn.on { background: rgba(200,160,32,0.12); color: var(--gold); border-color: var(--gold); }
-.dice-hide-btn { padding: 6px 10px; background: rgba(45,122,45,0.12); color: #6dbf6d; border: 1px solid #2d7a2d; border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 9px; font-weight: 700; white-space: nowrap; }
+.dice-hide-btn { padding: 6px 9px; background: rgba(45,122,45,0.12); color: #6dbf6d; border: 1px solid #2d7a2d; border-radius: 4px; cursor: pointer; font-size: 12px; line-height: 1; white-space: nowrap; }
 .dice-hide-btn.on { background: rgba(122,45,45,0.15); color: #df8a8a; border-color: #7a2d2d; }
 .dice-camp-panel { padding: 6px 0 2px; }
 .dice-camp-row { display: flex; gap: 6px; align-items: center; margin-bottom: 5px; }
@@ -769,9 +842,12 @@ input[type="number"] { -moz-appearance: textfield; }
 
   <div class="view-controls">
     <span class="split-label">View</span>
-    <button class="split-btn active" id="split-1" onclick="setSplit(1)" title="Single view">▮</button>
-    <button class="split-btn" id="split-2" onclick="setSplit(2)" title="Split view">▮▮</button>
-    <button class="split-btn" id="split-4" onclick="setSplit(4)" title="Quad view">⊞</button>
+    <select class="split-select" id="split-select" onchange="setSplit(parseInt(this.value))" title="Pane layout">
+      <option value="1">▮ Single</option>
+      <option value="2">▮▮ Split</option>
+      <option value="3">▮⊟ Focus</option>
+      <option value="4">▮▮▮▮ Four</option>
+    </select>
   </div>
 </div>
 
@@ -793,6 +869,7 @@ input[type="number"] { -moz-appearance: textfield; }
     <div class="pane-content" id="pane-1-content"></div>
   </div>
 
+  <div class="focus-stack" id="focus-stack">
   <div class="pane" id="pane-2" style="display:none;">
     <div class="pane-header" id="pane-2-header">
       <select class="pane-select pane-2-select" id="pane-2-select" onchange="setPaneTool(2, this.value)">
@@ -825,6 +902,7 @@ input[type="number"] { -moz-appearance: textfield; }
     <div class="pane-content" id="pane-3-content"></div>
   </div>
 
+  </div>
   <div class="pane" id="pane-4" style="display:none;">
     <div class="pane-header" id="pane-4-header">
       <select class="pane-select" id="pane-4-select" onchange="setPaneTool(4, this.value)">
@@ -937,7 +1015,7 @@ input[type="number"] { -moz-appearance: textfield; }
       <div class="toolbar-spacer"></div>
       <button class="btn small ghost nts-md-toggle" title="Toggle Markdown source">MD</button>
       <button class="btn small ghost nts-export">Export .md</button>
-      <label class="btn small ghost" style="cursor:pointer;" title="Import a Markdown file">
+      <label class="btn small ghost" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;" title="Import a Markdown file">
         Import .md
         <input type="file" class="nts-import-input" accept=".md,.markdown,.txt" style="display:none;">
       </label>
@@ -987,16 +1065,16 @@ input[type="number"] { -moz-appearance: textfield; }
 <template id="tpl-gen">
   <div class="tool-instance gen-tool" data-tool="gen">
     <div class="toolbar-tpl" style="display:none">
-      <div class="gen-tabs">
-        <button class="gen-tab active" data-tab="adventure">Adventure</button>
-        <button class="gen-tab" data-tab="npc">NPC</button>
-        <button class="gen-tab" data-tab="rival">Rival Crawlers</button>
-        <button class="gen-tab" data-tab="monster">Monster</button>
-        <button class="gen-tab" data-tab="dungeon">Dungeon</button>
-        <button class="gen-tab" data-tab="encounter">Encounter</button>
-        <button class="gen-tab" data-tab="shop">Shop/Tavern</button>
-        <button class="gen-tab" data-tab="loot">Treasure</button>
-      </div>
+      <select class="gen-tab-select" title="Generator">
+        <option value="adventure">📜 Adventure</option>
+        <option value="npc">👤 NPC</option>
+        <option value="rival">⚔ Rival Crawlers</option>
+        <option value="monster">🐉 Monster</option>
+        <option value="dungeon">🏰 Dungeon</option>
+        <option value="encounter">💀 Encounter</option>
+        <option value="shop">🏪 Shop/Tavern</option>
+        <option value="loot">💰 Treasure</option>
+      </select>
       <div class="toolbar-spacer"></div>
       <button class="btn small primary gen-roll">🎲 Generate</button>
     </div>
@@ -1371,6 +1449,7 @@ input[type="number"] { -moz-appearance: textfield; }
         </div>
         <div id="gen-adv-bar" style="display:none;padding:8px 14px;background:var(--panel);border-top:1px solid var(--border);flex-shrink:0;display:flex;gap:8px;align-items:center;">
           <button id="gen-adv-load-btn" class="btn small primary" style="white-space:nowrap">📖 Load to Adventure</button>
+          <button id="gen-adv-maps-btn" class="btn small ghost" style="white-space:nowrap;display:none;">🗺 Load Map to Maps</button>
         </div>
       </div>
 
@@ -1413,28 +1492,38 @@ function getOrCreateInstance(toolType) {
 
 function setSplit(n) {
   splitMode = n;
-  [1, 2, 4].forEach(m => {
-    const b = document.getElementById('split-' + m);
-    if(b) b.classList.toggle('active', n === m);
-  });
+  const sel = document.getElementById('split-select');
+  if(sel) sel.value = String(n);
   const area = document.getElementById('main-area');
-  if(area) area.classList.toggle('quad', n === 4);
+  if(area) {
+    area.classList.toggle('quad', n === 4);
+    area.classList.toggle('focus', n === 3);
+  }
   // Panes 2-4 show only when the split calls for them
   [2, 3, 4].forEach(p => {
     const el = document.getElementById('pane-' + p);
     if(el) el.style.display = (p <= n) ? 'flex' : 'none';
   });
-  // In quad mode, make sure no two panes hold the same tool (one instance per tool)
-  if(n === 4) dedupePaneTools();
+  // Panes squeezed below the mobile breakpoint need the narrow layout (stacked
+  // trackers, wrapped toolbars): all four columns in Four mode, and the two
+  // stacked panes in Focus mode (pane 1 stays wide there).
+  [1, 2, 3, 4].forEach(p => {
+    const el = document.getElementById('pane-' + p);
+    if(!el) return;
+    const narrow = (n === 4) || (n === 3 && (p === 2 || p === 3));
+    el.classList.toggle('narrow', narrow);
+  });
+  // Multi-pane modes: no two panes may hold the same tool (one instance per tool)
+  if(n >= 3) dedupePaneTools(n);
   for(let p = 1; p <= n; p++) renderPane(p);
 }
 
 // Each tool has a single DOM instance, so it can only live in one pane.
 // If a duplicate is found, swap that pane to the first unused tool.
-function dedupePaneTools() {
+function dedupePaneTools(count) {
   const all = ['adventure','maps','combat','notes','audio','gen','dice'];
   const used = new Set();
-  for(let p = 1; p <= 4; p++) {
+  for(let p = 1; p <= (count || 4); p++) {
     let tool = paneTools[p];
     if(!tool || used.has(tool)) {
       tool = all.find(t => !used.has(t)) || tool;
@@ -1464,6 +1553,33 @@ function setPaneTool(paneNum, tool) {
   paneTools[paneNum] = tool;
   document.getElementById('pane-' + paneNum + '-select').value = tool;
   renderPane(paneNum);
+}
+
+
+// Load generated content into a tool WITHOUT pulling the current pane off the
+// Generators. If a visible pane already shows the target tool, use it. Else, in
+// a multi-pane view, take another visible pane. Only in single view do we swap
+// the generator pane itself.
+function loadIntoTool(tool, dataUrl, fileName) {
+  const genPane = parseInt(Object.keys(paneTools).find(k => paneTools[k] === 'gen') || 1);
+  let target = null;
+
+  for(let p = 1; p <= splitMode; p++) {
+    if(paneTools[p] === tool) { target = p; break; }
+  }
+  if(target === null && splitMode > 1) {
+    for(let p = 1; p <= splitMode; p++) {
+      if(p !== genPane) { target = p; break; }
+    }
+  }
+  if(target === null) target = genPane; // single view — nowhere else to put it
+
+  if(paneTools[target] !== tool) setPaneTool(target, tool);
+
+  setTimeout(() => {
+    const inst = instances[tool];
+    if(inst && inst._loadDataUrl) inst._loadDataUrl(dataUrl, fileName);
+  }, 150);
 }
 
 function renderPane(paneNum) {
@@ -1515,7 +1631,6 @@ function syncToolbar(slot, toolNode) {
     // dice
     ['.dice-clear',    '.dice-clear'],
     // generators
-    ['.gen-tab',       '.gen-tab'],
     ['.gen-roll',      '.gen-roll'],
     ['.aud-clear',     '.aud-clear'],
     ['.aud-tta',       '.aud-tta'],
@@ -1586,13 +1701,13 @@ function syncToolbar(slot, toolNode) {
 
   // Notes import: cloned label click triggers live file input
   // Generator tabs: wire each clone tab to its live counterpart by data-tab
-  slot.querySelectorAll('.gen-tab').forEach(cloneTab => {
-    const liveTab = toolNode.querySelector(`.gen-tab[data-tab="${cloneTab.dataset.tab}"]`);
-    if(!liveTab) return;
-    cloneTab.addEventListener('click', () => {
-      liveTab.click();
-      slot.querySelectorAll('.gen-tab').forEach(t => t.classList.remove('active'));
-      cloneTab.classList.add('active');
+  slot.querySelectorAll('.gen-tab-select').forEach(cloneSel => {
+    const liveSel = toolNode.querySelector('.gen-tab-select');
+    if(!liveSel) return;
+    cloneSel.value = liveSel.value;
+    cloneSel.addEventListener('change', () => {
+      liveSel.value = cloneSel.value;
+      liveSel.dispatchEvent(new Event('change'));
     });
   });
 
@@ -1710,7 +1825,7 @@ function initDocTool(root) {
       mediaEl = el;
       zoomInBtn.style.display = 'none';
       zoomOutBtn.style.display = 'none';
-      zoomLabel.textContent = 'Scrollable';
+      zoomLabel.textContent = '';
     } else if(ext === 'pdf') {
       mediaType = 'pdf';
       frameWrap.classList.add('pdf-mode');
@@ -5086,18 +5201,23 @@ window._genDungeonMap = generateDungeonMap;
 })();
 
 window.init_gen = function(root) {
-  const tabs   = root.querySelectorAll('.gen-tab');
+  const tabSelect = root.querySelector('.gen-tab-select');
   const panels = root.querySelectorAll('.gen-panel');
   const rollBtn = root.querySelector('.gen-roll');
   let activeTab = 'adventure';
 
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      activeTab = tab.dataset.tab;
-      tabs.forEach(t => t.classList.toggle('active', t===tab));
-      panels.forEach(p => p.classList.toggle('active', p.dataset.panel===activeTab));
-    });
-  });
+  function showGenPanel(name) {
+    activeTab = name;
+    panels.forEach(p => p.classList.toggle('active', p.dataset.panel === activeTab));
+    // Keep the live select and any toolbar clones in sync
+    if(tabSelect) tabSelect.value = activeTab;
+    document.querySelectorAll('.gen-tab-select').forEach(s => { s.value = activeTab; });
+  }
+
+  if(tabSelect) {
+    tabSelect.addEventListener('change', () => showGenPanel(tabSelect.value));
+  }
+  showGenPanel(activeTab);
 
   rollBtn.addEventListener('click', () => {
     if(activeTab==='npc') {
@@ -5262,9 +5382,11 @@ window.init_gen = function(root) {
         res.appendChild(wrap);
       }
 
-      // Show load button
+      // Show load buttons (map button only when the adventure produced a map)
       const advBar = root.querySelector('#gen-adv-bar');
       if(advBar) advBar.style.display = 'flex';
+      const advMapsBtn = root.querySelector('#gen-adv-maps-btn');
+      if(advMapsBtn) advMapsBtn.style.display = root._mapSvg ? '' : 'none';
 
       // ── 2 NPCs ──
       {
@@ -5361,12 +5483,7 @@ window.init_gen = function(root) {
       const svg = root._mapSvg;
       if(!svg) return;
       const dataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
-      const paneNum = parseInt(Object.keys(paneTools).find(k => paneTools[k]==='gen') || 1);
-      setPaneTool(paneNum, 'maps');
-      setTimeout(() => {
-        const inst = instances['maps'];
-        if(inst && inst._loadDataUrl) inst._loadDataUrl(dataUrl, 'dungeon-map.svg');
-      }, 150);
+      loadIntoTool('maps', dataUrl, 'dungeon-map.svg');
     });
   })();
 
@@ -5439,16 +5556,23 @@ window.init_gen = function(root) {
 </body></html>`;
 
       const dataUrl = 'data:text/html;base64,' + btoa(unescape(encodeURIComponent(html)));
-      const paneNum = parseInt(Object.keys(paneTools).find(k => paneTools[k]==='gen') || 1);
-      setPaneTool(paneNum, 'adventure');
-      setTimeout(() => {
-        const inst = instances['adventure'];
-        if(inst && inst._loadDataUrl) inst._loadDataUrl(dataUrl, 'dungeon.html');
-      }, 150);
+      loadIntoTool('adventure', dataUrl, 'dungeon.html');
     });
     if(regenBtn) regenBtn.style.display = 'none';
   })();
 
+
+  // Wire Adventure Generator → Load generated map to the Maps pane
+  (function() {
+    const advMapsBtn = root.querySelector('#gen-adv-maps-btn');
+    if(!advMapsBtn) return;
+    advMapsBtn.addEventListener('click', () => {
+      const svg = root._mapSvg;
+      if(!svg) return;
+      const dataUrl = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+      loadIntoTool('maps', dataUrl, 'adventure-map.svg');
+    });
+  })();
 
   // Wire Adventure Generator → Load to Adventure pane
   (function() {
@@ -5486,12 +5610,7 @@ window.init_gen = function(root) {
 </head><body>${bodyHtml}</body></html>`;
 
       const dataUrl = 'data:text/html;base64,' + btoa(unescape(encodeURIComponent(html)));
-      const paneNum = parseInt(Object.keys(paneTools).find(k => paneTools[k]==='gen') || 1);
-      setPaneTool(paneNum, 'adventure');
-      setTimeout(() => {
-        const inst = instances['adventure'];
-        if(inst && inst._loadDataUrl) inst._loadDataUrl(dataUrl, 'adventure.html');
-      }, 150);
+      loadIntoTool('adventure', dataUrl, 'adventure.html');
     });
   })();
 
@@ -6264,7 +6383,9 @@ function init_dice(root) {
   }
 
   function renderTray() {
-    let h = '<div class="dice-btn-row">';
+    const label = poolLabel();
+    let h = '<div class="dice-pool-label-row"><span class="dice-pool-label">'+(label||'Tap dice to build a roll')+'</span></div>';
+    h += '<div class="dice-btn-row">';
     DICE.forEach(d=>{
       const n = pool[d]||0;
       h += '<button class="dice-die'+(n?' has':'')+'" data-d="'+d+'">d'+d+(n?'<span class="dice-count">'+n+'</span>':'')+'</button>';
@@ -6278,22 +6399,20 @@ function init_dice(root) {
   }
 
   function renderPool() {
-    const label = poolLabel();
     let h = '<div class="dice-pool-row">';
-    h += '<span class="dice-pool-label">'+(label||'Tap dice to build a roll')+'</span>';
-    h += '<input type="number" class="dice-mod" value="'+(modifier||'')+'" placeholder="+0" title="Modifier">';
+    // Order: Link · Bonus · ADV · DIS · ✕ · Roll
+    h += '<button class="dice-camp-btn'+(campaign?' on':'')+'" title="'+(campaign?'Campaign: '+campaign.name:'Campaign link')+'">🔗</button>';
+    if(campaign) h += '<button class="dice-hide-btn'+(hideRolls?' on':'')+'" title="'+(hideRolls?'Rolls hidden from campaign — click to share':'Rolls shared with campaign — click to hide')+'">'+(hideRolls?'🙈':'👁')+'</button>';
+    h += '<input type="number" class="dice-mod" value="'+(modifier||'')+'" placeholder="+0" title="Bonus">';
     h += '<button class="dice-advbtn'+(advMode==='adv'?' on-adv':'')+'" data-m="adv" title="Advantage (d20)">ADV</button>';
     h += '<button class="dice-advbtn'+(advMode==='dis'?' on-dis':'')+'" data-m="dis" title="Disadvantage (d20)">DIS</button>';
-    h += '<button class="dice-roll-go">🎲 Roll</button>';
-    h += '<button class="dice-pool-clear" title="Clear pool">✕ Clear</button>';
-    h += '<span class="dice-pool-gap"></span>';
-    if(campaign) h += '<button class="dice-hide-btn'+(hideRolls?' on':'')+'" title="'+(hideRolls?'Rolls hidden from campaign — click to share':'Rolls shared with campaign — click to hide')+'">'+(hideRolls?'🙈 Hidden':'👁 Shared')+'</button>';
-    h += '<button class="dice-camp-btn'+(campaign?' on':'')+'" title="Campaign link">🔗'+(campaign?' '+campaign.name:'')+'</button>';
+    h += '<button class="dice-pool-clear" title="Clear pool">✕</button>';
+    h += '<button class="dice-roll-go" title="Roll">🎲 Roll</button>';
     h += '</div>';
     h += '<div class="dice-camp-panel" style="display:'+(campPanelOpen?'block':'none')+';"></div>';
     poolEl.innerHTML = h;
     if(campPanelOpen) renderCampPanel(poolEl.querySelector('.dice-camp-panel'));
-    poolEl.querySelector('.dice-mod').onchange = (e)=>{ modifier = parseInt(e.target.value)||0; };
+    poolEl.querySelector('.dice-mod').onchange = (e)=>{ modifier = parseInt(e.target.value)||0; renderTray(); };
     poolEl.querySelectorAll('.dice-advbtn').forEach(b=>{
       b.onclick = ()=>{ advMode = advMode===b.dataset.m ? 'none' : b.dataset.m; renderPool(); };
     });
