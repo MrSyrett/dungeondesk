@@ -166,6 +166,17 @@ body::before {
 }
 .pane:last-child { border-right: none; }
 
+/* Quad view — 2×2 grid */
+.main-area.quad { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; }
+.main-area.quad .pane { border-right: 2px solid var(--border); border-bottom: 2px solid var(--border); }
+.main-area.quad #pane-2, .main-area.quad #pane-4 { border-right: none; }
+.main-area.quad #pane-3, .main-area.quad #pane-4 { border-bottom: none; }
+@media (max-width: 760px) {
+  .main-area.quad { grid-template-columns: 1fr; grid-template-rows: repeat(4, minmax(220px, 1fr)); overflow-y: auto; }
+  .main-area.quad .pane { border-right: none; }
+  .main-area.quad #pane-3 { border-bottom: 2px solid var(--border); }
+}
+
 
 
 .pane-content {
@@ -760,6 +771,7 @@ input[type="number"] { -moz-appearance: textfield; }
     <span class="split-label">View</span>
     <button class="split-btn active" id="split-1" onclick="setSplit(1)" title="Single view">▮</button>
     <button class="split-btn" id="split-2" onclick="setSplit(2)" title="Split view">▮▮</button>
+    <button class="split-btn" id="split-4" onclick="setSplit(4)" title="Quad view">⊞</button>
   </div>
 </div>
 
@@ -795,6 +807,38 @@ input[type="number"] { -moz-appearance: textfield; }
       <div class="pane-toolbar-slot" id="pane-2-toolbar"></div>
     </div>
     <div class="pane-content" id="pane-2-content"></div>
+  </div>
+
+  <div class="pane" id="pane-3" style="display:none;">
+    <div class="pane-header" id="pane-3-header">
+      <select class="pane-select" id="pane-3-select" onchange="setPaneTool(3, this.value)">
+        <option value="adventure">📜 Adventure</option>
+        <option value="maps">🗺 Maps</option>
+        <option value="combat">⚔ Combat &amp; Trackers</option>
+        <option value="notes" selected>✎ Notes</option>
+        <option value="audio">🌐 Browser</option>
+        <option value="gen">🎲 Generators</option>
+        <option value="dice">🎲 Dice Tray</option>
+      </select>
+      <div class="pane-toolbar-slot" id="pane-3-toolbar"></div>
+    </div>
+    <div class="pane-content" id="pane-3-content"></div>
+  </div>
+
+  <div class="pane" id="pane-4" style="display:none;">
+    <div class="pane-header" id="pane-4-header">
+      <select class="pane-select" id="pane-4-select" onchange="setPaneTool(4, this.value)">
+        <option value="adventure">📜 Adventure</option>
+        <option value="maps">🗺 Maps</option>
+        <option value="combat">⚔ Combat &amp; Trackers</option>
+        <option value="notes">✎ Notes</option>
+        <option value="audio">🌐 Browser</option>
+        <option value="gen">🎲 Generators</option>
+        <option value="dice" selected>🎲 Dice Tray</option>
+      </select>
+      <div class="pane-toolbar-slot" id="pane-4-toolbar"></div>
+    </div>
+    <div class="pane-content" id="pane-4-content"></div>
   </div>
 </div>
 
@@ -1350,7 +1394,7 @@ document.body.appendChild(instancePool);
 
 const instances = {}; // toolType -> DOM node (singleton per tool type)
 let splitMode = 1;
-let paneTools = { 1: 'adventure', 2: 'combat' };
+let paneTools = { 1: 'adventure', 2: 'combat', 3: 'notes', 4: 'dice' };
 
 function getOrCreateInstance(toolType) {
   if(instances[toolType]) return instances[toolType];
@@ -1369,14 +1413,54 @@ function getOrCreateInstance(toolType) {
 
 function setSplit(n) {
   splitMode = n;
-  document.getElementById('split-1').classList.toggle('active', n === 1);
-  document.getElementById('split-2').classList.toggle('active', n === 2);
-  document.getElementById('pane-2').style.display = n === 2 ? 'flex' : 'none';
-  renderPane(1);
-  if(n === 2) renderPane(2);
+  [1, 2, 4].forEach(m => {
+    const b = document.getElementById('split-' + m);
+    if(b) b.classList.toggle('active', n === m);
+  });
+  const area = document.getElementById('main-area');
+  if(area) area.classList.toggle('quad', n === 4);
+  // Panes 2-4 show only when the split calls for them
+  [2, 3, 4].forEach(p => {
+    const el = document.getElementById('pane-' + p);
+    if(el) el.style.display = (p <= n) ? 'flex' : 'none';
+  });
+  // In quad mode, make sure no two panes hold the same tool (one instance per tool)
+  if(n === 4) dedupePaneTools();
+  for(let p = 1; p <= n; p++) renderPane(p);
+}
+
+// Each tool has a single DOM instance, so it can only live in one pane.
+// If a duplicate is found, swap that pane to the first unused tool.
+function dedupePaneTools() {
+  const all = ['adventure','maps','combat','notes','audio','gen','dice'];
+  const used = new Set();
+  for(let p = 1; p <= 4; p++) {
+    let tool = paneTools[p];
+    if(!tool || used.has(tool)) {
+      tool = all.find(t => !used.has(t)) || tool;
+      paneTools[p] = tool;
+      const sel = document.getElementById('pane-' + p + '-select');
+      if(sel) sel.value = tool;
+    }
+    used.add(tool);
+  }
 }
 
 function setPaneTool(paneNum, tool) {
+  // A tool has one instance, so if a visible pane already shows it, swap the two.
+  const prev = paneTools[paneNum];
+  for(let p = 1; p <= splitMode; p++) {
+    if(p !== paneNum && paneTools[p] === tool) {
+      paneTools[p] = prev;
+      const sel = document.getElementById('pane-' + p + '-select');
+      if(sel) sel.value = prev;
+      paneTools[paneNum] = tool;
+      document.getElementById('pane-' + paneNum + '-select').value = tool;
+      renderPane(p);
+      renderPane(paneNum);
+      return;
+    }
+  }
   paneTools[paneNum] = tool;
   document.getElementById('pane-' + paneNum + '-select').value = tool;
   renderPane(paneNum);
@@ -5973,7 +6057,7 @@ function loadSession(input) {
 
       // Re-render panes so restored state is visible
       renderPane(1);
-      if(data.splitMode === 2) renderPane(2);
+      for(let p = 2; p <= (data.splitMode || 1); p++) renderPane(p);
 
     } catch(err) {
       alert('Could not load session file: ' + err.message);
@@ -6008,7 +6092,7 @@ window.__gmScreenSetState = function(data) {
     });
   }
   renderPane(1);
-  if(data.splitMode === 2) renderPane(2);
+  for(let p = 2; p <= (data.splitMode || 1); p++) renderPane(p);
 };
 
 // Trigger auto-save whenever Next Round is clicked or notes are edited
