@@ -728,6 +728,12 @@ input[type="number"] { -moz-appearance: textfield; }
 .dice-log-entry.fumble { border-color: #ff4444; }
 .dice-log-entry.fumble .roll-result { color: #ff4444; }
 @media (max-width: 760px) { .dice-btn-row { grid-template-columns: repeat(4, 1fr); } }
+
+.dice-camp-btn { padding: 6px 10px; background: transparent; color: #777; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 9px; font-weight: 700; white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
+.dice-camp-btn.on { background: rgba(200,160,32,0.12); color: var(--gold); border-color: var(--gold); }
+.dice-camp-panel { padding: 6px 0 2px; }
+.dice-camp-row { display: flex; gap: 6px; align-items: center; margin-bottom: 5px; }
+.dice-log-entry.remote { border-left: 3px solid #8a7ac8; background: #201d2a; }
 </style>
 </head>
 <body>
@@ -6111,7 +6117,52 @@ function init_dice(root) {
   let pool = {};       // {6: 2, 20: 1}
   let modifier = 0;
   let advMode = 'none'; // none | adv | dis
-  let log = [];         // [{time, label, detail, total, crit}]
+  let log = [];         // [{label, detail, total, crit, adv, remote?, source?}]
+
+  // ── Campaign link ──
+  let campaign = null; // {id, code, name}
+  const clientKey = 'gm-' + Math.random().toString(36).slice(2, 12);
+  let campLastId = 0;
+  let campTimer = null;
+
+  function campBroadcast(entry) {
+    if(!campaign) return;
+    fetch('/api/campaigns/' + campaign.id + '/rolls', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'content-type':'application/json'},
+      body: JSON.stringify({
+        clientKey, source: 'GM',
+        label: entry.label, result: String(entry.total),
+        detail: entry.detail, type: entry.crit || 'normal'
+      })
+    }).catch(()=>{});
+  }
+  async function campPoll() {
+    if(!campaign) return;
+    try {
+      const url = '/api/campaigns/' + campaign.id + '/rolls' + (campLastId ? '?since='+campLastId : '');
+      const r = await fetch(url, { credentials: 'same-origin' });
+      if(!r.ok) return;
+      const data = await r.json();
+      let added = false;
+      (data.rolls||[]).forEach(roll=>{
+        if(roll.clientKey === clientKey) return;
+        log.unshift({ label: roll.label, detail: roll.detail, total: roll.result,
+                      crit: roll.type==='normal' ? '' : roll.type, adv: 'none',
+                      remote: true, source: roll.source });
+        added = true;
+      });
+      if(log.length > 100) log.length = 100;
+      if(data.last) campLastId = data.last;
+      if(added) renderLog();
+    } catch(e) {}
+  }
+  function campStart() {
+    if(campTimer) clearInterval(campTimer);
+    campPoll();
+    campTimer = setInterval(campPoll, 4000);
+  }
+  function campStop() { if(campTimer) { clearInterval(campTimer); campTimer = null; } }
 
   const DICE = [4, 6, 8, 10, 12, 20, 100];
 
@@ -6145,7 +6196,9 @@ function init_dice(root) {
     h += '<button class="dice-advbtn'+(advMode==='dis'?' on-dis':'')+'" data-m="dis" title="Disadvantage (d20)">DIS</button>';
     h += '<button class="dice-roll-go">🎲 Roll</button>';
     h += '<button class="dice-pool-clear" title="Clear pool">✕</button>';
+    h += '<button class="dice-camp-btn'+(campaign?' on':'')+'" title="Campaign link">🔗'+(campaign?' '+campaign.name:'')+'</button>';
     h += '</div>';
+    h += '<div class="dice-camp-panel" style="display:none;"></div>';
     poolEl.innerHTML = h;
     poolEl.querySelector('.dice-mod').onchange = (e)=>{ modifier = parseInt(e.target.value)||0; };
     poolEl.querySelectorAll('.dice-advbtn').forEach(b=>{
@@ -6153,6 +6206,54 @@ function init_dice(root) {
     });
     poolEl.querySelector('.dice-roll-go').onclick = doRoll;
     poolEl.querySelector('.dice-pool-clear').onclick = ()=>{ pool={}; modifier=0; advMode='none'; renderTray(); renderPool(); };
+    poolEl.querySelector('.dice-camp-btn').onclick = ()=>{
+      const panel = poolEl.querySelector('.dice-camp-panel');
+      if(panel.style.display === 'none') { renderCampPanel(panel); panel.style.display = 'block'; }
+      else panel.style.display = 'none';
+    };
+  }
+
+  function renderCampPanel(panel) {
+    const inputStyle = 'flex:1;min-width:80px;padding:6px 8px;background:var(--panel);border:1px solid var(--border);border-radius:4px;color:var(--light);font-family:Montserrat,sans-serif;font-size:10px;outline:none;';
+    const btnStyle = 'padding:6px 12px;border:none;border-radius:4px;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:900;font-size:9px;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0;';
+    if(campaign) {
+      panel.innerHTML = '<div class="dice-camp-row">'
+        + '<span style="font-family:Montserrat,sans-serif;font-size:10px;color:var(--gold);flex:1;">🔗 <b>'+campaign.name+'</b> · code <b style="letter-spacing:.15em;">'+campaign.code+'</b></span>'
+        + '<button class="camp-leave" style="'+btnStyle+'background:#3a1a1a;color:#df8a8a;border:1px solid #7a2d2d;">Leave</button>'
+        + '</div>';
+      panel.querySelector('.camp-leave').onclick = ()=>{
+        campStop(); campaign = null; campLastId = 0;
+        panel.style.display = 'none'; renderPool();
+      };
+    } else {
+      panel.innerHTML = '<div class="dice-camp-row">'
+        + '<input type="text" class="camp-name" placeholder="Campaign name..." style="'+inputStyle+'">'
+        + '<button class="camp-create" style="'+btnStyle+'background:var(--gold);color:#1a1a1a;">Create</button>'
+        + '</div><div class="dice-camp-row">'
+        + '<input type="text" class="camp-code" placeholder="Join code..." maxlength="6" style="'+inputStyle+'text-transform:uppercase;letter-spacing:.12em;">'
+        + '<button class="camp-join" style="'+btnStyle+'background:#1a5a7a;color:#fff;">Join</button>'
+        + '</div><div class="camp-err" style="font-family:Montserrat,sans-serif;font-size:9px;color:#df6a6a;padding:2px 0;"></div>';
+      const err = (m)=>{ panel.querySelector('.camp-err').textContent = m; };
+      panel.querySelector('.camp-create').onclick = async ()=>{
+        const name = panel.querySelector('.camp-name').value.trim() || 'New Campaign';
+        try {
+          const r = await fetch('/api/campaigns', { method:'POST', credentials:'same-origin',
+            headers:{'content-type':'application/json'}, body: JSON.stringify({name}) });
+          if(!r.ok) throw 0;
+          campaign = await r.json(); campLastId = 0; campStart(); renderPool();
+        } catch(e) { err('Could not create — are you signed in?'); }
+      };
+      panel.querySelector('.camp-join').onclick = async ()=>{
+        const code = panel.querySelector('.camp-code').value.trim().toUpperCase();
+        if(!code) { err('Enter a join code.'); return; }
+        try {
+          const r = await fetch('/api/campaigns?code=' + encodeURIComponent(code), { credentials:'same-origin' });
+          if(r.status === 404) { err('No campaign with that code.'); return; }
+          if(!r.ok) throw 0;
+          campaign = await r.json(); campLastId = 0; campStart(); renderPool();
+        } catch(e) { err('Could not join — are you signed in?'); }
+      };
+    }
   }
 
   function doRoll() {
@@ -6178,14 +6279,16 @@ function init_dice(root) {
       }
     });
     if(modifier) detailParts.push((modifier>0?'+':'')+modifier);
-    log.unshift({
+    const entry = {
       label: poolLabel() || String(modifier),
       adv: isSingleD20 ? advMode : 'none',
       detail: detailParts.join(' '),
       total, crit
-    });
+    };
+    log.unshift(entry);
     if(log.length > 100) log.length = 100;
     renderLog();
+    campBroadcast(entry);
   }
 
   function renderLog() {
@@ -6197,8 +6300,9 @@ function init_dice(root) {
       const critTag = e.crit==='crit' ? ' ★ NAT 20' : e.crit==='fumble' ? ' ✗ NAT 1' : '';
       const advTag = e.adv==='adv' ? ' <span style="color:#6dbf6d;font-size:8px;">▲ADV</span>'
                    : e.adv==='dis' ? ' <span style="color:#df6a6a;font-size:8px;">▼DIS</span>' : '';
-      return '<div class="dice-log-entry'+(e.crit==='crit'?' crit':e.crit==='fumble'?' fumble':'')+'">'
-        + '<div class="roll-label">'+e.label+critTag+advTag+'</div>'
+      const srcTag = e.remote ? '<span style="color:#8a7ac8;">'+String(e.source||'').replace(/</g,'&lt;')+'</span> · ' : '';
+      return '<div class="dice-log-entry'+(e.remote?' remote':'')+(e.crit==='crit'?' crit':e.crit==='fumble'?' fumble':'')+'">'
+        + '<div class="roll-label">'+srcTag+String(e.label).replace(/</g,'&lt;')+critTag+advTag+'</div>'
         + '<div class="roll-result">'+e.total+'</div>'
         + '<div class="roll-detail">'+e.detail+'</div>'
         + '</div>';
@@ -6208,8 +6312,14 @@ function init_dice(root) {
 
   clearBtn.addEventListener('click', ()=>{ log = []; renderLog(); });
 
-  root._getState = () => ({ log });
-  root._setState = (s) => { if(s && Array.isArray(s.log)) { log = s.log; renderLog(); } };
+  root._getState = () => ({ log, campaign });
+  root._setState = (s) => {
+    if(!s) return;
+    if(Array.isArray(s.log)) log = s.log;
+    if(s.campaign && s.campaign.id) { campaign = s.campaign; campStart(); }
+    renderLog();
+    renderPool();
+  };
 
   renderTray();
   renderPool();

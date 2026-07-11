@@ -49,6 +49,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .log-entry .roll-result{font-family:'Montserrat',monospace;font-size:22px;font-weight:900;color:var(--log-text);line-height:1;}
 .log-entry .roll-detail{font-size:9px;color:#555;margin-top:2px;font-family:'Montserrat',sans-serif;}
 .log-entry.crit .roll-result{color:#ffd700;}.log-entry.fumble .roll-result{color:#ff4444;}
+.log-entry.remote{border-left:3px solid #8a7ac8;background:#1c1a24;}
 .log-entry.crit{border-color:#ffd700;}.log-entry.fumble{border-color:#ff4444;}
 .log-hint{color:#333;font-size:10px;font-family:'Montserrat',sans-serif;text-align:center;padding:16px 8px;text-transform:uppercase;letter-spacing:.08em;}
 
@@ -395,6 +396,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
     <button class="log-clear" onclick="clearLog()">Clear</button>
   </div>
   <div class="log-actions">
+    <button id="campaign-btn" class="log-action-btn" onclick="openCampaign()" style="border:1px solid var(--rule);">🔗 Campaign</button>
     <button class="log-action-btn save" onclick="saveSheet(true)">💾 Save</button>
     <button class="log-action-btn export" onclick="exportSheet()">↓ Export</button>
     <label class="log-action-btn import" style="display:flex;align-items:center;justify-content:center;cursor:pointer;">↑ Import<input type="file" accept=".json" style="display:none" onchange="importSheet(this)"></label>
@@ -886,6 +888,7 @@ function addLog(label, result, detail, type='normal') {
   const advLabel = advState==='advantage'?' <span style="color:#6dbf6d;font-size:8px;">▲ADV</span>'
                  : advState==='disadvantage'?' <span style="color:#df6a6a;font-size:8px;">▼DIS</span>':'';
   div.innerHTML = `<div class="roll-label">${label}${advLabel}</div><div class="roll-result">${result}</div><div class="roll-detail">${detail}</div>`;
+  if(typeof campaignBroadcast === 'function') campaignBroadcast(label, result, detail, type);
   entries.insertBefore(div, entries.firstChild);
   entries.scrollTop = 0;
   showRollToast(label, result, detail, type);
@@ -1219,6 +1222,7 @@ function collectSheet(){
       acBonus: document.getElementById('ac-bonus')?.value || '',
       spellStat: document.getElementById('spell-stat')?.value || '',
       spellGBonus: document.getElementById('spell-gbonus')?.value || '',
+      campaign: _campaign ? { id: _campaign.id, code: _campaign.code, name: _campaign.name } : null,
       acBonusOn: _acBonusOn,
     }
   };
@@ -1304,6 +1308,7 @@ function _applySDData(d){
     if(spellStatEl) spellStatEl.value = d._sheet?.spellStat || '';
     const spellGBEl = document.getElementById('spell-gbonus');
     if(spellGBEl) spellGBEl.value = d._sheet?.spellGBonus || '';
+    if(typeof campaignRestore === 'function') campaignRestore(d._sheet?.campaign);
     _acBonusOn = !!(d._sheet?.acBonusOn);
     if(typeof _acToggleVisual==='function') _acToggleVisual(_acBonusOn);
 
@@ -4159,5 +4164,216 @@ function unlearnSpell(name) {
     <div id="spellpick-body" style="overflow-y:auto;flex:1;padding:4px 8px;"></div>
   </div>
 </div>
+
+<!-- ═══ CAMPAIGN LINK ═══ -->
+<div id="campaign-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#1a1a1a;border:2px solid #8a7ac8;max-width:420px;width:100%;display:flex;flex-direction:column;">
+    <div style="background:#0a0a0a;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-family:'UnifrakturMaguntia',cursive;font-size:20px;color:#b8aae0;line-height:1;">Campaign</div>
+      <button onclick="closeCampaign()" style="background:transparent;border:none;color:#888;font-size:20px;cursor:pointer;padding:0 4px;">✕</button>
+    </div>
+    <div id="campaign-body" style="padding:14px 16px;"></div>
+  </div>
+</div>
+
+<script>
+// ═══ CAMPAIGN LINK (shared roll log) ════════════════════════════════════════
+let _campaign = null; // {id, code, name}
+const _campaignClientKey = 'ck-' + Math.random().toString(36).slice(2, 12);
+let _campaignLastId = 0;
+let _campaignTimer = null;
+let _campaignOnline = true;
+
+function campaignPlayerName() {
+  return document.getElementById('f-name')?.value.trim() || 'Player';
+}
+
+function campaignUpdateBtn() {
+  const btn = document.getElementById('campaign-btn');
+  if(!btn) return;
+  if(_campaign) {
+    btn.textContent = '🔗 ' + _campaign.name;
+    btn.style.background = '#241f10'; btn.style.color = '#c8a020'; btn.style.borderColor = '#7a5a00';
+  } else {
+    btn.textContent = '🔗 Campaign';
+    btn.style.background = 'transparent'; btn.style.color = 'var(--muted)'; btn.style.borderColor = 'var(--rule)';
+  }
+}
+
+function openCampaign() {
+  document.getElementById('campaign-overlay').style.display = 'flex';
+  campaignRenderModal();
+}
+function closeCampaign() { document.getElementById('campaign-overlay').style.display = 'none'; }
+
+function campaignRenderModal() {
+  const body = document.getElementById('campaign-body');
+  const inputStyle = 'width:100%;padding:8px 10px;background:#141414;border:1px solid #2a2a2a;color:#eee;font-family:Montserrat,sans-serif;font-size:12px;outline:none;box-sizing:border-box;';
+  const btnStyle = 'padding:8px 14px;border:none;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:900;font-size:10px;letter-spacing:.1em;text-transform:uppercase;';
+  if(_campaign) {
+    body.innerHTML =
+      '<p class="ccw-hint">Connected — rolls are shared with everyone in this campaign.</p>'
+      + '<div style="background:#0f0f0f;border:1px solid #7a5a00;padding:12px;margin-bottom:12px;">'
+      + '<div style="font-family:Montserrat,sans-serif;font-size:13px;font-weight:900;color:#c8a020;">'+_campaign.name+'</div>'
+      + '<div style="font-family:Montserrat,sans-serif;font-size:10px;color:#888;margin-top:4px;">Join code: <b style="color:#eee;font-size:14px;letter-spacing:.2em;">'+_campaign.code+'</b></div>'
+      + '<div style="font-family:Montserrat,sans-serif;font-size:9px;color:#666;margin-top:4px;">Share this code with your table.</div>'
+      + '</div>'
+      + '<button onclick="campaignLeave()" style="'+btnStyle+'background:#3a1a1a;color:#df8a8a;border:1px solid #7a2d2d;width:100%;">Leave Campaign</button>';
+  } else {
+    body.innerHTML =
+      '<p class="ccw-hint">Create a campaign and share the code, or join with a code from your GM. Rolls will appear in everyone\'s roll logs.</p>'
+      + '<div style="margin-bottom:14px;">'
+      + '<div style="font-family:Montserrat,sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#c8a020;margin-bottom:5px;">Create New</div>'
+      + '<div style="display:flex;gap:6px;"><input type="text" id="campaign-name-input" placeholder="Campaign name..." style="'+inputStyle+'flex:1;">'
+      + '<button onclick="campaignCreate()" style="'+btnStyle+'background:#c8a020;color:#1a1a1a;flex-shrink:0;">Create</button></div>'
+      + '</div>'
+      + '<div>'
+      + '<div style="font-family:Montserrat,sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#6ac8df;margin-bottom:5px;">Join Existing</div>'
+      + '<div style="display:flex;gap:6px;"><input type="text" id="campaign-code-input" placeholder="Join code (e.g. K7XP2M)" maxlength="6" style="'+inputStyle+'flex:1;text-transform:uppercase;letter-spacing:.15em;">'
+      + '<button onclick="campaignJoin()" style="'+btnStyle+'background:#1a5a7a;color:#fff;flex-shrink:0;">Join</button></div>'
+      + '</div>'
+      + '<div id="campaign-error" style="font-family:Montserrat,sans-serif;font-size:10px;color:#df6a6a;margin-top:10px;"></div>';
+  }
+}
+
+function campaignError(msg) {
+  const el = document.getElementById('campaign-error');
+  if(el) el.textContent = msg;
+}
+
+async function campaignCreate() {
+  const name = document.getElementById('campaign-name-input')?.value.trim() || 'New Campaign';
+  try {
+    const r = await fetch('/api/campaigns', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'content-type':'application/json'},
+      body: JSON.stringify({ name })
+    });
+    if(!r.ok) throw new Error(r.status);
+    _campaign = await r.json();
+    campaignConnected();
+  } catch(e) {
+    campaignError('Could not create campaign — are you signed in to the app?');
+  }
+}
+
+async function campaignJoin() {
+  const code = (document.getElementById('campaign-code-input')?.value || '').trim().toUpperCase();
+  if(!code) { campaignError('Enter a join code.'); return; }
+  try {
+    const r = await fetch('/api/campaigns?code=' + encodeURIComponent(code), { credentials: 'same-origin' });
+    if(r.status === 404) { campaignError('No campaign found with that code.'); return; }
+    if(!r.ok) throw new Error(r.status);
+    _campaign = await r.json();
+    campaignConnected();
+  } catch(e) {
+    campaignError('Could not join — are you signed in to the app?');
+  }
+}
+
+function campaignConnected() {
+  _campaignLastId = 0;
+  campaignUpdateBtn();
+  campaignRenderModal();
+  campaignStartPolling();
+  addLog('Campaign', '🔗', 'Connected to "'+_campaign.name+'" ('+_campaign.code+')', 'normal');
+  saveSheet(false);
+}
+
+function campaignLeave() {
+  if(_campaignTimer) { clearInterval(_campaignTimer); _campaignTimer = null; }
+  const name = _campaign ? _campaign.name : '';
+  _campaign = null;
+  _campaignLastId = 0;
+  campaignUpdateBtn();
+  campaignRenderModal();
+  addLog('Campaign', '🔗', 'Left "'+name+'"', 'normal');
+  saveSheet(false);
+}
+
+// Broadcast local rolls (called from inside addLog for local entries).
+// Only actual dice rolls and campaign joins are shared — sheet housekeeping
+// events (purchases, level ups, saves, etc.) stay local.
+const CAMPAIGN_SKIP_LABELS = new Set([
+  'Character Created','Exported','Imported','Item Added','Level Up',
+  'New Character','Purchase','Random Character','Rest','Sheet Saved',
+  'Spell Learned','Spell Unlearned'
+]);
+function campaignBroadcast(label, result, detail, type) {
+  if(!_campaign) return;
+  if(CAMPAIGN_SKIP_LABELS.has(String(label))) return;
+  fetch('/api/campaigns/' + _campaign.id + '/rolls', {
+    method: 'POST', credentials: 'same-origin',
+    headers: {'content-type':'application/json'},
+    body: JSON.stringify({
+      clientKey: _campaignClientKey,
+      source: campaignPlayerName(),
+      label: String(label), result: String(result), detail: String(detail||''), type: type||'normal'
+    })
+  }).catch(()=>{});
+}
+
+// Remote entries render directly (never through addLog, so they don't rebroadcast)
+function campaignAddRemote(roll) {
+  const entries = document.getElementById('log-entries');
+  if(!entries) return;
+  const hint = entries.querySelector('.log-hint');
+  if(hint) hint.remove();
+  const div = document.createElement('div');
+  div.className = 'log-entry remote' + (roll.type==='crit'?' crit':roll.type==='fumble'?' fumble':'');
+  const esc = (s)=>String(s).replace(/</g,'&lt;');
+  div.innerHTML = '<div class="roll-label"><span style="color:#8a7ac8;">'+esc(roll.source)+'</span> · '+esc(roll.label)+'</div>'
+    + '<div class="roll-result">'+esc(roll.result)+'</div>'
+    + (roll.detail?'<div class="roll-detail">'+esc(roll.detail)+'</div>':'');
+  entries.insertBefore(div, entries.firstChild);
+  entries.scrollTop = 0;
+  while(entries.children.length > 60) entries.removeChild(entries.lastChild);
+}
+
+async function campaignPoll() {
+  if(!_campaign) return;
+  try {
+    const url = '/api/campaigns/' + _campaign.id + '/rolls' + (_campaignLastId ? '?since='+_campaignLastId : '');
+    const r = await fetch(url, { credentials: 'same-origin' });
+    if(!r.ok) return;
+    const data = await r.json();
+    (data.rolls||[]).forEach(roll=>{
+      if(roll.clientKey !== _campaignClientKey) campaignAddRemote(roll);
+    });
+    if(data.last) _campaignLastId = data.last;
+  } catch(e) {}
+}
+
+function campaignStartPolling() {
+  if(_campaignTimer) clearInterval(_campaignTimer);
+  campaignPoll();
+  _campaignTimer = setInterval(campaignPoll, 4000);
+}
+
+// Restore connection on load (called from _applySDData path via campaignRestore)
+function campaignRestore(saved) {
+  if(saved && saved.id && saved.code) {
+    _campaign = { id: saved.id, code: saved.code, name: saved.name || 'Campaign' };
+    campaignStartPolling();
+  }
+  campaignUpdateBtn();
+}
+
+// Self-restore: the sheet's autoLoad ran before this block existed, so read
+// the saved campaign directly from the same source autoLoad used.
+(function(){
+  try {
+    let saved = null;
+    if(window.__ddState !== undefined) saved = window.__ddState['sd_sheet'] || null;
+    else saved = localStorage.getItem('sd_sheet');
+    if(saved) {
+      const d = typeof saved === 'string' ? JSON.parse(saved) : saved;
+      if(d && d._sheet && d._sheet.campaign) { campaignRestore(d._sheet.campaign); return; }
+    }
+  } catch(e) {}
+  campaignUpdateBtn();
+})();
+
+</script>
 </body>
 </html>
