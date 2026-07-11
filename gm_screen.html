@@ -686,6 +686,48 @@ input[type="number"] { -moz-appearance: textfield; }
 
   .nts-editor { font-size: 16px; padding: 14px 16px; }
 }
+
+/* ── NOTES TABS (hanging overlay) ── */
+.nts-body { position: relative; }
+.nts-tabs { position: absolute; top: 0; left: 8px; right: 8px; z-index: 5; display: flex; align-items: flex-start; gap: 3px; overflow-x: auto; scrollbar-width: none; pointer-events: none; }
+.nts-tabs::-webkit-scrollbar { display: none; }
+.nts-tab { pointer-events: auto; display: flex; align-items: center; gap: 5px; padding: 4px 10px 5px; background: #232323; color: #999; border: 1px solid var(--border); border-top: none; border-radius: 0 0 5px 5px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700; white-space: nowrap; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.4); }
+.nts-tab.active { background: var(--panel); color: var(--gold); border-color: var(--gold); }
+.nts-tab-x { color: #666; font-size: 10px; padding: 0 1px; line-height: 1; }
+.nts-tab-x:hover { color: #d06060; }
+.nts-tab-add { pointer-events: auto; padding: 4px 9px 5px; background: rgba(35,35,35,0.85); color: #888; border: 1px dashed var(--border); border-top: none; border-radius: 0 0 5px 5px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 900; flex-shrink: 0; }
+.nts-tab-add:hover { color: var(--gold); border-color: var(--gold); }
+
+/* ── DICE TRAY & ROLL LOG ── */
+.dice-tool { display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.dice-tray { flex-shrink: 0; padding: 8px 10px 4px; border-top: 2px solid var(--border); background: rgba(0,0,0,0.25); }
+.dice-btn-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.dice-die { position: relative; padding: 12px 2px; background: var(--panel); color: var(--light); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; font-weight: 700; letter-spacing: .04em; transition: border-color .1s, transform .05s; }
+.dice-die:hover { border-color: var(--gold); }
+.dice-die:active { transform: scale(0.94); }
+.dice-die.has { border-color: var(--gold); color: var(--gold); }
+.dice-count { position: absolute; top: -6px; right: -5px; background: var(--gold); color: #1a1a1a; border-radius: 8px; min-width: 16px; height: 16px; line-height: 16px; font-size: 10px; font-weight: 900; font-family: 'Montserrat', sans-serif; }
+.dice-pool { flex-shrink: 0; padding: 4px 10px 8px; background: rgba(0,0,0,0.25); }
+.dice-pool-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.dice-pool-label { flex: 1; min-width: 100px; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; color: var(--gold); }
+.dice-mod { width: 44px; background: var(--panel); border: 1px solid var(--border); border-radius: 4px; color: var(--light); font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; padding: 5px 4px; text-align: center; outline: none; }
+.dice-advbtn { padding: 6px 8px; background: var(--panel); color: #888; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 9px; font-weight: 900; letter-spacing: .06em; }
+.dice-advbtn.on-adv { background: #1a3a1a; border-color: #2d7a2d; color: #6dbf6d; }
+.dice-advbtn.on-dis { background: #3a1a1a; border-color: #7a2d2d; color: #df6a6a; }
+.dice-roll-go { padding: 6px 16px; background: var(--gold); color: #1a1a1a; border: none; border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.dice-roll-go:hover { filter: brightness(1.1); }
+.dice-pool-clear { padding: 6px 9px; background: transparent; color: #777; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 10px; }
+.dice-log { flex: 1; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column-reverse; justify-content: flex-start; gap: 6px; }
+.dice-log-hint { font-family: 'Montserrat', sans-serif; font-size: 10px; color: #666; font-style: italic; padding: 8px 2px; }
+.dice-log-entry { background: #1e1e1e; border: 1px solid #333; padding: 7px 9px; }
+.dice-log-entry .roll-label { font-family: 'Montserrat', sans-serif; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #777; margin-bottom: 2px; }
+.dice-log-entry .roll-result { font-family: 'Montserrat', monospace; font-size: 22px; font-weight: 900; color: #f0f0f0; line-height: 1; }
+.dice-log-entry .roll-detail { font-size: 9px; color: #555; margin-top: 2px; font-family: 'Montserrat', sans-serif; }
+.dice-log-entry.crit { border-color: #ffd700; }
+.dice-log-entry.crit .roll-result { color: #ffd700; }
+.dice-log-entry.fumble { border-color: #ff4444; }
+.dice-log-entry.fumble .roll-result { color: #ff4444; }
+@media (max-width: 760px) { .dice-btn-row { grid-template-columns: repeat(4, 1fr); } }
 </style>
 </head>
 <body>
@@ -722,6 +764,7 @@ input[type="number"] { -moz-appearance: textfield; }
         <option value="notes">✎ Notes</option>
         <option value="audio">🌐 Browser</option>
         <option value="gen">🎲 Generators</option>
+        <option value="dice">🎲 Dice Tray</option>
       </select>
       <div class="pane-toolbar-slot" id="pane-1-toolbar"></div>
     </div>
@@ -737,6 +780,7 @@ input[type="number"] { -moz-appearance: textfield; }
         <option value="notes">✎ Notes</option>
         <option value="audio">🌐 Browser</option>
         <option value="gen">🎲 Generators</option>
+        <option value="dice">🎲 Dice Tray</option>
       </select>
       <div class="pane-toolbar-slot" id="pane-2-toolbar"></div>
     </div>
@@ -846,6 +890,7 @@ input[type="number"] { -moz-appearance: textfield; }
       <button class="btn small ghost nts-clear">Clear</button>
     </div>
     <div class="nts-body">
+      <div class="nts-tabs"></div>
       <div class="nts-editor" contenteditable="true" data-placeholder="Start typing... Use # for headings, **bold**, *italic*, - for lists"></div>
       <textarea class="nts-raw" style="display:none;" placeholder="Raw Markdown..."></textarea>
     </div>
@@ -872,6 +917,17 @@ input[type="number"] { -moz-appearance: textfield; }
       </div>
       <iframe class="aud-frame" style="display:none;" allowtransparency="true" allow="autoplay" frameborder="0"></iframe>
     </div>
+  </div>
+</template>
+<template id="tpl-dice">
+  <div class="tool-instance dice-tool" data-tool="dice">
+    <div class="toolbar-tpl" style="display:none">
+      <div class="toolbar-spacer"></div>
+      <button class="btn small ghost dice-clear">Clear Log</button>
+    </div>
+    <div class="dice-log"></div>
+    <div class="dice-tray"></div>
+    <div class="dice-pool"></div>
   </div>
 </template>
 <template id="tpl-gen">
@@ -1362,6 +1418,8 @@ function syncToolbar(slot, toolNode) {
     ['.nts-export',    '.nts-export'],
     ['.nts-clear',     '.nts-clear'],
     ['.nts-md-toggle', '.nts-md-toggle'],
+    // dice
+    ['.dice-clear',    '.dice-clear'],
     // generators
     ['.gen-tab',       '.gen-tab'],
     ['.gen-roll',      '.gen-roll'],
@@ -5424,6 +5482,87 @@ function init_notes(root) {
 
   let mdMode = false;
 
+  // ── Tabs ──
+  const tabBar = root.querySelector('.nts-tabs');
+  let tabs = [{ name: 'Notes', md: '' }];
+  let activeTab = 0;
+
+  function currentMd() { return mdMode ? rawArea.value : domToMd(editor); }
+  function saveActiveTab() { if(tabs[activeTab]) tabs[activeTab].md = currentMd(); }
+  function loadActiveTab() {
+    const md = (tabs[activeTab] && tabs[activeTab].md) || '';
+    editor.innerHTML = md ? mdToDom(md) : '<p><br></p>';
+    rawArea.value = md;
+  }
+  function switchTab(i) {
+    if(i === activeTab) return;
+    saveActiveTab();
+    activeTab = i;
+    loadActiveTab();
+    renderTabs();
+  }
+  function renderTabs() {
+    tabBar.innerHTML = '';
+    tabs.forEach((t, i) => {
+      const el = document.createElement('div');
+      el.className = 'nts-tab' + (i === activeTab ? ' active' : '');
+      const label = document.createElement('span');
+      label.textContent = t.name || 'Untitled';
+      if(i === activeTab) {
+        // Active tab name is editable in place
+        el.title = 'Click name to edit';
+        label.contentEditable = 'true';
+        label.spellcheck = false;
+        label.style.outline = 'none';
+        label.style.minWidth = '20px';
+        label.style.display = 'inline-block';
+        label.addEventListener('click', e => e.stopPropagation());
+        label.addEventListener('input', () => { t.name = label.textContent; });
+        label.addEventListener('keydown', e => {
+          if(e.key === 'Enter') { e.preventDefault(); label.blur(); }
+        });
+        label.addEventListener('blur', () => {
+          t.name = label.textContent.trim() || 'Untitled';
+          renderTabs();
+        });
+      }
+      el.appendChild(label);
+      if(tabs.length > 1) {
+        const x = document.createElement('span');
+        x.className = 'nts-tab-x';
+        x.textContent = '✕';
+        x.title = 'Close tab';
+        x.onclick = (e) => {
+          e.stopPropagation();
+          const hasContent = (i === activeTab ? currentMd() : (t.md || '')).trim();
+          if(hasContent && !confirm('Close tab "' + (t.name||'Untitled') + '"? Its notes will be deleted.')) return;
+          const wasActive = (i === activeTab);
+          tabs.splice(i, 1);
+          if(i < activeTab) activeTab--;
+          if(activeTab >= tabs.length) activeTab = tabs.length - 1;
+          if(wasActive) loadActiveTab();
+          renderTabs();
+        };
+        el.appendChild(x);
+      }
+      el.onclick = () => switchTab(i);
+      tabBar.appendChild(el);
+    });
+    const add = document.createElement('button');
+    add.className = 'nts-tab-add';
+    add.textContent = '+';
+    add.title = 'New tab';
+    add.onclick = () => {
+      saveActiveTab();
+      tabs.push({ name: 'Tab ' + (tabs.length + 1), md: '' });
+      activeTab = tabs.length - 1;
+      loadActiveTab();
+      renderTabs();
+    };
+    tabBar.appendChild(add);
+  }
+  renderTabs();
+
   mdToggle.addEventListener('click', () => {
     mdMode = !mdMode;
     mdToggle.classList.toggle('active', mdMode);
@@ -5732,10 +5871,25 @@ function init_notes(root) {
   });
 
   // ── State: store as Markdown ──
-  root._getState = () => ({ md: mdMode ? rawArea.value : domToMd(editor) });
+  root._getState = () => {
+    saveActiveTab();
+    return { tabs: tabs.map(t => ({ name: t.name, md: t.md })), active: activeTab };
+  };
   root._setState = (s) => {
-    if(s.md !== undefined) { editor.innerHTML = mdToDom(s.md); rawArea.value = s.md; }
-    else if(s.html) editor.innerHTML = s.html;
+    if(!s) return;
+    if(Array.isArray(s.tabs) && s.tabs.length) {
+      tabs = s.tabs.map(t => ({ name: t.name || 'Notes', md: t.md || '' }));
+      activeTab = Math.min(s.active || 0, tabs.length - 1);
+    } else if(s.md !== undefined) {
+      tabs = [{ name: 'Notes', md: s.md }];
+      activeTab = 0;
+    } else if(s.html) {
+      editor.innerHTML = s.html;
+      tabs = [{ name: 'Notes', md: domToMd(editor) }];
+      activeTab = 0;
+    }
+    loadActiveTab();
+    renderTabs();
   };
 }
 </script>
@@ -5940,6 +6094,129 @@ const SD_MONSTERS = [
   {name:'Crocodile',       ac:'13', hp:'16',  atk:'1 bite +4 (2d6)',                             mv:'near (swim)',   lv:'3',  al:'N', s:'+4',d:'+1',c:'+2',i:'-4',w:'+1',ch:'-3', notes:'Stealth in water. Grab: DC 12 STR on bite hit or grappled.'},
   {name:'Mummy',           ac:'13', hp:'38',  atk:'2 fist +4 (1d6+rot)',                         mv:'near',          lv:'6',  al:'C', s:'+3',d:'-1',c:'+2',i:'-2',w:'+0',ch:'-2', notes:'Rot: DC 15 CON or HP max reduced by damage until remove curse. Fire vulnerability. Undead immunities.'},
 ];
+
+
+
+
+
+
+
+// ═══ DICE TRAY & ROLL LOG ═══════════════════════════════════════════════════
+function init_dice(root) {
+  const trayEl = root.querySelector('.dice-tray');
+  const poolEl = root.querySelector('.dice-pool');
+  const logEl = root.querySelector('.dice-log');
+  const clearBtn = root.querySelector('.dice-clear');
+
+  let pool = {};       // {6: 2, 20: 1}
+  let modifier = 0;
+  let advMode = 'none'; // none | adv | dis
+  let log = [];         // [{time, label, detail, total, crit}]
+
+  const DICE = [4, 6, 8, 10, 12, 20, 100];
+
+  function poolLabel() {
+    const parts = Object.entries(pool).filter(([,n])=>n>0).map(([d,n])=>n+'d'+d);
+    let s = parts.join(' + ');
+    if(modifier) s += (s?' ':'') + (modifier>0?'+':'') + modifier;
+    return s;
+  }
+
+  function renderTray() {
+    let h = '<div class="dice-btn-row">';
+    DICE.forEach(d=>{
+      const n = pool[d]||0;
+      h += '<button class="dice-die'+(n?' has':'')+'" data-d="'+d+'">d'+d+(n?'<span class="dice-count">'+n+'</span>':'')+'</button>';
+    });
+    h += '</div>';
+    trayEl.innerHTML = h;
+    trayEl.querySelectorAll('.dice-die').forEach(b=>{
+      b.onclick = ()=>{ const d = parseInt(b.dataset.d); pool[d]=(pool[d]||0)+1; renderTray(); renderPool(); };
+      b.oncontextmenu = (e)=>{ e.preventDefault(); const d = parseInt(b.dataset.d); if(pool[d]) pool[d]--; renderTray(); renderPool(); };
+    });
+  }
+
+  function renderPool() {
+    const label = poolLabel();
+    let h = '<div class="dice-pool-row">';
+    h += '<span class="dice-pool-label">'+(label||'Tap dice to build a roll')+'</span>';
+    h += '<input type="number" class="dice-mod" value="'+(modifier||'')+'" placeholder="+0" title="Modifier">';
+    h += '<button class="dice-advbtn'+(advMode==='adv'?' on-adv':'')+'" data-m="adv" title="Advantage (d20)">ADV</button>';
+    h += '<button class="dice-advbtn'+(advMode==='dis'?' on-dis':'')+'" data-m="dis" title="Disadvantage (d20)">DIS</button>';
+    h += '<button class="dice-roll-go">🎲 Roll</button>';
+    h += '<button class="dice-pool-clear" title="Clear pool">✕</button>';
+    h += '</div>';
+    poolEl.innerHTML = h;
+    poolEl.querySelector('.dice-mod').onchange = (e)=>{ modifier = parseInt(e.target.value)||0; };
+    poolEl.querySelectorAll('.dice-advbtn').forEach(b=>{
+      b.onclick = ()=>{ advMode = advMode===b.dataset.m ? 'none' : b.dataset.m; renderPool(); };
+    });
+    poolEl.querySelector('.dice-roll-go').onclick = doRoll;
+    poolEl.querySelector('.dice-pool-clear').onclick = ()=>{ pool={}; modifier=0; advMode='none'; renderTray(); renderPool(); };
+  }
+
+  function doRoll() {
+    const dice = Object.entries(pool).filter(([,n])=>n>0).map(([d,n])=>[parseInt(d), n]);
+    if(!dice.length && !modifier) return;
+    let detailParts = [];
+    let total = modifier;
+    let crit = '';
+    const isSingleD20 = dice.length===1 && dice[0][0]===20 && dice[0][1]===1;
+    dice.forEach(([d, n])=>{
+      if(d===20 && isSingleD20 && advMode!=='none') {
+        const r1 = 1+Math.floor(Math.random()*20), r2 = 1+Math.floor(Math.random()*20);
+        const keep = advMode==='adv' ? Math.max(r1,r2) : Math.min(r1,r2);
+        detailParts.push('d20('+r1+','+r2+' '+(advMode==='adv'?'▲':'▼')+' '+keep+')');
+        total += keep;
+        if(keep===20) crit='crit'; else if(keep===1) crit='fumble';
+      } else {
+        const rolls = [];
+        for(let i=0;i<n;i++){ rolls.push(1+Math.floor(Math.random()*d)); }
+        detailParts.push(n+'d'+d+'('+rolls.join(',')+')');
+        total += rolls.reduce((a,b)=>a+b,0);
+        if(d===20 && n===1) { if(rolls[0]===20) crit='crit'; else if(rolls[0]===1) crit='fumble'; }
+      }
+    });
+    if(modifier) detailParts.push((modifier>0?'+':'')+modifier);
+    log.unshift({
+      label: poolLabel() || String(modifier),
+      adv: isSingleD20 ? advMode : 'none',
+      detail: detailParts.join(' '),
+      total, crit
+    });
+    if(log.length > 100) log.length = 100;
+    renderLog();
+  }
+
+  function renderLog() {
+    if(!log.length) {
+      logEl.innerHTML = '<div class="dice-log-hint">Tap dice and roll — results appear here</div>';
+      return;
+    }
+    logEl.innerHTML = log.map(e=>{
+      const critTag = e.crit==='crit' ? ' ★ NAT 20' : e.crit==='fumble' ? ' ✗ NAT 1' : '';
+      const advTag = e.adv==='adv' ? ' <span style="color:#6dbf6d;font-size:8px;">▲ADV</span>'
+                   : e.adv==='dis' ? ' <span style="color:#df6a6a;font-size:8px;">▼DIS</span>' : '';
+      return '<div class="dice-log-entry'+(e.crit==='crit'?' crit':e.crit==='fumble'?' fumble':'')+'">'
+        + '<div class="roll-label">'+e.label+critTag+advTag+'</div>'
+        + '<div class="roll-result">'+e.total+'</div>'
+        + '<div class="roll-detail">'+e.detail+'</div>'
+        + '</div>';
+    }).join('');
+    logEl.scrollTop = 0;
+  }
+
+  clearBtn.addEventListener('click', ()=>{ log = []; renderLog(); });
+
+  root._getState = () => ({ log });
+  root._setState = (s) => { if(s && Array.isArray(s.log)) { log = s.log; renderLog(); } };
+
+  renderTray();
+  renderPool();
+  renderLog();
+}
+window.init_dice = init_dice;
+
 </script>
 </body>
 </html>
