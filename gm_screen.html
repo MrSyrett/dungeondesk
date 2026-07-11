@@ -716,7 +716,9 @@ input[type="number"] { -moz-appearance: textfield; }
 .dice-advbtn.on-dis { background: #3a1a1a; border-color: #7a2d2d; color: #df6a6a; }
 .dice-roll-go { padding: 6px 16px; background: var(--gold); color: #1a1a1a; border: none; border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
 .dice-roll-go:hover { filter: brightness(1.1); }
-.dice-pool-clear { padding: 6px 9px; background: transparent; color: #777; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 10px; }
+.dice-pool-clear { padding: 6px 12px; background: transparent; color: #999; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 9px; font-weight: 700; white-space: nowrap; }
+.dice-pool-clear:hover { color: #df6a6a; border-color: #7a2d2d; }
+.dice-pool-gap { flex: 1; min-width: 4px; }
 .dice-log { flex: 1; overflow-y: auto; padding: 8px 10px; display: flex; flex-direction: column-reverse; justify-content: flex-start; gap: 6px; }
 .dice-log-hint { font-family: 'Montserrat', sans-serif; font-size: 10px; color: #666; font-style: italic; padding: 8px 2px; }
 .dice-log-entry { background: #1e1e1e; border: 1px solid #333; padding: 7px 9px; }
@@ -731,6 +733,8 @@ input[type="number"] { -moz-appearance: textfield; }
 
 .dice-camp-btn { padding: 6px 10px; background: transparent; color: #777; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 9px; font-weight: 700; white-space: nowrap; max-width: 140px; overflow: hidden; text-overflow: ellipsis; }
 .dice-camp-btn.on { background: rgba(200,160,32,0.12); color: var(--gold); border-color: var(--gold); }
+.dice-hide-btn { padding: 6px 10px; background: rgba(45,122,45,0.12); color: #6dbf6d; border: 1px solid #2d7a2d; border-radius: 4px; cursor: pointer; font-family: 'Montserrat', sans-serif; font-size: 9px; font-weight: 700; white-space: nowrap; }
+.dice-hide-btn.on { background: rgba(122,45,45,0.15); color: #df8a8a; border-color: #7a2d2d; }
 .dice-camp-panel { padding: 6px 0 2px; }
 .dice-camp-row { display: flex; gap: 6px; align-items: center; margin-bottom: 5px; }
 .dice-log-entry.remote { border-left: 3px solid #8a7ac8; background: #201d2a; }
@@ -6124,9 +6128,11 @@ function init_dice(root) {
   const clientKey = 'gm-' + Math.random().toString(36).slice(2, 12);
   let campLastId = 0;
   let campTimer = null;
+  let hideRolls = false; // GM can hide their rolls from the campaign
+  let campPanelOpen = false;
 
   function campBroadcast(entry) {
-    if(!campaign) return;
+    if(!campaign || hideRolls) return;
     fetch('/api/campaigns/' + campaign.id + '/rolls', {
       method: 'POST', credentials: 'same-origin',
       headers: {'content-type':'application/json'},
@@ -6195,21 +6201,25 @@ function init_dice(root) {
     h += '<button class="dice-advbtn'+(advMode==='adv'?' on-adv':'')+'" data-m="adv" title="Advantage (d20)">ADV</button>';
     h += '<button class="dice-advbtn'+(advMode==='dis'?' on-dis':'')+'" data-m="dis" title="Disadvantage (d20)">DIS</button>';
     h += '<button class="dice-roll-go">🎲 Roll</button>';
-    h += '<button class="dice-pool-clear" title="Clear pool">✕</button>';
+    h += '<button class="dice-pool-clear" title="Clear pool">✕ Clear</button>';
+    h += '<span class="dice-pool-gap"></span>';
+    if(campaign) h += '<button class="dice-hide-btn'+(hideRolls?' on':'')+'" title="'+(hideRolls?'Rolls hidden from campaign — click to share':'Rolls shared with campaign — click to hide')+'">'+(hideRolls?'🙈 Hidden':'👁 Shared')+'</button>';
     h += '<button class="dice-camp-btn'+(campaign?' on':'')+'" title="Campaign link">🔗'+(campaign?' '+campaign.name:'')+'</button>';
     h += '</div>';
-    h += '<div class="dice-camp-panel" style="display:none;"></div>';
+    h += '<div class="dice-camp-panel" style="display:'+(campPanelOpen?'block':'none')+';"></div>';
     poolEl.innerHTML = h;
+    if(campPanelOpen) renderCampPanel(poolEl.querySelector('.dice-camp-panel'));
     poolEl.querySelector('.dice-mod').onchange = (e)=>{ modifier = parseInt(e.target.value)||0; };
     poolEl.querySelectorAll('.dice-advbtn').forEach(b=>{
       b.onclick = ()=>{ advMode = advMode===b.dataset.m ? 'none' : b.dataset.m; renderPool(); };
     });
     poolEl.querySelector('.dice-roll-go').onclick = doRoll;
     poolEl.querySelector('.dice-pool-clear').onclick = ()=>{ pool={}; modifier=0; advMode='none'; renderTray(); renderPool(); };
+    const hideBtn = poolEl.querySelector('.dice-hide-btn');
+    if(hideBtn) hideBtn.onclick = ()=>{ hideRolls = !hideRolls; renderPool(); };
     poolEl.querySelector('.dice-camp-btn').onclick = ()=>{
-      const panel = poolEl.querySelector('.dice-camp-panel');
-      if(panel.style.display === 'none') { renderCampPanel(panel); panel.style.display = 'block'; }
-      else panel.style.display = 'none';
+      campPanelOpen = !campPanelOpen;
+      renderPool();
     };
   }
 
@@ -6223,7 +6233,7 @@ function init_dice(root) {
         + '</div>';
       panel.querySelector('.camp-leave').onclick = ()=>{
         campStop(); campaign = null; campLastId = 0;
-        panel.style.display = 'none'; renderPool();
+        campPanelOpen = false; renderPool();
       };
     } else {
       panel.innerHTML = '<div class="dice-camp-row">'
@@ -6240,7 +6250,7 @@ function init_dice(root) {
           const r = await fetch('/api/campaigns', { method:'POST', credentials:'same-origin',
             headers:{'content-type':'application/json'}, body: JSON.stringify({name}) });
           if(!r.ok) throw 0;
-          campaign = await r.json(); campLastId = 0; campStart(); renderPool();
+          campaign = await r.json(); campLastId = 0; campStart(); campPanelOpen = false; renderPool();
         } catch(e) { err('Could not create — are you signed in?'); }
       };
       panel.querySelector('.camp-join').onclick = async ()=>{
@@ -6250,7 +6260,7 @@ function init_dice(root) {
           const r = await fetch('/api/campaigns?code=' + encodeURIComponent(code), { credentials:'same-origin' });
           if(r.status === 404) { err('No campaign with that code.'); return; }
           if(!r.ok) throw 0;
-          campaign = await r.json(); campLastId = 0; campStart(); renderPool();
+          campaign = await r.json(); campLastId = 0; campStart(); campPanelOpen = false; renderPool();
         } catch(e) { err('Could not join — are you signed in?'); }
       };
     }
@@ -6312,11 +6322,12 @@ function init_dice(root) {
 
   clearBtn.addEventListener('click', ()=>{ log = []; renderLog(); });
 
-  root._getState = () => ({ log, campaign });
+  root._getState = () => ({ log, campaign, hideRolls });
   root._setState = (s) => {
     if(!s) return;
     if(Array.isArray(s.log)) log = s.log;
     if(s.campaign && s.campaign.id) { campaign = s.campaign; campStart(); }
+    if(typeof s.hideRolls === 'boolean') hideRolls = s.hideRolls;
     renderLog();
     renderPool();
   };
