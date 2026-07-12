@@ -509,7 +509,109 @@ const SD_SPELLS = [
   {name:'Heal',                  tier:'5', caster:'Priest',  range:'Close', duration:'Instant',   damage:'',     desc:'One touched creature is restored to full HP and cured of all conditions.'},
   {name:'Create Undead',         tier:'5', caster:'Wizard',  range:'Close', duration:'1 day',     damage:'',     desc:'Summon a powerful undead creature to serve you for 1 day.'},
   {name:'Hold Monster',          tier:'5', caster:'Wizard',  range:'Near',  duration:'Focus',     damage:'',     desc:'Paralyze one creature you can see. DC 18 CON each round to resist.'},
+
+  // ══ CURSED SCROLL 1: WITCH SPELLS ══
+  // Tier 1
+  {name:'Cauldron',        tier:'1', caster:'Witch', range:'Close', duration:'1 round',   damage:'',    desc:"Conjure a bubbling cauldron. One effect: repair a broken mundane item; produce an obedient toad for 3 rounds; or store/expel up to 3 item slots of gear."},
+  {name:'Charm Person',    tier:'1', caster:'Witch', range:'Near',  duration:'1d8 days',  damage:'',    desc:"One humanoid LV 2 or less treats you as a friend. Ends if you or your allies harm it. The target knows it was enchanted afterward."},
+  {name:'Eyebite',         tier:'1', caster:'Witch', range:'Near',  duration:'Instant',   damage:'1d4', desc:"Target takes 1d4 damage and can't see you until the end of its next turn."},
+  {name:'Fog',             tier:'1', caster:'Witch', range:'Close', duration:'Focus',     damage:'',    desc:"A fog cloud blooms around you and moves with you. Attacks against creatures inside have disadvantage."},
+  {name:'Hypnotize',       tier:'1', caster:'Witch', range:'Near',  duration:'Focus',     damage:'',    desc:"One creature LV 3 or less that can see you is stupefied. Breaking line of sight lets it try a DC 15 CHA check to end the spell."},
+  {name:'Oak, Ash, Thorn', tier:'1', caster:'Witch', range:'Self',  duration:'Focus',     damage:'',    desc:"Faeries, demons, and devils can't attack, possess, compel, or beguile you."},
+  {name:'Puppet',          tier:'1', caster:'Witch', range:'Close', duration:'Focus',     damage:'',    desc:"One humanoid LV 2 or less you touch mimics your movements on your turn. DC 15 CHA to resist if mimicking would harm itself or an ally."},
+  {name:'Shadowdance',     tier:'1', caster:'Witch', range:'Near',  duration:'3 rounds',  damage:'',    desc:"Spin a person-sized audiovisual illusion that can move within near of where it appeared. It can't affect physical objects; touching it reveals it."},
+  {name:'Willowman',       tier:'1', caster:'Witch', range:'Near',  duration:'Instant',   damage:'',    desc:"One creature LV 2 or less must immediately make a morale check — even creatures normally immune to them, such as undead."},
+  {name:'Witchlight',      tier:'1', caster:'Witch', range:'Near',  duration:'Focus',     damage:'',    desc:"Summon a floating marsh light casting light to close radius. It changes color, takes vague shapes, and can float a near distance on your turn."},
+  // Tier 2
+  {name:'Alter Self',      tier:'2', caster:'Witch', range:'Self',  duration:'5 rounds',  damage:'',    desc:"Gain one feature modifying your existing anatomy (gills, claws, etc). Can't grow wings or new limbs."},
+  {name:'Augury',          tier:'2', caster:'Witch', range:'Self',  duration:'Instant',   damage:'',    desc:"Ask the GM one question about a specific course of action. The GM says whether it leads to weal or woe."},
+  {name:'Bogboil',         tier:'2', caster:'Witch', range:'Far',   duration:'5 rounds',  damage:'',    desc:"Turn a near-sized cube of ground into boiling quicksand. Stuck creatures can't move; DEX check vs. your spellcasting check to escape."},
+  {name:'Cacklerot',       tier:'2', caster:'Witch', range:'Close', duration:'Focus',     damage:'',    desc:"One target LV 4 or less you touch collapses helplessly with pained laughter."},
+  {name:"Cat's Eye",       tier:'2', caster:'Witch', range:'Self',  duration:'Focus',     damage:'',    desc:"Your eyes become slitted. You can see invisible creatures and secret doors."},
+  {name:'Frog Rain',       tier:'2', caster:'Witch', range:'Far',   duration:'Instant',   damage:'1d6', desc:"Indignant frogs pelt a near-sized cube around a point you can see. All creatures inside take 1d6 damage."},
+  {name:'Invisibility',    tier:'2', caster:'Witch', range:'Close', duration:'10 rounds', damage:'',    desc:"A creature you touch turns invisible. Ends if the target attacks or casts a spell."},
+  {name:'Poison',          tier:'2', caster:'Witch', range:'Close', duration:'5 rounds',  damage:'1d6', desc:"One worn or carried object becomes toxic. Any creature touching it at the start of its turn takes 1d6 damage."},
+  {name:'Spidersilk',      tier:'2', caster:'Witch', range:'Self',  duration:'Focus',     damage:'',    desc:"Sticky silk covers your hands and feet. You can walk on vertical surfaces as easily as flat ground."},
+  {name:'Toadstool',       tier:'2', caster:'Witch', range:'Self',  duration:'Instant',   damage:'',    desc:"Conjure a toadstool that vanishes at the end of your next turn. A creature that eats it regains 1d6 HP."},
+  // Tier 3
+  {name:'Broomstick',      tier:'3', caster:'Witch', range:'Self',  duration:'Focus',     damage:'',    desc:"Conjure a flying broomstick. Its rider can fly a near distance each round and hover in place."},
+  {name:'Coven',           tier:'3', caster:'Witch', range:'Self',  duration:'Instant',   damage:'',    desc:"Regain the use of one tier 3 or lower spell you can no longer cast today. Can't cast again until you rest."},
+  {name:'Divination',      tier:'3', caster:'Witch', range:'Self',  duration:'Instant',   damage:'',    desc:"Ask the GM one yes/no question; the GM answers truthfully. Cast twice in 24 hours and a failed check becomes a critical failure."},
+  {name:'Howl',            tier:'3', caster:'Witch', range:'Near',  duration:'Instant',   damage:'',    desc:"All enemies within near must immediately make a morale check. No effect on creatures immune to morale checks."},
+  {name:'Mistletoe',       tier:'3', caster:'Witch', range:'Near',  duration:'1d8 days',  damage:'',    desc:"Two creatures you can see become enchanted with each other. Each time one takes damage it may make a DC 15 CHA check to end the spell."},
+  {name:'Pin Doll',        tier:'3', caster:'Witch', range:'Same plane', duration:'Focus', damage:'2d6', desc:"Pin hair or flesh from a creature to a conjured doll. While focusing, push in a pin on your turn to deal 2d6 damage to that creature."},
+  {name:'Speak With Dead', tier:'3', caster:'Witch', range:'Close', duration:'Instant',   damage:'',    desc:"Ask a corpse up to three yes/no questions; the GM answers truthfully. Cast twice in 24 hours and a failed check becomes a critical failure."},
+  {name:'Swarm',           tier:'3', caster:'Witch', range:'Far',   duration:'Focus',     damage:'2d6', desc:"A swarm of bats, rats, or locusts fills a near-sized cube. Creatures starting their turn inside take 2d6 damage and are blinded."},
+  {name:'Void Stare',      tier:'3', caster:'Witch', range:'Far',   duration:'Focus',     damage:'',    desc:"One creature LV 6 or less you can see falls under your control. You decide its actions on its turn."},
+  {name:'Whisper',         tier:'3', caster:'Witch', range:'Close', duration:'Instant',   damage:'',    desc:"Plant a brief false memory the target believes. On a failed check the GM plants a false memory in YOUR mind instead."},
+  // Tier 4
+  {name:'Beguile',         tier:'4', caster:'Witch', range:'Near',  duration:'Focus',     damage:'',    desc:"Conjure a convincing audiovisual illusion. Touching it reveals it. You may force an interacting creature to make a DC 15 WIS check or become enchanted and protect it."},
+  {name:'Cloak of Night',  tier:'4', caster:'Witch', range:'Self',  duration:'8 rounds',  damage:'',    desc:"Your AC becomes 17 (20 on a critical spellcasting check). Advantage on DEX checks to sneak and hide."},
+  {name:'Curse',           tier:'4', caster:'Witch', range:'Close', duration:'Permanent', damage:'',    desc:"Afflict a creature you touch with one curse: boils and warts, food tastes of ash, shrill voice, nightmares, always lose at gambling, an ally turns enemy, or fear of something ordinary."},
+  {name:'Dimension Door',  tier:'4', caster:'Witch', range:'Self',  duration:'Instant',   damage:'',    desc:"Teleport yourself and up to one other willing creature within close to any point you can see."},
+  {name:'Glassbones',      tier:'4', caster:'Witch', range:'Close', duration:'Focus',     damage:'',    desc:"A creature you touch becomes fragile and takes double damage for the duration."},
+  {name:'Moonbeam',        tier:'4', caster:'Witch', range:'Far',   duration:'Instant',   damage:'3d6', desc:"A silvery ray of moonlight strikes one creature within far for 3d6 damage."},
+  {name:'Nightmare',       tier:'4', caster:'Witch', range:'Same plane', duration:'Focus', damage:'',   desc:"Send nightmares to a sleeping creature of level <= half yours that you've seen in person. Focus 3 rounds in a row and it dies of fright."},
+  {name:'Polymorph',       tier:'4', caster:'Witch', range:'Close', duration:'10 rounds', damage:'',    desc:"Transform a creature you touch into a natural creature of equal or smaller size. It gains physical stats/features, keeps mental ones. Willing target, or unwilling of level <= half yours."},
+  // Tier 5
+  {name:'Anathema',        tier:'5', caster:'Witch', range:'Close', duration:'Instant',   damage:'',    desc:"All allies revile and abandon the creature you touch for 1 day. Each time you or your allies harm it, its former allies may pass a DC 15 WIS check to end the spell."},
+  {name:'Dreamwalk',       tier:'5', caster:'Witch', range:'Close', duration:'Instant',   damage:'',    desc:"You and willing creatures within close step into the dream of a named sleeping creature on your plane, then step out beside it as if teleported."},
+  {name:'Enfeeble',        tier:'5', caster:'Witch', range:'Close', duration:'Instant',   damage:'',    desc:"A creature you touch has a random stat (d6) reduced to 3 for one week. On a failed check this happens to YOU instead."},
+  {name:'Finger of Death', tier:'5', caster:'Witch', range:'Close', duration:'Instant',   damage:'',    desc:"One creature you touch of LV 9 or less dies. A failed check is a critical failure; roll the mishap with disadvantage."},
+  {name:'Mother of Night', tier:'5', caster:'Witch', range:'Self',  duration:'Instant',   damage:'',    desc:"Make a single wish, stated as exactly as possible; it occurs as the GM interprets it. On a failed check she pulls you into The Nightfall for judgment."},
+  {name:'Scrying',         tier:'5', caster:'Witch', range:'Self',  duration:'Focus',     damage:'',    desc:"See and hear a creature or location on your plane. DC 18 if unfamiliar. Each round the target may make a WIS check vs. your last spellcasting check to notice you."},
+  {name:'Shapechange',     tier:'5', caster:'Witch', range:'Self',  duration:'Focus',     damage:'',    desc:"Transform into a natural creature of LV 10 or less you've seen. Gain its physical stats/features; keep INT, WIS, CHA. At 0 HP you revert at 1 HP."},
+  {name:'Soul Jar',        tier:'5', caster:'Witch', range:'Close', duration:'Permanent', damage:'',    desc:"Transfer the soul of a creature LV 9 or less into a vessel; its body goes comatose. You may possess the empty body. If the vessel opens or breaks, the soul returns."},
 ];
+
+// ── Caster-aware spell lookup (witch shares 5 names with wizard/priest) ────
+function findSpell(name, prefCaster) {
+  if(typeof SD_SPELLS === 'undefined') return null;
+  const hits = SD_SPELLS.filter(x=>x.name===name);
+  if(!hits.length) return null;
+  if(prefCaster) {
+    const m = hits.find(x=>x.caster===prefCaster);
+    if(m) return m;
+  }
+  return hits[0];
+}
+
+// ── Diabolical Mishaps (Cursed Scroll 1) ──────────────────────────────────
+const SD_MISHAPS_1_3 = [
+  'Diablerie! Roll twice and combine both effects (reroll further 1s)',
+  'Wither! Take 1d6 damage per spell tier',
+  "Newt! Become a 1 HP newt for 3 rounds; you can't cast spells",
+  "Shune's baleful gaze! You can't cast this spell and another random spell for a week",
+  'Thieving fairies! Lose a random piece of gear',
+  "Cobwebs! You can't cast this spell again for a week",
+  'Cackles! You can do nothing but laugh for the next 3 rounds',
+  'Double trouble! Lose the ability to cast a random spell until you rest',
+  'Swamp gas! Near-sized cube of sulfurous gas — creatures ending their turn in it are blinded and take 1d6 damage. 3 rounds',
+  'Bat! An angry bat clings to your face. Blinded 3 rounds or until you toss it away',
+  "Salt! A ring of salt surrounds you. You can't touch or cross it until something breaks it",
+  'Siphon! Disadvantage casting spells of the same tier or lower for 10 rounds',
+];
+const SD_MISHAPS_4_5 = [
+  'Maelstrom! Roll twice and combine both effects (reroll further 1s)',
+  'Ruin! Take 1d8 damage per spell tier',
+  'Mind rot! Permanently forget one random spell',
+  'The Willowman! You summon an angry Willowman near you for 1d6 rounds',
+  'Accursed imps! Imps steal three random pieces of gear and flap away',
+  'Lightning blast! 3d6 damage to yourself and all nearby creatures',
+  'Cold iron! Take 2d6 damage and are paralyzed for 2 rounds',
+  'Mother of Night! Lose the ability to cast this spell until you atone to her',
+  "Catatonia! You can't take any actions for the next hour",
+  'Tongue of dog! Spells of a random tier fail until you complete a rest',
+  'Fiddlesticks! Disadvantage on casting all spells for the next 10 rounds',
+  'Nemesis! Somewhere, a child is born who will become your sworn enemy',
+];
+function rollDiabolicalMishap(tier) {
+  const t = parseInt(tier) || 1;
+  const table = t >= 4 ? SD_MISHAPS_4_5 : SD_MISHAPS_1_3;
+  const roll = Math.ceil(Math.random()*12);
+  return { roll: roll, tableName: (t>=4?'4-5':'1-3'), text: table[roll-1] };
+}
+
 
 function weaponOptions() {
   return '<option value="">— Select Weapon —</option>' +
@@ -525,7 +627,7 @@ function spellOptions() {
       curTier = s.tier;
       html += `<optgroup label="Tier ${s.tier}">`;
     }
-    html += `<option value="${s.name}">${s.name} (${s.caster})</option>`;
+    html += `<option value="${s.name}::${s.caster}">${s.name} (${s.caster})</option>`;
   });
   return html;
 }
@@ -598,9 +700,10 @@ function populateWeaponPicker() {
 
 
 function pickSpell(sel) {
-  const name = sel.value;
-  if(!name) return;
-  const s = SD_SPELLS.find(x=>x.name===name);
+  const raw = sel.value;
+  if(!raw) return;
+  const [name, caster] = raw.split('::');
+  const s = findSpell(name, caster);
   if(!s) return;
   // Find first empty spell row or add a new one
   const rows = [...document.querySelectorAll('#spells-list .spell-row')];
@@ -646,7 +749,7 @@ function populateSpellPicker() {
       sel.appendChild(grp);
     }
     const opt = document.createElement('option');
-    opt.value = s.name;
+    opt.value = s.name + '::' + s.caster;
     opt.textContent = s.name + ' (' + s.caster + ')';
     grp.appendChild(opt);
   });
@@ -999,6 +1102,15 @@ function rollSpell(btn) {
   if(!success) {
     row.querySelector('.spell-lost-btn')?.classList.add('on');
     row.classList.add('lost');
+  }
+
+  // Diabolical Mishap — natural 1 on a witch spell (Cursed Scroll 1)
+  const _cls = (document.getElementById('f-class')?.value || '').trim().toLowerCase();
+  const _isWitchSpell = _cls==='witch' || _cls==='warlock' || /knight of st\.? ydris/.test(_cls)
+                     || !!(typeof SD_SPELLS!=='undefined' && SD_SPELLS.find(x=>x.name===name && x.caster==='Witch'));
+  if(roll === 1 && _isWitchSpell) {
+    const m = rollDiabolicalMishap(spellLevel);
+    addLog('Diabolical Mishap ('+m.tableName+')', 'd12 → '+m.roll, m.text, 'fumble');
   }
 
   // Roll damage if spell succeeded and damage field has a dice string
@@ -1854,7 +1966,7 @@ const RC_ANCESTRY = {
   }
 };
 
-const RC_CLASSES = ['Fighter','Priest','Thief','Wizard','Bard','Ranger'];
+const RC_CLASSES = ['Fighter','Priest','Thief','Wizard','Bard','Ranger','Witch','Barbarian'];
 const RC_CLASS_INFO = {
   Fighter: { hd:'1d8', weapons:'All weapons', armor:'All armor and shields',
     talent:['Gain Weapon Mastery with one additional weapon type','+1 to melee and ranged attacks','+1 to melee and ranged attacks','+1 to melee and ranged attacks','+1 to melee and ranged attacks','+2 to Strength, Dexterity, or Constitution stat','+2 to Strength, Dexterity, or Constitution stat','+2 to Strength, Dexterity, or Constitution stat','+2 to Strength, Dexterity, or Constitution stat','Choose one armor type, get +1 AC from it','Choose one armor type, get +1 AC from it','Choose a talent or +2 stat points'],
@@ -1873,7 +1985,13 @@ const RC_CLASS_INFO = {
     features:['Bardic Arts: Advantage on oration, performing arts, lore, and diplomacy.','Magical Dabbler: Activate scrolls/wands using CHA. Critical fail = wizard mishap.','Presence (DC 12 CHA): Inspire (give luck token) or Fascinate (transfix targets ≤ lvl 4).','Prolific: +1d6 to learning rolls. Groups with bards +1d6 to carousing.','Languages: 4 additional common + 1 rare language.'] },
   Ranger: { hd:'1d8', weapons:'Dagger, longbow, longsword, shortbow, shortsword, spear, staff', armor:'Leather armor, chainmail',
     talent:['You deal d12 damage with one weapon type you choose','+1 to melee or ranged attacks and damage','+1 to melee or ranged attacks and damage','+1 to melee or ranged attacks and damage','+1 to melee or ranged attacks and damage','+2 to Strength, Dexterity, or Intelligence stat','+2 to Strength, Dexterity, or Intelligence stat','+2 to Strength, Dexterity, or Intelligence stat','+2 to Strength, Dexterity, or Intelligence stat','ADV on Herbalism checks for a remedy you choose','ADV on Herbalism checks for a remedy you choose','Choose a talent or +2 stat points'],
-    features:['Wayfinder: Advantage on Navigation, Tracking, Bushcraft, Stealth, Wild animal checks.','Herbalism (INT check): Prepare a herbal remedy. Remedies expire in 3 rounds. Salve (DC11), Stimulant (DC12), Foebane (DC13), Restorative (DC14), Curative (DC15).'] }
+    features:['Wayfinder: Advantage on Navigation, Tracking, Bushcraft, Stealth, Wild animal checks.','Herbalism (INT check): Prepare a herbal remedy. Remedies expire in 3 rounds. Salve (DC11), Stimulant (DC12), Foebane (DC13), Restorative (DC14), Curative (DC15).'] },
+  Witch: { hd:'1d4', weapons:'Dagger, staff', armor:'Leather armor',
+    talent:["1/day, teleport to your familiar's location as a move",'+2 to Charisma stat or +1 to witch spellcasting checks','+2 to Charisma stat or +1 to witch spellcasting checks','+2 to Charisma stat or +1 to witch spellcasting checks','+2 to Charisma stat or +1 to witch spellcasting checks','+2 to Charisma stat or +1 to witch spellcasting checks','Gain advantage on casting one spell you know','Gain advantage on casting one spell you know','Learn an additional witch spell of any tier you can cast','Learn an additional witch spell of any tier you can cast','Choose a talent or +2 points to distribute to stats'],
+    features:["Familiar: A small animal (raven, rat, frog) serves you loyally and speaks Common. It can be the source of your spells — treat it as you for spell ranges. If it dies, restore it by permanently sacrificing 1d4 HP.",'Spellcasting (CHA). Know 3 tier 1 witch spells. DC is 10 + spell tier. Add spells per level.','Diabolical Mishap: On a natural 1 on a spellcasting check, roll on the Diabolical Mishap table for that spell tier.','Languages: Diabolic, Primordial, Sylvan.'] },
+  Barbarian: { hd:'1d8', weapons:'All weapons', armor:'Leather armor, shields',
+    talent:['1/day, ignore all damage and effects from one attack','You gain +1 to melee weapon damage','You gain +1 to melee weapon damage','You gain +1 to melee weapon damage','You gain +1 to melee weapon damage','+2 to Strength or Constitution stat, or +1 to melee attacks','+2 to Strength or Constitution stat, or +1 to melee attacks','+2 to Strength or Constitution stat, or +1 to melee attacks','Increase the HP you gain from Flourish by 1d6','Increase the HP you gain from Flourish by 1d6','Choose a talent or +2 points to distribute to stats'],
+    features:['Flourish: 3/day, regain 1d6 HP when you hit an enemy with a melee attack.','Implacable: Advantage on Constitution checks to resist injury, poison, or endure extreme environments.','Last Stand: You get up from dying with 1 HP on a natural d20 roll of 18-20.','Relentless: 3/day, when reduced to 0 HP, make a DC 18 Constitution check (Implacable applies). On a success, you go to 1 HP instead.'] }
 };
 
 const RC_TITLES = {
@@ -1883,6 +2001,8 @@ const RC_TITLES = {
   Wizard:  { Lawful:['Apprentice','Conjurer','Arcanist','Mage','Archmage'], Chaotic:['Adept','Channeler','Witch/Warlock','Diabolist','Sorcerer'], Neutral:['Shaman','Seer','Warden','Sage','Druid'] },
   Bard:    { Lawful:['Storyteller','Balladeer','Philosopher','Poet','Master Poet'], Chaotic:['Guttersnipe','Charlatan','Satirist','Silvertongue','Doomspeaker'], Neutral:['Seeker','Witness','Speaker','Voice','Truthbearer'] },
   Ranger:  { Lawful:['Wanderer','Strider','Warden','Guardian','Sentinel'], Chaotic:['Hood','Outlaw','Fugitive','Exile','Pariah'], Neutral:['Stranger','Wayfarer','Outlander','Recluse','Hermit'] },
+  Witch:   { Lawful:['Fortune Teller','Far Seer','Prophet','Wise One','Baba'], Chaotic:['Whisperer','Hexer','Hag/Elder','Crone/Uncle','Baba'], Neutral:['Shaman','Conjurer','Soothsayer','Conduit','Baba'] },
+  Barbarian: { Lawful:['Rookie','Gladiator','Hero','Champion','Legend'], Chaotic:['Ruffian','Brawler','Heel','Villain','Legend'], Neutral:['Underdog','Dark Horse','Wild Card','Victor','Legend'] },
 };
 
 const RC_BACKGROUNDS = [
@@ -1921,6 +2041,7 @@ const RC_SPELL_DATA = {
 
 const RC_PRIEST_SPELLS_T1 = ['Cure Wounds','Holy Weapon','Light','Protection From Evil','Shield of Faith'];
 const RC_WIZARD_SPELLS_T1 = ['Alarm','Burning Hands','Charm Person','Detect Magic','Hold Portal','Light','Magic Missile','Protection From Evil','Sleep'];
+const RC_WITCH_SPELLS_T1  = ['Cauldron','Charm Person','Eyebite','Fog','Hypnotize','Oak, Ash, Thorn','Puppet','Shadowdance','Willowman','Witchlight'];
 
 const RC_ALIGNMENTS = ['Lawful','Lawful','Lawful','Neutral','Neutral','Chaotic'];
 const RC_DEITIES = {
@@ -2000,6 +2121,9 @@ function randomCharacter() {
     spells.push('Turn Undead (free)');
   } else if(cls==='Wizard') {
     const pool = [...RC_WIZARD_SPELLS_T1];
+    for(let i=0;i<3;i++){ const s=_rc_roll(pool.filter(x=>!spells.includes(x))); spells.push(s); }
+  } else if(cls==='Witch') {
+    const pool = [...RC_WITCH_SPELLS_T1];
     for(let i=0;i<3;i++){ const s=_rc_roll(pool.filter(x=>!spells.includes(x))); spells.push(s); }
   }
 
@@ -2258,6 +2382,12 @@ function ccwAnalyzeTalent(text, cls) {
   if(/\+2 points? to (distribute to )?(any )?stats/i.test(text)) {
     p.kind = 'distribute'; p.final = null; return p;
   }
+  // Barbarian: "+2 to Strength or Constitution stat, or +1 to melee attacks" — 3-way pick
+  if(/^\+2 to Strength or Constitution stat, or \+1 to melee attacks/i.test(text)) {
+    p.kind = 'ortwo';
+    p.options = ['+2 to Strength stat', '+2 to Constitution stat', '+1 to melee attacks'];
+    p.final = null; return p;
+  }
   if(/ stat or \+1 to /i.test(text)) {
     // e.g. "+2 to Intelligence stat or +1 to spellcasting checks"
     const parts = text.split(/ or /);
@@ -2286,6 +2416,9 @@ function ccwAnalyzeTalent(text, cls) {
   }
   if(/additional wizard spell/i.test(text)) {
     p.kind = 'wizspell'; p.final = null; return p;
+  }
+  if(/additional witch spell/i.test(text)) {
+    p.kind = 'witchspell'; p.final = null; return p;
   }
   if(/armor type/i.test(text)) {
     p.kind = 'armor'; p.final = null; return p;
@@ -2355,6 +2488,14 @@ function ccwTalentChoiceUI(p, stateRef, knownSpells, cls) {
     h += '<select style="'+selStyle+'" onchange="'+stateRef+'.picked=this.value;ccwResolve('+stateRef+');ccwRerender()">';
     h += '<option value="">— Choose any wizard spell —</option>';
     (typeof SD_SPELLS!=='undefined'?SD_SPELLS:[]).filter(s=>s.caster==='Wizard'||s.caster==='Both').forEach(s=>{
+      h += '<option value="'+s.name+'"'+(p.picked===s.name?' selected':'')+'>'+s.name+' (T'+s.tier+')</option>';
+    });
+    h += '</select>';
+  }
+  else if(p.kind==='witchspell') {
+    h += '<select style="'+selStyle+'" onchange="'+stateRef+'.picked=this.value;ccwResolve('+stateRef+');ccwRerender()">';
+    h += '<option value="">— Choose any witch spell —</option>';
+    (typeof SD_SPELLS!=='undefined'?SD_SPELLS:[]).filter(s=>s.caster==='Witch').forEach(s=>{
       h += '<option value="'+s.name+'"'+(p.picked===s.name?' selected':'')+'>'+s.name+' (T'+s.tier+')</option>';
     });
     h += '</select>';
@@ -2439,7 +2580,7 @@ function ccwResolve(p) {
     case 'meleeranged':
       if(p.picked) p.final = p.text.replace(/melee or ranged/i, p.picked);
       break;
-    case 'weapon': case 'spellknown': case 'wizspell': case 'armor': case 'remedy': case 'wand':
+    case 'weapon': case 'spellknown': case 'wizspell': case 'witchspell': case 'armor': case 'remedy': case 'wand':
       if(p.picked) p.final = p.text + ' — ' + p.picked;
       break;
     case 'meta':
@@ -2610,7 +2751,7 @@ function ccwLangChoices() {
 
 function ccwStepList() {
   const steps = ['Method','Ability Scores','Ancestry','Class','Background','Alignment & Deity'];
-  if(_ccw.cls==='Priest' || _ccw.cls==='Wizard') steps.push('Spells');
+  if(_ccw.cls==='Priest' || _ccw.cls==='Wizard' || _ccw.cls==='Witch') steps.push('Spells');
   steps.push('Talent');
   const lc = _ccw.ancestry && _ccw.cls ? ccwLangChoices() : {common:0,rare:0,priest:false};
   if(lc.common || lc.rare || lc.priest) steps.push('Languages');
@@ -2669,6 +2810,7 @@ function ccwRandResolve(p, cls, knownSpells) {
       break;
     }
     case 'wizspell':   p.picked = rand(SD_SPELLS.filter(s=>s.caster==='Wizard'||s.caster==='Both').map(s=>s.name)); break;
+    case 'witchspell': p.picked = rand(SD_SPELLS.filter(s=>s.caster==='Witch').map(s=>s.name)); break;
     case 'armor':      p.picked = rand(CCW_ARMOR_TYPES); break;
     case 'remedy':     p.picked = rand(CCW_REMEDIES); break;
     case 'wand':       p.picked = rand(['Priest wand','Wizard wand']); break;
@@ -2703,12 +2845,12 @@ function ccwRandomize() {
   _ccw.elfFarsight = _ccw.ancestry==='Elf' ? rand(['ranged','spell']) : null;
   // Class follows the highest stat so builds make sense
   const CLASS_BY_STAT = {
-    STR: ['Fighter','Ranger'],
+    STR: ['Fighter','Ranger','Barbarian'],
     DEX: ['Ranger','Thief'],
-    CON: ['Fighter'],
+    CON: ['Fighter','Barbarian'],
     INT: ['Wizard'],
     WIS: ['Priest'],
-    CHA: ['Bard'],
+    CHA: ['Bard','Witch'],
   };
   const maxVal = Math.max(...CCW_ALL_STATS.map(k=>_ccw.stats[k]));
   const topStats = CCW_ALL_STATS.filter(k=>_ccw.stats[k]===maxVal);
@@ -2723,7 +2865,7 @@ function ccwRandomize() {
 
   // Spells first (so talent "spell you know" has options)
   _ccw.spells = [];
-  const spellPool = _ccw.cls==='Priest' ? RC_PRIEST_SPELLS_T1 : _ccw.cls==='Wizard' ? RC_WIZARD_SPELLS_T1 : null;
+  const spellPool = _ccw.cls==='Priest' ? RC_PRIEST_SPELLS_T1 : _ccw.cls==='Wizard' ? RC_WIZARD_SPELLS_T1 : _ccw.cls==='Witch' ? RC_WITCH_SPELLS_T1 : null;
   if(spellPool) {
     const needed = _ccw.cls==='Priest' ? 2 : 3;
     const pool = [...spellPool];
@@ -3208,12 +3350,12 @@ function ccwToggleLang(pool, lang, max) {
 function ccwSpells() {
   const cls = _ccw.cls;
   const needed = cls==='Priest' ? 2 : 3;
-  const pool = cls==='Priest' ? RC_PRIEST_SPELLS_T1 : RC_WIZARD_SPELLS_T1;
+  const pool = cls==='Priest' ? RC_PRIEST_SPELLS_T1 : cls==='Witch' ? RC_WITCH_SPELLS_T1 : RC_WIZARD_SPELLS_T1;
   let h = '<p class="ccw-hint">Choose '+needed+' tier 1 '+cls.toLowerCase()+' spells.'+(cls==='Priest'?' Turn Undead is free.':'')+' ('+_ccw.spells.length+'/'+needed+' selected)</p>';
   h += '<div class="ccw-choice-grid">';
   pool.forEach(sp=>{
     const sel = _ccw.spells.includes(sp) ? ' selected' : '';
-    const data = RC_SPELL_DATA[sp] || {};
+    const data = (cls==='Witch' ? (findSpell(sp,'Witch')||{}) : (RC_SPELL_DATA[sp] || findSpell(sp,cls) || {}));
     const meta = [data.range?'Range: '+data.range:'', data.duration?'Dur: '+data.duration:'', data.damage?'Dmg: '+data.damage:''].filter(Boolean).join(' · ');
     h += '<button class="ccw-choice'+sel+'" onclick="ccwToggleSpell(\''+sp.replace(/'/g,"\\'")+'\')"><div class="ccw-choice-name" style="font-size:11px;">'+sp+'</div>'+(meta?'<div class="ccw-choice-desc" style="color:#c8a020;font-size:8px;">'+meta+'</div>':'')+'<div class="ccw-choice-desc">'+(data.desc||'')+'</div></button>';
   });
@@ -3306,7 +3448,7 @@ function ccwApply() {
   set('f-deity', c.deity||'');
   set('f-level', '1');
   set('xp-level', '1');
-  set('spell-stat', c.cls==='Wizard' ? 'int' : c.cls==='Priest' ? 'wis' : c.cls==='Bard' ? 'cha' : '');
+  set('spell-stat', c.cls==='Wizard' ? 'int' : c.cls==='Priest' ? 'wis' : (c.cls==='Bard' || c.cls==='Witch') ? 'cha' : '');
 
   const statIds = {STR:'str-val',DEX:'dex-val',CON:'con-val',INT:'int-val',WIS:'wis-val',CHA:'cha-val'};
   Object.entries(statIds).forEach(([k,id])=>{ set(id, eff[k]); });
@@ -3363,14 +3505,14 @@ function ccwApply() {
   if(c.cls==='Priest') allSpells.push('Turn Undead');
   // Wizard talent "Learn one additional wizard spell" — add the chosen spell
   [c.tres, c.tres2].forEach(p=>{
-    if(p && p.kind==='wizspell' && p.picked && !allSpells.includes(p.picked)) allSpells.push(p.picked);
-    if(p && p.sub && p.sub.kind==='wizspell' && p.sub.picked && !allSpells.includes(p.sub.picked)) allSpells.push(p.sub.picked);
+    if(p && (p.kind==='wizspell'||p.kind==='witchspell') && p.picked && !allSpells.includes(p.picked)) allSpells.push(p.picked);
+    if(p && p.sub && (p.sub.kind==='wizspell'||p.sub.kind==='witchspell') && p.sub.picked && !allSpells.includes(p.sub.picked)) allSpells.push(p.sub.picked);
   });
   allSpells.forEach(sp=>{
     _spellCount++;
     const row = addSpellRow(_spellCount);
     if(!row) return;
-    const data = RC_SPELL_DATA[sp] || (typeof SD_SPELLS!=='undefined' ? SD_SPELLS.find(x=>x.name===sp) : null) || {};
+    const data = (c.cls==='Witch' ? findSpell(sp,'Witch') : (RC_SPELL_DATA[sp] || findSpell(sp, c.cls))) || {};
     const q = (cl)=>row.querySelector(cl);
     const inp=q('.spell-input'); if(inp) inp.value=sp;
     const lvl=q('.spell-level'); if(lvl&&(data.level||data.tier)) lvl.value=data.level||data.tier;
@@ -3445,7 +3587,7 @@ function ccwApply() {
     if(/\+1 to melee and ranged attacks/i.test(f) || /\+1 to melee\/ranged attacks/i.test(f)) { atkBonus.melee+=1; atkBonus.ranged+=1; }
     else if(/\+1 to melee attacks/i.test(f)) { atkBonus.melee+=1; if(/and damage/i.test(f)) atkBonus.meleeDmg+=1; }
     else if(/\+1 to ranged attacks/i.test(f)) { atkBonus.ranged+=1; if(/and damage/i.test(f)) atkBonus.rangedDmg+=1; }
-    if(/\+1 to (priest )?spellcasting checks/i.test(f) || /Magical Dabbler/i.test(f)) spellChkBonus += 1;
+    if(/\+1 to (priest |witch )?spellcasting checks/i.test(f) || /Magical Dabbler/i.test(f)) spellChkBonus += 1;
     if(/Backstab deals \+1 dice/i.test(f)) backstabExtraDice += 1;
     let m = f.match(/Weapon Mastery with one additional weapon type — (.+)$/i);
     if(m) masterySet.add(m[1].trim());
@@ -3531,6 +3673,7 @@ function ccwApply() {
 
 const CCW_PRIEST_SPELLS_KNOWN = {1:[2,0,0,0,0],2:[3,0,0,0,0],3:[3,1,0,0,0],4:[3,2,0,0,0],5:[3,2,1,0,0],6:[3,2,2,0,0],7:[3,3,2,1,0],8:[3,3,2,2,0],9:[3,3,2,2,1],10:[3,3,3,2,2]};
 const CCW_WIZARD_SPELLS_KNOWN = {1:[3,0,0,0,0],2:[4,0,0,0,0],3:[4,1,0,0,0],4:[4,2,0,0,0],5:[4,2,1,0,0],6:[4,3,2,0,0],7:[4,3,2,1,0],8:[4,4,2,2,0],9:[4,4,3,2,1],10:[4,4,4,2,2]};
+const CCW_WITCH_SPELLS_KNOWN  = {1:[3,0,0,0,0],2:[4,0,0,0,0],3:[4,1,0,0,0],4:[4,2,0,0,0],5:[4,2,1,0,0],6:[4,3,2,0,0],7:[4,3,2,1,0],8:[4,4,2,2,0],9:[4,4,3,2,1],10:[4,4,4,2,2]};
 
 let _lvl = null;
 
@@ -3539,7 +3682,7 @@ function startLevelUp() {
   if(curLevel >= 10) { alert('Already at maximum level (10).'); return; }
   const cls = document.getElementById('f-class')?.value.trim() || '';
   const clsKey = Object.keys(RC_CLASS_INFO).find(k=>k.toLowerCase()===cls.toLowerCase());
-  if(!clsKey) { alert('Set a valid class on the sheet first (Fighter, Priest, Thief, Wizard, Bard, or Ranger).'); return; }
+  if(!clsKey) { alert('Set a valid class on the sheet first (Fighter, Priest, Thief, Wizard, Bard, Ranger, Witch, or Barbarian).'); return; }
   const newLevel = curLevel + 1;
   _lvl = {
     step: 0,
@@ -3552,7 +3695,7 @@ function startLevelUp() {
     newSpells: [], spellsNeeded: 0, spellTiers: [],
   };
   // Spell gains for casters
-  const table = clsKey==='Priest' ? CCW_PRIEST_SPELLS_KNOWN : clsKey==='Wizard' ? CCW_WIZARD_SPELLS_KNOWN : null;
+  const table = clsKey==='Priest' ? CCW_PRIEST_SPELLS_KNOWN : clsKey==='Wizard' ? CCW_WIZARD_SPELLS_KNOWN : clsKey==='Witch' ? CCW_WITCH_SPELLS_KNOWN : null;
   if(table) {
     const oldRow = table[_lvl.oldLevel] || [0,0,0,0,0];
     const newRow = table[_lvl.newLevel] || oldRow;
@@ -3836,7 +3979,7 @@ function lvlApply() {
     });
 
     // Spellcasting check bonus
-    if(/\+1 to (priest )?spellcasting checks/i.test(f) || /Magical Dabbler/i.test(f)) {
+    if(/\+1 to (priest |witch )?spellcasting checks/i.test(f) || /Magical Dabbler/i.test(f)) {
       bumpVal(document.getElementById('spell-gbonus'), 1);
     }
 
@@ -4488,8 +4631,16 @@ function spellPickChoose(name, tier) {
 let _spellShopTier = '1';
 let _spellShopWiz = true;
 let _spellShopPri = true;
+let _spellShopWit = true;
 
 function openSpellShop() {
+  // Default the caster filters to the character's own class, if it's a caster
+  const cls = (document.getElementById('f-class')?.value || '').trim().toLowerCase();
+  if(cls==='wizard' || cls==='priest' || cls==='witch') {
+    _spellShopWiz = (cls==='wizard');
+    _spellShopPri = (cls==='priest');
+    _spellShopWit = (cls==='witch');
+  }
   document.getElementById('spellshop-overlay').style.display = 'flex';
   spellShopRender();
 }
@@ -4506,7 +4657,8 @@ function spellShopRender() {
   const filterBar = document.getElementById('spellshop-filters');
   filterBar.innerHTML =
     '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopWiz?'checked':'')+' onchange="_spellShopWiz=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Wizard</label>'
-    + '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopPri?'checked':'')+' onchange="_spellShopPri=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Priest</label>';
+    + '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopPri?'checked':'')+' onchange="_spellShopPri=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Priest</label>'
+    + '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopWit?'checked':'')+' onchange="_spellShopWit=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Witch</label>';
 
   const known = new Set([...document.querySelectorAll('#spells-list .spell-row .spell-input')].map(el=>el.value.trim()).filter(Boolean));
   const body = document.getElementById('spellshop-body');
@@ -4514,6 +4666,7 @@ function spellShopRender() {
     s.caster==='Both' ? (_spellShopWiz || _spellShopPri)
     : s.caster==='Wizard' ? _spellShopWiz
     : s.caster==='Priest' ? _spellShopPri
+    : s.caster==='Witch' ? _spellShopWit
     : true;
   const spells = (typeof SD_SPELLS!=='undefined' ? SD_SPELLS : []).filter(s=>s.tier===_spellShopTier && casterOk(s)).sort((a,b)=>a.name.localeCompare(b.name));
 
@@ -4530,13 +4683,13 @@ function spellShopRender() {
       + '</div>'
       + (isKnown
           ? '<button onclick="unlearnSpell(\''+s.name.replace(/'/g,"\\'")+'\')" style="padding:5px 10px;background:#3a1a1a;color:#df8a8a;border:1px solid #7a2d2d;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;">Unlearn</button>'
-          : '<button onclick="learnSpell(\''+s.name.replace(/'/g,"\\'")+'\')" style="padding:5px 10px;background:#2a1a3a;color:#b89ae0;border:1px solid #5a3a8a;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;">Learn</button>')
+          : '<button onclick="learnSpell(\''+s.name.replace(/'/g,"\\'")+'\',\''+s.caster+'\')" style="padding:5px 10px;background:#2a1a3a;color:#b89ae0;border:1px solid #5a3a8a;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;">Learn</button>')
       + '</div>';
   }).join('') || '<p style="font-family:Montserrat,sans-serif;font-size:10px;color:#888;padding:10px;">No spells at this tier.</p>';
 }
 
-function learnSpell(name) {
-  const s = (typeof SD_SPELLS!=='undefined' ? SD_SPELLS : []).find(x=>x.name===name);
+function learnSpell(name, caster) {
+  const s = findSpell(name, caster);
   if(!s) return;
   _spellCount++;
   const row = addSpellRow(_spellCount);
