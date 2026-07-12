@@ -81,7 +81,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 
 /* SHEET */
 .sheet{background:var(--bg);border:2px solid var(--border);max-width:900px;margin:0 auto;}
-.sl{font-family:'Montserrat',sans-serif;font-weight:900;font-size:8px;text-transform:uppercase;letter-spacing:.18em;color:var(--section-bar-text);background:var(--section-bar);padding:3px 8px;display:block;}
+.sl{font-family:'Montserrat',sans-serif;font-weight:900;font-size:9px;text-transform:uppercase;letter-spacing:.18em;color:var(--section-bar-text);background:var(--section-bar);padding:3px 8px;display:block;}
 
 /* HEADER */
 .sheet-title{background:var(--black);padding:12px 16px;display:flex;align-items:baseline;gap:12px;}
@@ -102,10 +102,10 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 
 /* STATS BLOCK */
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--rule);}
-.stat-cell{padding:8px 10px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);display:flex;flex-direction:column;align-items:center;}
+.stat-cell{padding:8px 10px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);display:flex;flex-direction:column;align-items:stretch;}
 .stat-cell:nth-child(2n){border-right:none;}
 .stat-cell:nth-last-child(-n+2){border-bottom:none;}
-.stat-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:4px;text-align:center;}
+.stat-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:4px;text-align:center;align-self:stretch;}
 .stat-val-row{display:flex;align-items:center;justify-content:center;gap:6px;}
 .stat-val{width:44px;height:36px;border:2px solid var(--border);background:var(--input-bg);font-family:'Montserrat',sans-serif;font-size:18px;font-weight:900;text-align:center;color:var(--ink);outline:none;}
 .stat-mod{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:var(--ink);min-width:28px;background:var(--box);border:1px solid var(--rule);text-align:center;padding:2px 4px;cursor:pointer;}
@@ -113,14 +113,14 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 
 /* LEFT INFO */
 .info-field{padding:5px 8px;border-bottom:1px solid var(--rule);}
-.info-field label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);display:block;margin-bottom:2px;}
+.info-field label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);display:block;margin-bottom:2px;}
 .info-field input,.info-field textarea{width:100%;border:none;border-bottom:1px solid var(--rule);background:transparent;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;color:var(--ink);outline:none;resize:none;}
 
 /* HP / AC */
 .hp-ac-row{display:flex;border-bottom:1px solid var(--rule);}
 .hp-box,.ac-box{flex:0 0 50%;padding:5px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;box-sizing:border-box;overflow:hidden;}
 .hp-box{border-right:1px solid var(--rule);}
-.hpac-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);}
+.hpac-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);}
 .hpac-inputs{display:flex;align-items:center;justify-content:center;gap:2px;overflow:hidden;}
 .hpac-input{width:36px;min-width:0;height:34px;border:2px solid var(--border);background:var(--input-bg);font-family:'Montserrat',sans-serif;font-size:16px;font-weight:900;text-align:center;color:var(--ink);outline:none;}
 .hpac-slash{font-size:13px;font-weight:700;color:var(--muted);flex-shrink:0;}
@@ -130,7 +130,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .xp-row{display:flex;align-items:center;border-bottom:1px solid var(--rule);}
 .xp-half{flex:0 0 50%;display:flex;align-items:center;justify-content:center;gap:4px;padding:4px 8px;box-sizing:border-box;}
 .xp-half:first-child{border-right:1px solid var(--rule);}
-.xp-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);flex-shrink:0;}
+.xp-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);flex-shrink:0;}
 .xp-input{width:32px;height:22px;border:1px solid var(--rule);background:var(--input-bg);font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;text-align:center;color:var(--ink);outline:none;}
 .xp-slash{font-size:12px;color:var(--muted);}
 .lk-input{width:30px;height:22px;border:1px solid var(--rule);background:var(--input-bg);font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;text-align:center;color:var(--ink);outline:none;}
@@ -141,7 +141,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .coin-row{display:flex;border-bottom:1px solid var(--rule);}
 .coin-cell{flex:1;padding:4px 6px;border-right:1px solid var(--rule);display:flex;flex-direction:column;align-items:center;gap:2px;}
 .coin-cell:last-child{border-right:none;}
-.coin-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);}
+.coin-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);}
 .coin-input{width:100%;border:none;border-bottom:1px solid var(--rule);background:transparent;font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;text-align:center;color:var(--ink);outline:none;}
 
 /* CENTER — attacks + gear */
@@ -191,7 +191,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 
 /* ROLL BTN */
 .stat-roll-row{margin-top:3px;}
-.stat-roll-btn{width:100%;margin-top:4px;padding:3px 0;background:var(--black);color:white;border:none;cursor:pointer;font-size:11px;line-height:1.2;}
+.stat-roll-btn{width:100%;margin-top:5px;padding:5px 0;background:var(--black);color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;line-height:1.2;}
 .stat-roll-btn:hover{background:var(--red);}
 
 /* dark mode inputs */
@@ -348,7 +348,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
 
     <!-- SPELLS: spans left+center -->
     <div class="spells-bottom">
-      <div class="sl" style="display:flex;align-items:center;gap:8px;"><span>Spells</span><label style="display:flex;align-items:center;gap:4px;font-size:7px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#aaa;margin-left:auto;">Cast Mod
+      <div class="sl" style="display:flex;align-items:center;gap:8px;"><span>Spells</span><label style="display:flex;align-items:center;gap:4px;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#aaa;margin-left:auto;">Cast Mod
         <select id="spell-stat" onchange="saveSheet(false)" style="background:rgba(255,255,255,0.08);border:1px solid #555;border-radius:2px;color:#f8f8f6;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;padding:1px 2px;outline:none;">
           <option value="">—</option>
           <option value="int">INT</option>
@@ -356,7 +356,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
           <option value="cha">CHA</option>
         </select>
         <input type="text" id="spell-gbonus" placeholder="+0" title="Global bonus to all casting checks" style="width:26px;background:rgba(255,255,255,0.08);border:1px solid #555;border-radius:2px;color:#f8f8f6;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;padding:1px 2px;outline:none;text-align:center;" onchange="saveSheet(false)">
-      </label><button onclick="openSpellShop()" style="padding:2px 10px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:8px;letter-spacing:.08em;text-transform:uppercase;" onmouseover="this.style.background='#7a5a00';this.style.color='white'" onmouseout="this.style.background='#241f10';this.style.color='#c8a020'">📖 Spellbook</button></div>
+      </label><button onclick="openSpellShop()" style="padding:2px 10px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.08em;text-transform:uppercase;" onmouseover="this.style.background='#7a5a00';this.style.color='white'" onmouseout="this.style.background='#241f10';this.style.color='#c8a020'">📖 Spellbook</button></div>
       <div id="spells-list"></div>
     </div>
 
@@ -367,7 +367,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
         <div class="coin-cell"><span class="coin-label">SP</span><input type="text" class="coin-input" id="coin-sp" placeholder="0"></div>
         <div class="coin-cell"><span class="coin-label">CP</span><input type="text" class="coin-input" id="coin-cp" placeholder="0"></div>
       </div>
-      <div class="sl" style="display:flex;align-items:center;justify-content:space-between;"><span>Gear</span><button onclick="openShop()" style="padding:2px 10px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:8px;letter-spacing:.08em;text-transform:uppercase;" onmouseover="this.style.background='#7a5a00';this.style.color='white'" onmouseout="this.style.background='#241f10';this.style.color='#c8a020'">+ Add Item</button></div>
+      <div class="sl" style="display:flex;align-items:center;justify-content:space-between;"><span>Gear</span><button onclick="openShop()" style="padding:2px 10px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.08em;text-transform:uppercase;" onmouseover="this.style.background='#7a5a00';this.style.color='white'" onmouseout="this.style.background='#241f10';this.style.color='#c8a020'">+ Add Item</button></div>
       <div id="gear-list"></div>
 
       <div class="free-carry">
@@ -763,16 +763,16 @@ function buildSpells() {
   const hdr = document.createElement('div');
   hdr.style.cssText = 'display:grid;grid-template-columns:16px 1fr 26px 30px 48px 60px 60px 20px 20px 24px;align-items:center;gap:2px;padding:2px 6px;border-bottom:2px solid var(--border);background:var(--box);';
   hdr.innerHTML =
-    '<span style="font-size:7px;font-weight:700;color:var(--muted);">#</span>' +
-    '<span style="font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Spell</span>' +
-    '<span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);text-align:center;">Lvl</span>' +
-    '<span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);text-align:center;">+Bon</span>' +
-    '<span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);">Range</span>' +
-    '<span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);">Dur</span>' +
-    '<span style="font-size:7px;font-weight:700;text-transform:uppercase;color:var(--muted);">Dmg</span>' +
+    '<span style="font-size:8px;font-weight:700;color:var(--muted);">#</span>' +
+    '<span style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Spell</span>' +
+    '<span style="font-size:8px;font-weight:700;text-transform:uppercase;color:var(--muted);text-align:center;">Lvl</span>' +
+    '<span style="font-size:8px;font-weight:700;text-transform:uppercase;color:var(--muted);text-align:center;">+Bon</span>' +
+    '<span style="font-size:8px;font-weight:700;text-transform:uppercase;color:var(--muted);">Range</span>' +
+    '<span style="font-size:8px;font-weight:700;text-transform:uppercase;color:var(--muted);">Dur</span>' +
+    '<span style="font-size:8px;font-weight:700;text-transform:uppercase;color:var(--muted);">Dmg</span>' +
     '<span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Advantage">▲</span>' +
     '<span style="font-size:8px;font-weight:900;color:var(--muted);text-align:center;" title="Lost">✗</span>' +
-    '<span style="font-size:7px;font-weight:700;color:var(--muted);">Roll</span>';
+    '<span style="font-size:8px;font-weight:700;color:var(--muted);">Roll</span>';
   list.appendChild(hdr);
   _spellCount = 0; // start with no spells
 
@@ -823,7 +823,7 @@ function buildGear() {
   // Header
   const hdr = document.createElement('div');
   hdr.style.cssText = 'display:flex;align-items:center;gap:4px;padding:2px 8px;border-bottom:2px solid var(--border);background:var(--box);';
-  hdr.innerHTML = '<span style="width:16px;"></span><span style="flex:1;font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Item</span><span style="width:30px;font-size:7px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;">Qty</span>';
+  hdr.innerHTML = '<span style="width:16px;"></span><span style="flex:1;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Item</span><span style="width:30px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;">Qty</span>';
   list.appendChild(hdr);
   for(let i=1;i<=20;i++) {
     const row = document.createElement('div');
@@ -1617,7 +1617,7 @@ autoLoad();
   #ac-bonus{width:38px!important;height:34px!important;font-size:15px!important;}
   .xp-input,.lk-input{height:36px!important;width:44px!important;font-size:15px!important;}
   .lk-btn{width:32px!important;height:36px!important;font-size:15px!important;}
-  .xp-label{font-size:10px!important;}
+  .xp-label,.coin-label{font-size:11px!important;}
   .xp-slash{font-size:15px!important;}
   .coin-input{font-size:15px!important;height:32px!important;}
   .coin-label{font-size:10px!important;}
@@ -1625,12 +1625,11 @@ autoLoad();
   /* Text fields: 16px stops iOS from zooming on focus */
   .hdr-input,.hdr-select{font-size:16px!important;height:34px!important;}
   .hdr-label{font-size:9px!important;}
-  .gear-name,.gear-qty{font-size:14px!important;min-height:32px!important;}
   .attacks-table input,.attacks-table select{font-size:14px!important;min-height:34px!important;}
-  .attacks-table th{font-size:9px!important;}
+  .attacks-table th,.gear-table th{font-size:11px!important;}
   .spell-input,.spell-level,.spell-range,.spell-duration,.spell-damage{font-size:14px!important;min-height:32px!important;}
   .spell-desc{font-size:13px!important;}
-  .sl{font-size:10px!important;letter-spacing:.12em!important;padding:6px 8px!important;}
+  .sl{font-size:12px!important;letter-spacing:.14em!important;padding:7px 8px!important;}
 
   /* Header actions: Rest and Create / Level Up */
   .sheet-title button{min-height:44px!important;font-size:12px!important;padding:8px 14px!important;letter-spacing:.08em!important;}
@@ -1640,8 +1639,15 @@ autoLoad();
   .sl label{font-size:10px!important;}
 
   /* Talents & Notes text */
-  .talents-area,.notes-area,.info-field textarea,.info-field input{font-size:15px!important;line-height:1.5!important;}
-  .info-field label{font-size:10px!important;}
+  .talents-area textarea,.notes-area textarea,.free-carry-inner textarea,
+  .info-field textarea,.info-field input{font-size:16px!important;line-height:1.55!important;}
+  .info-field label{font-size:11px!important;}
+
+  /* Gear slot items */
+  .gear-name{font-size:16px!important;padding:6px 0!important;}
+  .gear-qty{font-size:16px!important;width:40px!important;padding:5px 0!important;}
+  .gear-slot{min-height:38px!important;}
+  .gear-slot-num{font-size:11px!important;}
 
   /* Item shop / spellbook / wizard modals */
   .ccw-btn{min-height:46px!important;font-size:13px!important;}
