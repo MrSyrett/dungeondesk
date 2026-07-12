@@ -81,6 +81,8 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--ink);min-h
 .mod-toggle.enhanced{background:var(--red);border-color:var(--red);color:white;}
 .roll-btn{width:100%;padding:3px 0;background:var(--section-hdr);color:white;border:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:.1em;text-transform:uppercase;transition:background .1s;margin-top:2px;}
 .roll-btn:hover{background:var(--red);}
+.btn-die{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;font-size:1.05em;line-height:1;vertical-align:-1px;}
+.atk-roll-btn,.skill-roll-btn{line-height:1;}
 
 /* CENTER */
 .center-col{flex:1;display:flex;flex-direction:column;}
@@ -375,7 +377,7 @@ body.dark select.skill-stat-sel{background:var(--input-bg);}
                     <input type="text" class="formula-total" id="evade-total" readonly placeholder="—">
                     <span class="formula-sublabel">Evade Total</span>
                   </div>
-                  <button class="evade-roll-btn" onclick="rollEvade()" style="align-self:center;margin-left:6px;">Roll Evade</button>
+                  <button class="evade-roll-btn" onclick="rollEvade()" style="align-self:center;margin-left:6px;" title="Roll Evade" aria-label="Roll Evade"><span class="btn-die">&#127922;</span> Roll</button>
                 </div>
               </div>
               <!-- DR -->
@@ -582,7 +584,7 @@ body.dark select.skill-stat-sel{background:var(--input-bg);}
     </div>
     <div class="dice-pool-display" id="dice-pool-display"><span>Empty — add dice above</span></div>
     <div class="dice-tray-actions">
-      <button class="dice-roll-btn" onclick="rollDicePool()">Roll</button>
+      <button class="dice-roll-btn" onclick="rollDicePool()" title="Roll dice pool"><span class="btn-die">&#127922;</span> Roll</button>
       <button class="dice-clear-btn" onclick="clearDicePool()">Clear</button>
     </div>
   </div>
@@ -660,7 +662,7 @@ function buildStats() {
         <span class="stat-mod-label">${s.abbr} MOD</span>
         <span class="stat-mod-val" id="${s.id}-mod">—</span>
       </div>
-      <button class="roll-btn" onclick="rollStat('${s.id}','${s.name}')">Roll d20 + ${s.abbr} Mod</button>
+      <button class="roll-btn" onclick="rollStat('${s.id}','${s.name}')" title="Roll d20 + ${s.abbr} Mod" aria-label="Roll d20 plus ${s.abbr} modifier"><span class="btn-die">&#127922;</span> Roll</button>
     `;
     list.appendChild(div);
   });
@@ -783,7 +785,7 @@ function addAttackRow(tbody) {
       </div>
     </td>
     <td><input type="text" placeholder="Effects..."></td>
-    <td><button class="atk-roll-btn" onclick="rollAttack(this)">Roll</button></td>
+    <td><button class="atk-roll-btn" onclick="rollAttack(this)" title="Roll attack" aria-label="Roll attack">&#127922;</button></td>
   `;
   tbody.appendChild(tr);
 }
@@ -832,7 +834,7 @@ function addSkillRow() {
     <td><input type="text" placeholder="Active/Passive"></td>
     <td><input type="text" placeholder="Notes..."></td>
     <td style="text-align:center;"><input type="checkbox" class="skill-check"></td>
-    <td><button class="skill-roll-btn" onclick="rollSkill(this)">Roll</button></td>
+    <td><button class="skill-roll-btn" onclick="rollSkill(this)" title="Roll skill" aria-label="Roll skill">&#127922;</button></td>
     <td><button class="skill-del-btn" onclick="this.closest('tr').remove()" title="Remove">✕</button></td>
   `;
   tbody.appendChild(tr);
@@ -1535,13 +1537,28 @@ autoLoad();
   .skill-roll-btn { min-height: 44px; font-size: 13px !important; padding: 9px 10px !important; }
   .skill-del-btn, .inv-del-btn { min-height: 44px; font-size: 17px !important; padding: 8px 11px !important; }
   .add-btn { min-height: 46px; font-size: 15px !important; padding: 11px 16px !important; }
-  .roll-btn { min-height: 44px; font-size: 14px !important; padding: 10px 0 !important; }
+  .roll-btn { min-height: 48px; font-size: 16px !important; padding: 12px 0 !important; letter-spacing: .08em; margin-top: 6px; }
+  /* Icon-only roll buttons: square-ish, thumb-sized */
+  .atk-roll-btn, .skill-roll-btn { min-width: 46px; font-size: 20px !important; padding: 8px 10px !important; }
 
   /* ── Larger, more legible type ── */
   /* 16px on inputs stops iOS from zooming the page when a field is focused */
   input[type="text"], input[type="number"], select, textarea { font-size: 16px !important; }
-  .stat-input { width: 62px; height: 52px; font-size: 24px; }
-  .stat-mod-val { font-size: 17px; padding: 5px 12px; }
+  /* ── Stat boxes ──
+     Each .stat-score-wrap is flex:1, so on a full-width mobile block it takes
+     half the row and a fixed-width input just floats in the middle of it —
+     which is what pushed Enhanced/Unenhanced so far apart. Stretch the inputs
+     to fill their wrap instead: they get much bigger AND sit side by side. */
+  .stat-block { padding: 12px 12px; }
+  .stat-name { font-size: 18px; margin-bottom: 6px; }
+  .stat-scores { gap: 8px; margin-bottom: 6px; align-items: flex-end; }
+  .stat-score-wrap { flex: 1 1 0; min-width: 0; align-items: stretch; gap: 3px; }
+  .stat-score-label { font-size: 11px; text-align: center; }
+  .stat-divider { font-size: 24px; padding-bottom: 10px; flex: 0 0 auto; }
+  .stat-input { width: 100%; height: 66px; font-size: 34px; }
+  .stat-mod-row { gap: 8px; margin-bottom: 6px; }
+  .stat-mod-label { font-size: 13px; }
+  .stat-mod-val { font-size: 22px; padding: 6px 14px; min-width: 48px; }
   .stat-label { font-size: 13px; }
   .combat-tag { min-width: 92px; font-size: 16px; }
   .formula-input { width: 46px; height: 34px; font-size: 15px; }
@@ -1549,8 +1566,13 @@ autoLoad();
   .mana-input { width: 52px; font-size: 16px; }
   .atk-formula input { width: 34px; font-size: 14px; }
   .skill-stat-sel { width: 58px; font-size: 14px; padding: 5px 4px; }
-  .hp-bar-label { font-size: 13px; width: 68px; }
-  .hp-pip { height: 42px; }
+  /* ── Health bar: taller pips, readable values ── */
+  .hp-bar-wrap { gap: 6px; }
+  .hp-bar-label { font-size: 15px; width: 72px; letter-spacing: .06em; }
+  .hp-pips { gap: 3px; }
+  .hp-pip { height: 62px; border-width: 2px; padding-bottom: 3px; }
+  .hp-pip-val { font-size: 19px; }
+  .hp-pip-label { font-size: 10px; }
   .section-title, .sec-title { font-size: 14px; }
   .hdr-field label { font-size: 12px; }
   .hdr-field input { font-size: 16px; }
