@@ -2499,8 +2499,11 @@ function ccwGearSpent() {
 }
 function ccwGear() {
   if(_ccw.gold===null) {
-    return '<p class="ccw-hint">Roll 2d6 × 5 for your starting gold, then buy your gear.</p>'
-      + '<button class="ccw-roll-btn" onclick="ccwRollGold()">🎲 Roll 2d6 × 5 gp</button>';
+    return '<p class="ccw-hint">Roll 2d6 × 5 for your starting gold, or take the flat 35 gp, then buy your gear.</p>'
+      + '<div style="display:flex;gap:6px;">'
+      + '<button class="ccw-roll-btn" style="flex:1;margin:0;" onclick="ccwRollGold()">🎲 Roll 2d6 × 5 gp</button>'
+      + '<button style="flex:0 0 auto;margin:0;padding:0 14px;background:#1a3a4a;border:1px solid #2d6a7a;color:#8ad4e0;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;" onclick="ccwTakeGold()" title="Take the average instead of rolling">Take 35 gp</button>'
+      + '</div>';
   }
   const spent = ccwGearSpent();
   const left = Math.round((_ccw.gold - spent)*100)/100;
@@ -2537,6 +2540,12 @@ function ccwGear() {
   }
   return h;
 }
+// Take the flat 35 gp (the average of 2d6 × 5) instead of rolling
+function ccwTakeGold() {
+  _ccw.gold = 35;
+  ccwRender();
+}
+
 function ccwRollGold() {
   _ccw.gold = (Math.ceil(Math.random()*6)+Math.ceil(Math.random()*6)) * 5;
   ccwRender();
@@ -2695,6 +2704,7 @@ function ccwRandomize() {
   const maxVal = Math.max(...CCW_ALL_STATS.map(k=>_ccw.stats[k]));
   const topStats = CCW_ALL_STATS.filter(k=>_ccw.stats[k]===maxVal);
   _ccw.cls = rand(CLASS_BY_STAT[rand(topStats)]);
+  _ccw.grit = _ccw.cls==='Fighter' ? rand(['Strength','Dexterity']) : null;
   _ccw.background= rand(RC_BACKGROUNDS);
   _ccw.alignment = rand(['Lawful','Neutral','Chaotic']);
   const deities  = RC_DEITIES[_ccw.alignment] || [];
@@ -2785,7 +2795,10 @@ function ccwNext() {
     if(!_ccw.ancestry) { alert('Choose an ancestry.'); return; }
     if(_ccw.ancestry==='Elf' && !_ccw.elfFarsight) { alert('Choose your Farsight option.'); return; }
   }
-  if(name==='Class' && !_ccw.cls) { alert('Choose a class.'); return; }
+  if(name==='Class') {
+    if(!_ccw.cls) { alert('Choose a class.'); return; }
+    if(_ccw.cls==='Fighter' && !_ccw.grit) { alert('Fighters must choose Grit: Strength or Dexterity.'); return; }
+  }
   if(name==='Background' && !_ccw.background) { alert('Choose a background.'); return; }
   if(name==='Alignment & Deity' && !_ccw.alignment) { alert('Choose an alignment.'); return; }
   if(name==='Talent') {
@@ -2933,9 +2946,21 @@ function ccwClass() {
   RC_CLASSES.forEach(c=>{
     const ci = RC_CLASS_INFO[c];
     const sel = _ccw.cls===c ? ' selected' : '';
-    h += '<button class="ccw-choice'+sel+'" onclick="_ccw.cls=\''+c+'\';_ccw.spells=[];_ccw.langCommon=[];_ccw.langRare=[];_ccw.langPriest=\'\';_ccw.tres=null;_ccw.tres2=null;_ccw.talent=null;ccwRender()"><div class="ccw-choice-name">'+c+'</div><div class="ccw-choice-desc">HP: '+ci.hd+' / lvl · '+ci.weapons.split(',').slice(0,3).join(',')+'…</div></button>';
+    h += '<button class="ccw-choice'+sel+'" onclick="_ccw.cls=\''+c+'\';_ccw.spells=[];_ccw.langCommon=[];_ccw.langRare=[];_ccw.langPriest=\'\';_ccw.tres=null;_ccw.tres2=null;_ccw.talent=null;_ccw.grit=null;ccwRender()"><div class="ccw-choice-name">'+c+'</div><div class="ccw-choice-desc">HP: '+ci.hd+' / lvl · '+ci.weapons.split(',').slice(0,3).join(',')+'…</div></button>';
   });
   h += '</div>';
+  // Fighter: Grit — choose Strength or Dexterity
+  if(_ccw.cls === 'Fighter') {
+    h += '<div style="background:#0f0f0f;border:1px solid #7a5a00;padding:8px 10px;margin-top:10px;">';
+    h += '<div style="font-family:Montserrat,sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#c8a020;margin-bottom:4px;">Grit — choose one</div>';
+    h += '<p class="ccw-hint" style="margin:0 0 6px;font-size:10px;">Advantage on checks of that type to overcome an opposing force — kicking open a stuck door (Strength) or slipping free of rusty chains (Dexterity).</p>';
+    h += '<div style="display:flex;gap:6px;">';
+    ['Strength','Dexterity'].forEach(g=>{
+      const sel = _ccw.grit===g ? ' selected' : '';
+      h += '<button class="ccw-choice'+sel+'" style="flex:1;text-align:center;" onclick="_ccw.grit=\''+g+'\';ccwRender()"><div class="ccw-choice-name" style="font-size:11px;">'+g+'</div></button>';
+    });
+    h += '</div></div>';
+  }
   // Details panel always visible, following the selected class
   const infoCls = _ccw.cls || null;
   h += '<div style="background:#0f0f0f;border:1px solid #7a5a00;padding:10px 12px;margin-top:10px;min-height:120px;">';
@@ -3200,6 +3225,7 @@ function ccwFinish() {
   h += '<div>'+(_ccw.name||'(unnamed)')+' — '+_ccw.ancestry+' '+_ccw.cls+'</div>';
   h += '<div>'+_ccw.alignment+(_ccw.deity?' · '+_ccw.deity:'')+' · '+_ccw.background+'</div>';
   h += '<div>STR '+eff.STR+' DEX '+eff.DEX+' CON '+eff.CON+' INT '+eff.INT+' WIS '+eff.WIS+' CHA '+eff.CHA+'</div>';
+  if(_ccw.grit) h += '<div>Grit: '+_ccw.grit+'</div>';
   if(_ccw.tres && _ccw.tres.final) h += '<div>Talent: '+_ccw.tres.final+'</div>';
   if(_ccw.tres2 && _ccw.tres2.final) h += '<div>Bonus Talent: '+_ccw.tres2.final+'</div>';
   const langs = [..._ccw.langCommon, ..._ccw.langRare, ...(_ccw.langPriest?[_ccw.langPriest]:[])];
@@ -3290,7 +3316,13 @@ function ccwApply() {
   const ci = RC_CLASS_INFO[c.cls];
   const talentFinal  = (c.tres && c.tres.final) || c.talent;
   const talent2Final = (c.tres2 && c.tres2.final) || c.talent2;
-  const lines = ['— Class Features —', ...ci.features, '',
+  // Fighter's Grit names the chosen stat
+  const features = (ci.features || []).map(f =>
+    (c.cls === 'Fighter' && c.grit && /^Grit[:.]/i.test(f))
+      ? 'Grit (' + c.grit + '): Advantage on ' + c.grit + ' checks to overcome an opposing force.'
+      : f
+  );
+  const lines = ['— Class Features —', ...features, '',
     '— Ancestry: '+c.ancestry+' —',
     (c.ancestry==='Elf' && c.elfFarsight
       ? 'Farsight: +1 to '+(c.elfFarsight==='ranged'?'ranged attack rolls':'spellcasting checks')+'.'
@@ -3351,9 +3383,19 @@ function ccwApply() {
     if(existing) existing.qty = String(parseInt(existing.qty)+1);
     else gearItems.push({name:w, qty:'1'});
   });
+  // Expand bulky items (2-slot weapons, chainmail, plate) into continuation rows
+  const gearRows = [];
+  gearItems.forEach(g=>{
+    const qty = parseInt(g.qty) || 1;
+    const cost = itemSlotCost(g.name);
+    gearRows.push({name:g.name, qty:g.qty});
+    // one item of N slots takes N-1 extra rows; multiples multiply that
+    const extras = (cost - 1) * qty;
+    for(let s = 0; s < extras; s++) gearRows.push({name:'↳ ' + g.name, qty:'1'});
+  });
   const gn=document.querySelectorAll('#gear-list .gear-name');
   const gq=document.querySelectorAll('#gear-list .gear-qty');
-  gearItems.forEach((g,i)=>{ if(gn[i])gn[i].value=g.name; if(gq[i])gq[i].value=g.qty!=='1'?g.qty:''; });
+  gearRows.forEach((g,i)=>{ if(gn[i])gn[i].value=g.name; if(gq[i])gq[i].value=g.qty!=='1'?g.qty:''; });
   const fc=document.getElementById('free-carry'); if(fc) fc.value=c.buyKit?'Backpack':'';
 
   // Gear slots: max(10, STR) available; disable the rest from slot 20 downward
@@ -3455,6 +3497,8 @@ function ccwApply() {
 
 <script>
 // ═══ LEVEL UP WIZARD ═══════════════════════════════════════════════════════
+
+
 const CCW_PRIEST_SPELLS_KNOWN = {1:[2,0,0,0,0],2:[3,0,0,0,0],3:[3,1,0,0,0],4:[3,2,0,0,0],5:[3,2,1,0,0],6:[3,2,2,0,0],7:[3,3,2,1,0],8:[3,3,2,2,0],9:[3,3,2,2,1],10:[3,3,3,2,2]};
 const CCW_WIZARD_SPELLS_KNOWN = {1:[3,0,0,0,0],2:[4,0,0,0,0],3:[4,1,0,0,0],4:[4,2,0,0,0],5:[4,2,1,0,0],6:[4,3,2,0,0],7:[4,3,2,1,0],8:[4,4,2,2,0],9:[4,4,3,2,1],10:[4,4,4,2,2]};
 
@@ -3559,6 +3603,7 @@ function lvlRollHP() {
   _lvl.hpRoll = Math.max(1, Math.ceil(Math.random()*hdNum) + conMod);
   lvlRender();
 }
+
 
 function lvlTalentRows() {
   const t = RC_CLASS_INFO[_lvl.cls]?.talent || [];
@@ -4176,6 +4221,22 @@ function shopGetItem(tab, i) {
   return items[i];
 }
 
+
+// ── Gear slot cost (Shadowdark pg. 33-35) ──
+// Bastard sword / greataxe / greatsword take 2 slots; chainmail 2, plate mail 3.
+const GEAR_SLOT_COST = { 'Chainmail':2, 'Plate mail':3 };
+function itemSlotCost(name) {
+  const n = String(name||'').trim();
+  if(!n) return 1;
+  if(GEAR_SLOT_COST[n]) return GEAR_SLOT_COST[n];
+  const w = (typeof SD_WEAPONS !== 'undefined') ? SD_WEAPONS.find(x=>x.name===n) : null;
+  if(w) {
+    const m = /(\d+)\s*slots?/i.exec(w.props||'');
+    if(m) return parseInt(m[1]);
+  }
+  return 1;
+}
+
 function shopNextSlot() {
   const rows = document.querySelectorAll('#gear-list > div');
   for(let i=1;i<rows.length;i++){
@@ -4206,11 +4267,20 @@ function shopAddToGear(it) {
     if(placed < kit.length) alert('Not enough free gear slots for the whole kit — added what fits.');
     return true;
   }
+  const slotCost = itemSlotCost(it.name);
   const row = shopNextSlot();
   if(!row) { alert('No free gear slots available.'); return false; }
   row.querySelector('.gear-name').value = it.name;
   const q = row.querySelector('.gear-qty');
   if(q) q.value = it.qty || '';
+  // Bulky items (2-slot weapons, chainmail, plate mail) occupy extra slots
+  for(let s = 1; s < slotCost; s++) {
+    const extra = shopNextSlot();
+    if(!extra) { alert(it.name + ' needs ' + slotCost + ' gear slots — not enough room.'); break; }
+    extra.querySelector('.gear-name').value = '↳ ' + it.name;
+    const eq = extra.querySelector('.gear-qty');
+    if(eq) eq.value = '';
+  }
   return true;
 }
 
