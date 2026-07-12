@@ -1524,17 +1524,43 @@ autoLoad();
   .dice-btn { font-size: 12px !important; padding: 8px 2px !important; min-height: 40px; }
   .adv-btn { font-size: 12px !important; min-height: 40px; padding: 8px 4px !important; }
 
-  /* Bigger touch targets for all buttons */
-  .evade-roll-btn { min-height: 40px; font-size: 13px !important; padding: 8px 12px !important; }
-  .log-clear { min-height: 36px; font-size: 12px !important; padding: 6px 10px !important; }
-  .log-action-btn { min-height: 44px; font-size: 12px !important; }
-  .dice-roll-btn { min-height: 44px; font-size: 14px !important; }
-  .dice-clear-btn { min-height: 44px; font-size: 12px !important; }
-  .tab-btn { min-height: 44px; font-size: 12px !important; padding: 10px 12px !important; }
-  .atk-roll-btn { min-height: 36px; font-size: 11px !important; padding: 6px 8px !important; }
-  .skill-roll-btn { min-height: 34px; padding: 5px 6px !important; }
-  .skill-del-btn, .inv-del-btn { min-height: 34px; font-size: 14px !important; padding: 5px 8px !important; }
-  .add-btn { min-height: 40px; font-size: 13px !important; padding: 8px 14px !important; }
+  /* ── Bigger touch targets + type for all buttons (min 44px tap area) ── */
+  .evade-roll-btn { min-height: 46px; font-size: 15px !important; padding: 11px 14px !important; }
+  .log-clear { min-height: 42px; font-size: 13px !important; padding: 9px 12px !important; }
+  .log-action-btn { min-height: 46px; font-size: 13px !important; }
+  .dice-roll-btn { min-height: 48px; font-size: 16px !important; }
+  .dice-clear-btn { min-height: 46px; font-size: 14px !important; }
+  .tab-btn { min-height: 46px; font-size: 14px !important; padding: 12px 14px !important; }
+  .atk-roll-btn { min-height: 44px; font-size: 13px !important; padding: 9px 10px !important; }
+  .skill-roll-btn { min-height: 44px; font-size: 13px !important; padding: 9px 10px !important; }
+  .skill-del-btn, .inv-del-btn { min-height: 44px; font-size: 17px !important; padding: 8px 11px !important; }
+  .add-btn { min-height: 46px; font-size: 15px !important; padding: 11px 16px !important; }
+  .roll-btn { min-height: 44px; font-size: 14px !important; padding: 10px 0 !important; }
+
+  /* ── Larger, more legible type ── */
+  /* 16px on inputs stops iOS from zooming the page when a field is focused */
+  input[type="text"], input[type="number"], select, textarea { font-size: 16px !important; }
+  .stat-input { width: 62px; height: 52px; font-size: 24px; }
+  .stat-mod-val { font-size: 17px; padding: 5px 12px; }
+  .stat-label { font-size: 13px; }
+  .combat-tag { min-width: 92px; font-size: 16px; }
+  .formula-input { width: 46px; height: 34px; font-size: 15px; }
+  .formula-total { width: 52px; height: 34px; font-size: 16px; }
+  .mana-input { width: 52px; font-size: 16px; }
+  .atk-formula input { width: 34px; font-size: 14px; }
+  .skill-stat-sel { width: 58px; font-size: 14px; padding: 5px 4px; }
+  .hp-bar-label { font-size: 13px; width: 68px; }
+  .hp-pip { height: 42px; }
+  .section-title, .sec-title { font-size: 14px; }
+  .hdr-field label { font-size: 12px; }
+  .hdr-field input { font-size: 16px; }
+  .skills-table th { font-size: 12px; padding: 6px 4px; }
+  .skills-table td { font-size: 14px; }
+  .gear-slot { font-size: 15px; }
+  .hotlist-card { min-height: 84px; font-size: 14px; }
+  .log-entries { font-size: 14px; }
+  .dice-btn { font-size: 16px !important; padding: 12px 4px !important; min-height: 48px; }
+  .adv-btn { font-size: 14px !important; min-height: 46px; padding: 11px 6px !important; }
 }
 
 @media (max-width: 420px) {

@@ -328,7 +328,6 @@ input[type="number"] { -moz-appearance: textfield; }
 /* ═══ ADVENTURE / MAPS (document viewer) ═══ */
 .doc-filename {
   display: none;
-}
   max-width: 240px;
 }
 .doc-controls { display: flex; align-items: center; gap: 6px; }
@@ -441,9 +440,10 @@ input[type="number"] { -moz-appearance: textfield; }
   text-transform: uppercase;
   color: var(--light);
 }
-.cbt-round-num { font-family: 'Share Tech Mono', monospace; color: var(--gold); font-size: 14px; }
+.cbt-round-num, .trk-round-num { font-family: 'Share Tech Mono', monospace; color: var(--gold); font-size: 14px; }
 
 .cbt-body { flex: 1; display: flex; overflow: hidden; min-height: 0; }
+.cbt-body.cbt-single .cbt-col { flex: 1; border-right: none; }
 .cbt-col { flex: 1; display: flex; flex-direction: column; min-width: 0; border-right: 1px solid var(--border); overflow: hidden; }
 .cbt-col:last-child { border-right: none; }
 .cbt-col-header {
@@ -749,10 +749,32 @@ input[type="number"] { -moz-appearance: textfield; }
   .pdf-mobile-open { display: none !important; }
   .pdf-close-btn { display: none !important; }
 
-  .toolrow { padding: 8px 10px; gap: 8px; }
-  .doc-filename { max-width: 120px; font-size: 10px; }
-  .btn { font-size: 10px; padding: 7px 10px; min-height: 36px; }
-  .btn.small { padding: 6px 8px; min-height: 32px; }
+  /* Single-pane lock: the layout picker is meaningless on mobile */
+  .view-controls { display: none !important; }
+
+  .toolrow { padding: 10px 12px; gap: 10px; }
+
+  /* ── Larger type + touch targets (min 44px tap area) ── */
+  .btn { font-size: 14px; padding: 11px 14px; min-height: 44px; }
+  .btn.small { font-size: 13px; padding: 9px 12px; min-height: 40px; }
+  .brand { font-size: 20px; }
+  .bar-title { font-size: 14px; }
+  .pane-select { font-size: 14px !important; padding: 9px 8px !important; min-height: 42px; max-width: none !important; flex: 1 1 auto !important; }
+  .pane-header { padding: 6px 10px; gap: 6px; }
+  .split-select, .gen-tab-select { font-size: 14px; min-height: 42px; padding: 8px 10px; }
+  .session-controls .btn { min-height: 44px; }
+
+  /* Notes / text entry */
+  .nts-editor { font-size: 16px; padding: 14px 16px; }   /* 16px stops iOS zoom-on-focus */
+  input[type="text"], input[type="number"], select, textarea { font-size: 16px; }
+
+  /* Combat + tracker controls */
+  .cbt-round-display { font-size: 15px; }
+  .npc-hp-btn, .tracker-adjust-btn { width: 44px; height: 44px; font-size: 18px; }
+  .dice-camp-btn, .dice-hide-btn { font-size: 14px; padding: 10px 12px; min-height: 42px; }
+  .dice-pool-clear, .dice-roll-go { font-size: 14px; padding: 11px 14px; min-height: 44px; }
+  .dice-mod { font-size: 15px; padding: 9px 6px; min-height: 42px; }
+  .dice-advbtn { font-size: 13px; padding: 10px 10px; min-height: 42px; }
 
   .cbt-body { flex-direction: column; }
   .npc-hp-btn, .tracker-adjust-btn { width: 32px; height: 32px; }
@@ -811,8 +833,9 @@ input[type="number"] { -moz-appearance: textfield; }
 .dice-log-entry.fumble { border-color: #ff4444; }
 .dice-log-entry.fumble .roll-result { color: #ff4444; }
 @media (max-width: 760px) {
-  .dice-btn-row { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; }
-  .dice-die { padding: 10px 0; font-size: 12px; }
+  .dice-btn-row { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+  .dice-die { padding: 14px 0; font-size: 16px; min-height: 48px; }
+  .dice-log-entry { font-size: 14px; }
 }
 
 .dice-camp-btn { padding: 6px 9px; background: transparent; color: #777; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 12px; line-height: 1; white-space: nowrap; }
@@ -858,7 +881,8 @@ input[type="number"] { -moz-appearance: textfield; }
       <select class="pane-select" id="pane-1-select" onchange="setPaneTool(1, this.value)">
         <option value="adventure">📜 Adventure</option>
         <option value="maps">🗺 Maps</option>
-        <option value="combat">⚔ Combat &amp; Trackers</option>
+        <option value="combat">⚔ Combat</option>
+        <option value="trackers">⏱ Trackers</option>
         <option value="notes">✎ Notes</option>
         <option value="audio">🌐 Browser</option>
         <option value="gen">🎲 Generators</option>
@@ -875,7 +899,8 @@ input[type="number"] { -moz-appearance: textfield; }
       <select class="pane-select pane-2-select" id="pane-2-select" onchange="setPaneTool(2, this.value)">
         <option value="adventure">📜 Adventure</option>
         <option value="maps">🗺 Maps</option>
-        <option value="combat" selected>⚔ Combat &amp; Trackers</option>
+        <option value="combat" selected>⚔ Combat</option>
+        <option value="trackers">⏱ Trackers</option>
         <option value="notes">✎ Notes</option>
         <option value="audio">🌐 Browser</option>
         <option value="gen">🎲 Generators</option>
@@ -891,7 +916,8 @@ input[type="number"] { -moz-appearance: textfield; }
       <select class="pane-select" id="pane-3-select" onchange="setPaneTool(3, this.value)">
         <option value="adventure">📜 Adventure</option>
         <option value="maps">🗺 Maps</option>
-        <option value="combat">⚔ Combat &amp; Trackers</option>
+        <option value="combat">⚔ Combat</option>
+        <option value="trackers">⏱ Trackers</option>
         <option value="notes" selected>✎ Notes</option>
         <option value="audio">🌐 Browser</option>
         <option value="gen">🎲 Generators</option>
@@ -908,7 +934,8 @@ input[type="number"] { -moz-appearance: textfield; }
       <select class="pane-select" id="pane-4-select" onchange="setPaneTool(4, this.value)">
         <option value="adventure">📜 Adventure</option>
         <option value="maps">🗺 Maps</option>
-        <option value="combat">⚔ Combat &amp; Trackers</option>
+        <option value="combat">⚔ Combat</option>
+        <option value="trackers">⏱ Trackers</option>
         <option value="notes">✎ Notes</option>
         <option value="audio">🌐 Browser</option>
         <option value="gen">🎲 Generators</option>
@@ -977,23 +1004,11 @@ input[type="number"] { -moz-appearance: textfield; }
 <template id="tpl-combat">
   <div class="tool-instance cbt-tool" data-tool="combat">
     <div class="toolbar-tpl" style="display:none">
-      <button class="btn primary small cbt-next-round">Next Round →</button>
-      <span class="cbt-round-display">Round <span class="cbt-round-num">1</span></span>
+      <button class="btn small primary cbt-add-npc">+ NPC</button>
       <div class="toolbar-spacer"></div>
-      <button class="btn small ghost cbt-reset">Reset All</button>
+      <button class="btn small ghost cbt-reset">Clear All</button>
     </div>
-    <div class="cbt-body">
-      <div class="cbt-col cbt-trackers-col">
-        <div class="cbt-col-header">
-          <span class="cbt-col-title">Round Trackers</span>
-          <button class="btn small primary cbt-add-tracker">+ Tracker</button>
-        </div>
-        <div class="cbt-tracker-list"></div>
-        <div class="cbt-empty cbt-trackers-empty">
-          <div class="cbt-empty-text">No trackers yet</div>
-          <div class="cbt-empty-sub">Add round-based effects or real-time countdown timers</div>
-        </div>
-      </div>
+    <div class="cbt-body cbt-single">
       <div class="cbt-col cbt-npcs-col">
         <div class="cbt-col-header">
           <span class="cbt-col-title">NPCs &amp; Monsters</span>
@@ -1003,6 +1018,29 @@ input[type="number"] { -moz-appearance: textfield; }
         <div class="cbt-empty cbt-npcs-empty">
           <div class="cbt-empty-text">No combatants yet</div>
           <div class="cbt-empty-sub">Add monsters and NPCs to track their health</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+<template id="tpl-trackers">
+  <div class="tool-instance cbt-tool trk-tool" data-tool="trackers">
+    <div class="toolbar-tpl" style="display:none">
+      <button class="btn primary small trk-next-round">Next Round →</button>
+      <span class="cbt-round-display">Round <span class="trk-round-num">1</span></span>
+      <div class="toolbar-spacer"></div>
+      <button class="btn small ghost trk-reset">Reset</button>
+    </div>
+    <div class="cbt-body cbt-single">
+      <div class="cbt-col cbt-trackers-col">
+        <div class="cbt-col-header">
+          <span class="cbt-col-title">Round Trackers</span>
+          <button class="btn small primary cbt-add-tracker">+ Tracker</button>
+        </div>
+        <div class="cbt-tracker-list"></div>
+        <div class="cbt-empty cbt-trackers-empty">
+          <div class="cbt-empty-text">No trackers yet</div>
+          <div class="cbt-empty-sub">Add round-based effects or real-time countdown timers</div>
         </div>
       </div>
     </div>
@@ -1473,6 +1511,11 @@ document.body.appendChild(instancePool);
 
 const instances = {}; // toolType -> DOM node (singleton per tool type)
 let splitMode = 1;
+// On mobile the GM screen is locked to a single pane. splitPref remembers the
+// layout the user actually chose so it comes back when they return to desktop.
+let splitPref = 1;
+const GM_MOBILE_MQ = window.matchMedia('(max-width: 760px)');
+function isMobileView() { return GM_MOBILE_MQ.matches; }
 let paneTools = { 1: 'adventure', 2: 'combat', 3: 'notes', 4: 'dice' };
 
 function getOrCreateInstance(toolType) {
@@ -1491,6 +1534,8 @@ function getOrCreateInstance(toolType) {
 }
 
 function setSplit(n) {
+  splitPref = n;
+  if(isMobileView()) n = 1;   // mobile: always one pane
   splitMode = n;
   const sel = document.getElementById('split-select');
   if(sel) sel.value = String(n);
@@ -1518,10 +1563,14 @@ function setSplit(n) {
   for(let p = 1; p <= n; p++) renderPane(p);
 }
 
+// Rotating the phone / resizing across the breakpoint re-applies the layout:
+// collapse to one pane on mobile, restore the chosen split on desktop.
+GM_MOBILE_MQ.addEventListener('change', () => setSplit(splitPref));
+
 // Each tool has a single DOM instance, so it can only live in one pane.
 // If a duplicate is found, swap that pane to the first unused tool.
 function dedupePaneTools(count) {
-  const all = ['adventure','maps','combat','notes','audio','gen','dice'];
+  const all = ['adventure','maps','combat','trackers','notes','audio','gen','dice'];
   const used = new Set();
   for(let p = 1; p <= (count || 4); p++) {
     let tool = paneTools[p];
@@ -1560,6 +1609,19 @@ function setPaneTool(paneNum, tool) {
 // Generators. If a visible pane already shows the target tool, use it. Else, in
 // a multi-pane view, take another visible pane. Only in single view do we swap
 // the generator pane itself.
+
+// Sessions saved before Combat and Trackers were split store {round, trackers,
+// npcs} under 'combat'. Move the tracker half to the new 'trackers' tool.
+function migrateToolState(tools) {
+  if(!tools || !tools.combat) return tools;
+  const c = tools.combat;
+  const hasTrackerData = ('trackers' in c) || ('round' in c);
+  if(hasTrackerData && !tools.trackers) {
+    tools.trackers = { round: c.round || 1, trackers: c.trackers || [] };
+  }
+  return tools;
+}
+
 function loadIntoTool(tool, dataUrl, fileName) {
   const genPane = parseInt(Object.keys(paneTools).find(k => paneTools[k] === 'gen') || 1);
   let target = null;
@@ -1922,32 +1984,13 @@ function init_maps(root) { initDocTool(root); }
 // COMBAT & TRACKERS TOOL
 // ══════════════════════════════════════════
 function init_combat(root) {
-  let round = 1;
-  let trackers = [];
   let npcs = [];
-  let nextTrackerId = 1;
   let nextNpcId = 1;
 
-  const roundNumEl = root.querySelector('.cbt-round-num');
-
-  // Update both the live element and any clones in pane headers
-  function updateRoundDisplay() {
-    document.querySelectorAll('.cbt-round-num').forEach(el => {
-      el.textContent = round;
-    });
-  }
-  const trackerList = root.querySelector('.cbt-tracker-list');
   const npcList = root.querySelector('.cbt-npc-list');
-  const trackersEmpty = root.querySelector('.cbt-trackers-empty');
   const npcsEmpty = root.querySelector('.cbt-npcs-empty');
 
   function escAttr(s) { return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
-  function fmtTime(sec) {
-    sec = Math.max(0, sec);
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return m + ':' + String(s).padStart(2, '0');
-  }
   function npcHpColor(pct) {
     if(pct <= 0) return '#3a3a3a';
     if(pct <= 25) return '#b82018';
@@ -1955,17 +1998,13 @@ function init_combat(root) {
     if(pct <= 75) return '#c8a020';
     return '#4caf50';
   }
-
-  // Positional gradient red -> orange -> yellow -> green across segments, left to right,
-  // split into four contiguous quartile bands.
   function dccSegColor(index, total) {
     const colors = ['#b82018', '#c08020', '#c8a020', '#4caf50'];
     const band = Math.min(3, Math.floor((index * 4) / total));
     return colors[band];
   }
 
-  // ── Shared status checklist (used by both tracker cards and NPC cards) ──
-  // Each entry: { id, checked, text }
+  // ── Status checklist (NPC cards) ──
   function statusListHtml(statuses) {
     const rows = (statuses || []).map(s => `
       <div class="status-row" data-status-id="${s.id}">
@@ -2002,132 +2041,7 @@ function init_combat(root) {
     });
   }
 
-  function renderTrackers() {
-    trackerList.innerHTML = '';
-    trackersEmpty.classList.toggle('show', trackers.length === 0);
-    trackers.forEach(t => {
-      const card = document.createElement('div');
-      card.dataset.id = t.id;
-      const isExpired = t.kind === 'rounds' ? t.rounds <= 0 : t.remainingSeconds <= 0;
-      card.className = 'tracker-card' + (t.kind === 'timer' ? ' timer-type' : '') + (isExpired ? ' expired' : '');
-
-      let bottomHtml = '';
-      if(t.kind === 'rounds') {
-        bottomHtml = `
-          <button class="tracker-adjust-btn tracker-dec">−</button>
-          <div class="tracker-rounds-display">
-            <span class="tracker-rounds ${t.rounds<=0?'zero':''}">${t.rounds}</span>
-            <span class="tracker-label">rounds</span>
-          </div>
-          <button class="tracker-adjust-btn tracker-inc">+</button>
-          ${t.rounds <= 0 ? '<span class="tracker-expired-tag">Expired</span>' : ''}
-        `;
-      } else {
-        bottomHtml = `
-          <div class="tracker-rounds-display">
-            <span class="timer-display ${t.remainingSeconds<=0?'zero':''}">${fmtTime(t.remainingSeconds)}</span>
-            <span class="tracker-label">${t.running ? 'running' : 'paused'}</span>
-          </div>
-          <div class="timer-controls">
-            <button class="tracker-adjust-btn timer-toggle">${t.running ? '⏸' : '▶'}</button>
-            <button class="tracker-adjust-btn timer-reset">↺</button>
-          </div>
-          ${t.remainingSeconds <= 0 ? '<span class="tracker-expired-tag">Time&#39;s Up</span>' : ''}
-        `;
-      }
-
-      card.innerHTML = `
-        <div class="tracker-top">
-          <input type="text" class="tracker-name-input" value="${escAttr(t.name)}" placeholder="Tracker name...">
-          <div class="tracker-type-toggle">
-            <button class="tracker-type-btn rounds-active ${t.kind==='rounds'?'active':''}" data-kind="rounds">Rounds</button>
-            <button class="tracker-type-btn timer-active ${t.kind==='timer'?'active':''}" data-kind="timer">Timer</button>
-          </div>
-          <button class="tracker-del" title="Remove">✕</button>
-        </div>
-        <div class="tracker-bottom">${bottomHtml}</div>
-        ${t.kind === 'timer' ? `
-        <div class="timer-set-row">
-          <span class="timer-set-label">Set</span>
-          <input type="number" class="timer-set-input timer-min" min="0" value="${Math.floor(t.totalSeconds/60)}">
-          <span class="timer-set-label">m</span>
-          <input type="number" class="timer-set-input timer-sec" min="0" max="59" value="${t.totalSeconds%60}">
-          <span class="timer-set-label">s</span>
-          <button class="btn small ghost timer-apply" style="margin-left:6px;">Apply</button>
-        </div>` : ''}
-        ${statusListHtml(t.statuses)}
-      `;
-
-      card.querySelector('.tracker-name-input').addEventListener('input', e => { t.name = e.target.value; });
-      card.querySelector('.tracker-del').addEventListener('click', () => {
-        trackers = trackers.filter(x => x.id !== t.id);
-        renderTrackers();
-      });
-
-      card.querySelectorAll('.tracker-type-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const kind = btn.dataset.kind;
-          if(kind === t.kind) return;
-          t.running = false;
-          t.kind = kind;
-          if(kind === 'timer' && t.totalSeconds === undefined) { t.totalSeconds = 60; t.remainingSeconds = 60; }
-          renderTrackers();
-        });
-      });
-
-      if(t.kind === 'rounds') {
-        card.querySelector('.tracker-dec').addEventListener('click', () => { t.rounds = Math.max(0, t.rounds - 1); renderTrackers(); });
-        card.querySelector('.tracker-inc').addEventListener('click', () => { t.rounds += 1; renderTrackers(); });
-      } else {
-        card.querySelector('.timer-toggle').addEventListener('click', () => {
-          t.running = !t.running;
-          renderTrackers();
-        });
-        card.querySelector('.timer-reset').addEventListener('click', () => {
-          t.running = false;
-          t.remainingSeconds = t.totalSeconds;
-          renderTrackers();
-        });
-        card.querySelector('.timer-apply')?.addEventListener('click', () => {
-          const min = parseInt(card.querySelector('.timer-min').value) || 0;
-          const sec = parseInt(card.querySelector('.timer-sec').value) || 0;
-          t.totalSeconds = min * 60 + sec;
-          t.remainingSeconds = t.totalSeconds;
-          t.running = false;
-          renderTrackers();
-        });
-      }
-
-      wireStatusList(card, t, renderTrackers);
-      trackerList.appendChild(card);
-    });
-  }
-
-  // ── Single global tick loop, decoupled from rendering ──
-  // Runs every second; updates DOM directly for any running timer by looking
-  // up its live card via data-id, so it never holds a stale element reference.
-  setInterval(() => {
-    let needsFullRerender = false;
-    trackers.forEach(t => {
-      if(t.kind !== 'timer' || !t.running) return;
-      t.remainingSeconds = Math.max(0, t.remainingSeconds - 1);
-      const card = trackerList.querySelector('[data-id="' + t.id + '"]');
-      if(card) {
-        const display = card.querySelector('.timer-display');
-        if(display) {
-          display.textContent = fmtTime(t.remainingSeconds);
-          display.classList.toggle('zero', t.remainingSeconds <= 0);
-        }
-      }
-      if(t.remainingSeconds <= 0) {
-        t.running = false;
-        needsFullRerender = true;
-      }
-    });
-    if(needsFullRerender) renderTrackers();
-  }, 1000);
-
-  function renderNpcs() {
+function renderNpcs() {
     npcList.innerHTML = '';
     npcsEmpty.classList.toggle('show', npcs.length === 0);
     npcs.forEach(n => {
@@ -2243,32 +2157,19 @@ function init_combat(root) {
     });
   }
 
-  // Use document-level delegation so clicks on toolbar-tpl OR pane-header clones
-  // both trigger correctly — no proxy chain needed.
   function onCbtClick(e) {
-    // Only handle clicks that belong to THIS combat instance (its pane or toolbar slot)
-    const btn = e.target.closest('.cbt-next-round, .cbt-reset, .cbt-add-tracker, .cbt-add-npc');
+    const btn = e.target.closest('.cbt-reset, .cbt-add-npc');
     if(!btn) return;
-    // Confirm the click is visually associated with this instance by checking
-    // whether the pane containing this root is currently active (or the toolbar slot)
     const paneContent = root.closest('.pane-content');
     const paneNum = paneContent ? paneContent.id.replace('pane-','').replace('-content','') : null;
     const toolbarSlot = paneNum ? document.getElementById('pane-' + paneNum + '-toolbar') : null;
     const inRoot = root.contains(btn) || (toolbarSlot && toolbarSlot.contains(btn));
     if(!inRoot) return;
 
-    if(btn.classList.contains('cbt-next-round')) {
-      round += 1;
-      updateRoundDisplay();
-      trackers.forEach(t => { if(t.kind === 'rounds') t.rounds = Math.max(0, t.rounds - 1); });
-      renderTrackers();
-    } else if(btn.classList.contains('cbt-reset')) {
-      if(!confirm('Reset round counter and clear all trackers and NPCs?')) return;
-      round = 1; trackers = []; npcs = [];
-      updateRoundDisplay(); renderTrackers(); renderNpcs();
-    } else if(btn.classList.contains('cbt-add-tracker')) {
-      trackers.push({ id: nextTrackerId++, name: '', kind: 'rounds', rounds: 1, totalSeconds: 60, remainingSeconds: 60, running: false });
-      renderTrackers();
+    if(btn.classList.contains('cbt-reset')) {
+      if(!confirm('Remove all NPCs and monsters?')) return;
+      npcs = [];
+      renderNpcs();
     } else if(btn.classList.contains('cbt-add-npc')) {
       npcs.push({ id: nextNpcId++, name: '', tag: '', hpCurrent: 10, hpMax: 10 });
       renderNpcs();
@@ -2276,21 +2177,174 @@ function init_combat(root) {
   }
   document.addEventListener('click', onCbtClick);
 
-  renderTrackers();
   renderNpcs();
 
-  // ── State hooks for session save/load ──
-  root._getState = () => ({ round, trackers, npcs });
+  root._getState = () => ({ npcs });
   root._setState = (s) => {
+    if(!s) return;
+    npcs = s.npcs || [];
+    renderNpcs();
+  };
+}
+
+function init_trackers(root) {
+  let round = 1;
+  let trackers = [];
+  let nextTrackerId = 1;
+
+  function updateRoundDisplay() {
+    document.querySelectorAll('.trk-round-num').forEach(el => {
+      el.textContent = round;
+    });
+  }
+  const trackerList = root.querySelector('.cbt-tracker-list');
+  const trackersEmpty = root.querySelector('.cbt-trackers-empty');
+
+  function escAttr(s) { return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  function fmtTime(sec) {
+    sec = Math.max(0, sec);
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return m + ':' + String(s).padStart(2, '0');
+  }
+
+function renderTrackers() {
+    trackerList.innerHTML = '';
+    trackersEmpty.classList.toggle('show', trackers.length === 0);
+    trackers.forEach(t => {
+      const card = document.createElement('div');
+      card.dataset.id = t.id;
+      const isExpired = t.kind === 'rounds' ? t.rounds <= 0 : t.remainingSeconds <= 0;
+      card.className = 'tracker-card' + (t.kind === 'timer' ? ' timer-type' : '') + (isExpired ? ' expired' : '');
+
+      let bottomHtml = '';
+      if(t.kind === 'rounds') {
+        bottomHtml = `
+          <button class="tracker-adjust-btn tracker-dec">−</button>
+          <div class="tracker-rounds-display">
+            <span class="tracker-rounds ${t.rounds<=0?'zero':''}">${t.rounds}</span>
+            <span class="tracker-label">rounds</span>
+          </div>
+          <button class="tracker-adjust-btn tracker-inc">+</button>
+          ${t.rounds <= 0 ? '<span class="tracker-expired-tag">Expired</span>' : ''}
+        `;
+      } else {
+        bottomHtml = `
+          <div class="tracker-rounds-display">
+            <span class="timer-display ${t.remainingSeconds<=0?'zero':''}">${fmtTime(t.remainingSeconds)}</span>
+            <span class="tracker-label">${t.running ? 'running' : 'paused'}</span>
+          </div>
+          <div class="timer-controls">
+            <button class="tracker-adjust-btn timer-toggle">${t.running ? '⏸' : '▶'}</button>
+            <button class="tracker-adjust-btn timer-reset">↺</button>
+          </div>
+          ${t.remainingSeconds <= 0 ? '<span class="tracker-expired-tag">Time&#39;s Up</span>' : ''}
+        `;
+      }
+
+      card.innerHTML = `
+        <div class="tracker-top">
+          <input type="text" class="tracker-name-input" value="${escAttr(t.name)}" placeholder="Tracker name...">
+          <div class="tracker-type-toggle">
+            <button class="tracker-type-btn rounds-active ${t.kind==='rounds'?'active':''}" data-kind="rounds">Rounds</button>
+            <button class="tracker-type-btn timer-active ${t.kind==='timer'?'active':''}" data-kind="timer">Timer</button>
+          </div>
+          <button class="tracker-del" title="Remove">✕</button>
+        </div>
+        <div class="tracker-bottom">${bottomHtml}</div>
+        ${t.kind === 'timer' ? `
+        <div class="timer-set-row">
+          <span class="timer-set-label">Set</span>
+          <input type="number" class="timer-set-input timer-min" min="0" value="${Math.floor(t.totalSeconds/60)}">
+          <span class="timer-set-label">m</span>
+          <input type="number" class="timer-set-input timer-sec" min="0" max="59" value="${t.totalSeconds%60}">
+          <span class="timer-set-label">s</span>
+          <button class="btn small ghost timer-apply" style="margin-left:6px;">Apply</button>
+        </div>` : ''}
+      `;
+
+      card.querySelector('.tracker-name-input').addEventListener('input', e => { t.name = e.target.value; });
+      card.querySelector('.tracker-del').addEventListener('click', () => {
+        trackers = trackers.filter(x => x.id !== t.id);
+        renderTrackers();
+      });
+
+      card.querySelectorAll('.tracker-type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const kind = btn.dataset.kind;
+          if(kind === t.kind) return;
+          t.running = false;
+          t.kind = kind;
+          if(kind === 'timer' && t.totalSeconds === undefined) { t.totalSeconds = 60; t.remainingSeconds = 60; }
+          renderTrackers();
+        });
+      });
+
+      if(t.kind === 'rounds') {
+        card.querySelector('.tracker-dec').addEventListener('click', () => { t.rounds = Math.max(0, t.rounds - 1); renderTrackers(); });
+        card.querySelector('.tracker-inc').addEventListener('click', () => { t.rounds += 1; renderTrackers(); });
+      } else {
+        card.querySelector('.timer-toggle').addEventListener('click', () => {
+          t.running = !t.running;
+          renderTrackers();
+        });
+        card.querySelector('.timer-reset').addEventListener('click', () => {
+          t.running = false;
+          t.remainingSeconds = t.totalSeconds;
+          renderTrackers();
+        });
+        card.querySelector('.timer-apply')?.addEventListener('click', () => {
+          const min = parseInt(card.querySelector('.timer-min').value) || 0;
+          const sec = parseInt(card.querySelector('.timer-sec').value) || 0;
+          t.totalSeconds = min * 60 + sec;
+          t.remainingSeconds = t.totalSeconds;
+          t.running = false;
+          renderTrackers();
+        });
+      }
+
+      trackerList.appendChild(card);
+    });
+  }
+
+  function onTrkClick(e) {
+    const btn = e.target.closest('.trk-next-round, .trk-reset, .cbt-add-tracker');
+    if(!btn) return;
+    const paneContent = root.closest('.pane-content');
+    const paneNum = paneContent ? paneContent.id.replace('pane-','').replace('-content','') : null;
+    const toolbarSlot = paneNum ? document.getElementById('pane-' + paneNum + '-toolbar') : null;
+    const inRoot = root.contains(btn) || (toolbarSlot && toolbarSlot.contains(btn));
+    if(!inRoot) return;
+
+    if(btn.classList.contains('trk-next-round')) {
+      round += 1;
+      updateRoundDisplay();
+      trackers.forEach(t => { if(t.kind === 'rounds') t.rounds = Math.max(0, t.rounds - 1); });
+      renderTrackers();
+    } else if(btn.classList.contains('trk-reset')) {
+      if(!confirm('Reset the round counter and clear all trackers?')) return;
+      round = 1; trackers = [];
+      updateRoundDisplay(); renderTrackers();
+    } else if(btn.classList.contains('cbt-add-tracker')) {
+      trackers.push({ id: nextTrackerId++, name: '', kind: 'rounds', rounds: 1, totalSeconds: 60, remainingSeconds: 60, running: false });
+      renderTrackers();
+    }
+  }
+  document.addEventListener('click', onTrkClick);
+
+  renderTrackers();
+  updateRoundDisplay();
+
+  root._getState = () => ({ round, trackers });
+  root._setState = (s) => {
+    if(!s) return;
     round = s.round || 1;
     updateRoundDisplay();
     trackers = (s.trackers || []).map(t => ({...t, running: false, intervalId: null}));
-    npcs = s.npcs || [];
     renderTrackers();
-    renderNpcs();
   };
-
 }
+window.init_trackers = init_trackers;
 </script>
 
 </script>
@@ -6127,7 +6181,7 @@ function saveSession() {
     version: 1,
     saved: new Date().toISOString(),
     paneTools,
-    splitMode,
+    splitMode: splitPref,
     tools: {}
   };
 
@@ -6166,6 +6220,7 @@ function loadSession(input) {
 
       // Restore each tool's state (instantiate it first if not yet created)
       if(data.tools) {
+        migrateToolState(data.tools);
         Object.entries(data.tools).forEach(([type, state]) => {
           const node = getOrCreateInstance(type);
           if(node._setState) {
@@ -6189,7 +6244,7 @@ function loadSession(input) {
 // ── Server persistence hooks (used by the injected shim when running on Dungeon Desk) ──
 // __gmScreenGetState: returns the full session state as a plain object
 window.__gmScreenGetState = function() {
-  const data = { version: 1, paneTools, splitMode, tools: {} };
+  const data = { version: 1, paneTools, splitMode: splitPref, tools: {} };
   Object.entries(instances).forEach(([type, node]) => {
     if(node._getState) try { data.tools[type] = node._getState(); } catch(e) {}
   });
@@ -6205,6 +6260,7 @@ window.__gmScreenSetState = function(data) {
     setPaneTool(2, data.paneTools[2] || 'combat');
   }
   if(data.tools) {
+    migrateToolState(data.tools);
     Object.entries(data.tools).forEach(([type, state]) => {
       const node = getOrCreateInstance(type);
       if(node._setState) try { node._setState(state); } catch(e) {}
