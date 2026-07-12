@@ -702,6 +702,12 @@ function onStatChange(id) {
   document.getElementById(id+'-mod').textContent = fmtMod(m);
 }
 
+// Weapon types the character has mastered (Fighter class feature + any talent
+// grants). Bonus per the rules = +1 atk/dmg, plus half your level (round down).
+// Declared in this block because autoLoad() below restores it at page load.
+let _charMastery = [];
+function masteryBonus(level) { return 1 + Math.floor((parseInt(level)||1) / 2); }
+
 function getStatMod(id) {
   const val = document.getElementById(id+'-val')?.value;
   return statToMod(val) ?? 0;
@@ -1224,6 +1230,7 @@ function collectSheet(){
       spellStat: document.getElementById('spell-stat')?.value || '',
       spellGBonus: document.getElementById('spell-gbonus')?.value || '',
       campaign: _campaign ? { id: _campaign.id, code: _campaign.code, name: _campaign.name } : null,
+      mastery: Array.isArray(_charMastery) ? _charMastery : [],
       acBonusOn: _acBonusOn,
     }
   };
@@ -1309,6 +1316,7 @@ function _applySDData(d){
     if(spellStatEl) spellStatEl.value = d._sheet?.spellStat || '';
     const spellGBEl = document.getElementById('spell-gbonus');
     if(spellGBEl) spellGBEl.value = d._sheet?.spellGBonus || '';
+    _charMastery = Array.isArray(d._sheet?.mastery) ? d._sheet.mastery.slice() : [];
     if(typeof campaignRestore === 'function') campaignRestore(d._sheet?.campaign);
     if(typeof refreshGearSlots === 'function') refreshGearSlots();
     _acBonusOn = !!(d._sheet?.acBonusOn);
@@ -1586,6 +1594,7 @@ function newCharacter(){
   STATS.forEach(s=>{const el=document.getElementById(s.id+'-val');if(el){el.value='';onStatChange(s.id);}});
   ['hp-current','hp-max','ac-val','xp-current','xp-next','xp-level','lk-val','coin-gp','coin-sp','coin-cp'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('talents-text').value='';
+  _charMastery = [];
   document.getElementById('free-carry').value='';
   document.querySelectorAll('#spells-list .spell-row').forEach(row => row.remove());
   _spellCount = 0;
@@ -2705,6 +2714,7 @@ function ccwRandomize() {
   const topStats = CCW_ALL_STATS.filter(k=>_ccw.stats[k]===maxVal);
   _ccw.cls = rand(CLASS_BY_STAT[rand(topStats)]);
   _ccw.grit = _ccw.cls==='Fighter' ? rand(['Strength','Dexterity']) : null;
+  _ccw.mastery = _ccw.cls==='Fighter' ? rand(SD_WEAPONS).name : null;
   _ccw.background= rand(RC_BACKGROUNDS);
   _ccw.alignment = rand(['Lawful','Neutral','Chaotic']);
   const deities  = RC_DEITIES[_ccw.alignment] || [];
@@ -2797,6 +2807,7 @@ function ccwNext() {
   }
   if(name==='Class') {
     if(!_ccw.cls) { alert('Choose a class.'); return; }
+    if(_ccw.cls==='Fighter' && !_ccw.mastery) { alert('Fighters must choose a weapon type for Weapon Mastery.'); return; }
     if(_ccw.cls==='Fighter' && !_ccw.grit) { alert('Fighters must choose Grit: Strength or Dexterity.'); return; }
   }
   if(name==='Background' && !_ccw.background) { alert('Choose a background.'); return; }
@@ -2946,9 +2957,22 @@ function ccwClass() {
   RC_CLASSES.forEach(c=>{
     const ci = RC_CLASS_INFO[c];
     const sel = _ccw.cls===c ? ' selected' : '';
-    h += '<button class="ccw-choice'+sel+'" onclick="_ccw.cls=\''+c+'\';_ccw.spells=[];_ccw.langCommon=[];_ccw.langRare=[];_ccw.langPriest=\'\';_ccw.tres=null;_ccw.tres2=null;_ccw.talent=null;_ccw.grit=null;ccwRender()"><div class="ccw-choice-name">'+c+'</div><div class="ccw-choice-desc">HP: '+ci.hd+' / lvl · '+ci.weapons.split(',').slice(0,3).join(',')+'…</div></button>';
+    h += '<button class="ccw-choice'+sel+'" onclick="_ccw.cls=\''+c+'\';_ccw.spells=[];_ccw.langCommon=[];_ccw.langRare=[];_ccw.langPriest=\'\';_ccw.tres=null;_ccw.tres2=null;_ccw.talent=null;_ccw.grit=null;_ccw.mastery=null;ccwRender()"><div class="ccw-choice-name">'+c+'</div><div class="ccw-choice-desc">HP: '+ci.hd+' / lvl · '+ci.weapons.split(',').slice(0,3).join(',')+'…</div></button>';
   });
   h += '</div>';
+  // Fighter: Weapon Mastery — choose a weapon type
+  if(_ccw.cls === 'Fighter') {
+    h += '<div style="background:#0f0f0f;border:1px solid #7a5a00;padding:8px 10px;margin-top:10px;">';
+    h += '<div style="font-family:Montserrat,sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#c8a020;margin-bottom:4px;">Weapon Mastery — choose one</div>';
+    h += '<p class="ccw-hint" style="margin:0 0 6px;font-size:10px;">+1 to attack and damage with that weapon type, plus half your level (round down) to those rolls.</p>';
+    h += '<select onchange="_ccw.mastery=this.value;ccwRender()" style="width:100%;padding:7px 8px;background:#141414;border:1px solid #2a2a2a;color:#eee;font-family:Montserrat,sans-serif;font-size:11px;font-weight:700;outline:none;cursor:pointer;">';
+    h += '<option value="">— Choose a weapon type —</option>';
+    SD_WEAPONS.forEach(w=>{
+      const sel = _ccw.mastery === w.name ? ' selected' : '';
+      h += '<option value="'+w.name+'"'+sel+'>'+w.name+' ('+w.damage+')</option>';
+    });
+    h += '</select></div>';
+  }
   // Fighter: Grit — choose Strength or Dexterity
   if(_ccw.cls === 'Fighter') {
     h += '<div style="background:#0f0f0f;border:1px solid #7a5a00;padding:8px 10px;margin-top:10px;">';
@@ -3225,6 +3249,7 @@ function ccwFinish() {
   h += '<div>'+(_ccw.name||'(unnamed)')+' — '+_ccw.ancestry+' '+_ccw.cls+'</div>';
   h += '<div>'+_ccw.alignment+(_ccw.deity?' · '+_ccw.deity:'')+' · '+_ccw.background+'</div>';
   h += '<div>STR '+eff.STR+' DEX '+eff.DEX+' CON '+eff.CON+' INT '+eff.INT+' WIS '+eff.WIS+' CHA '+eff.CHA+'</div>';
+  if(_ccw.mastery) h += '<div>Weapon Mastery: '+_ccw.mastery+'</div>';
   if(_ccw.grit) h += '<div>Grit: '+_ccw.grit+'</div>';
   if(_ccw.tres && _ccw.tres.final) h += '<div>Talent: '+_ccw.tres.final+'</div>';
   if(_ccw.tres2 && _ccw.tres2.final) h += '<div>Bonus Talent: '+_ccw.tres2.final+'</div>';
@@ -3317,11 +3342,13 @@ function ccwApply() {
   const talentFinal  = (c.tres && c.tres.final) || c.talent;
   const talent2Final = (c.tres2 && c.tres2.final) || c.talent2;
   // Fighter's Grit names the chosen stat
-  const features = (ci.features || []).map(f =>
-    (c.cls === 'Fighter' && c.grit && /^Grit[:.]/i.test(f))
-      ? 'Grit (' + c.grit + '): Advantage on ' + c.grit + ' checks to overcome an opposing force.'
-      : f
-  );
+  const features = (ci.features || []).map(f => {
+    if(c.cls === 'Fighter' && c.grit && /^Grit[:.]/i.test(f))
+      return 'Grit (' + c.grit + '): Advantage on ' + c.grit + ' checks to overcome an opposing force.';
+    if(c.cls === 'Fighter' && c.mastery && /^Weapon Mastery[:.]/i.test(f))
+      return 'Weapon Mastery (' + c.mastery + '): +1 to attack and damage, plus half your level (round down).';
+    return f;
+  });
   const lines = ['— Class Features —', ...features, '',
     '— Ancestry: '+c.ancestry+' —',
     (c.ancestry==='Elf' && c.elfFarsight
@@ -3409,6 +3436,7 @@ function ccwApply() {
   let spellChkBonus = 0;
   let backstabExtraDice = 0;
   let armorTalentAC = 0;
+  if(c.cls==='Fighter' && c.mastery) masterySet.add(c.mastery);  // Weapon Mastery (class feature)
   if(c.ancestry==='Half-Orc') { atkBonus.melee += 1; atkBonus.meleeDmg += 1; } // Mighty
   if(c.elfFarsight==='ranged') atkBonus.ranged += 1;      // Farsight
   if(c.elfFarsight==='spell')  spellChkBonus += 1;        // Farsight
@@ -3442,7 +3470,7 @@ function ccwApply() {
     const isRangedWeapon = w.type==='R';
     let bonus = isRangedWeapon ? atkBonus.ranged : atkBonus.melee;
     let dmgBonus = isRangedWeapon ? atkBonus.rangedDmg : atkBonus.meleeDmg;
-    if(masterySet.has(w.name)) { bonus += 1; dmgBonus += 1; }
+    if(masterySet.has(w.name)) { const mb = masteryBonus(1); bonus += mb; dmgBonus += mb; }
     let dmg = dmgOverride || w.damage;
     if(d12Set.has(w.name)) dmg = dmg.replace(/d\d+/g, 'd12');
     if(dmgBonus > 0) dmg = dmg.split('/').map(d=>d+'+'+dmgBonus).join('/');
@@ -3459,7 +3487,7 @@ function ccwApply() {
   });
   // Thief: Backstab attack for every chosen weapon (extra weapon die vs unaware targets, +talent dice)
   if(c.cls==='Thief') {
-    const bsDice = 2 + backstabExtraDice;
+    const bsDice = 1 + 1 + Math.floor(1/2) + backstabExtraDice;   // weapon die + extra die + half level
     uniqueWeapons.forEach(wname=>{
       const bw = SD_WEAPONS.find(x=>x.name===wname);
       if(!bw) return;
@@ -3468,6 +3496,8 @@ function ccwApply() {
       _fillAtkRow('Backstab ('+bw.name+')', bw, bsDmg);
     });
   }
+
+  _charMastery = [...masterySet];
 
   saveSheet(false);
   addLog('Character Created','⚒',c.name+' the '+c.ancestry+' '+c.cls,'normal');
@@ -3810,18 +3840,22 @@ function lvlApply() {
       bumpVal(document.getElementById('spell-gbonus'), 1);
     }
 
-    // Weapon Mastery — chosen weapon: +1 atk & dmg on matching rows
+    // Weapon Mastery (talent) — newly mastered weapon gains its full value now:
+    // +1 atk/dmg plus half the character's level (round down).
     let m = f.match(/Weapon Mastery with one additional weapon type — (.+)$/i);
     if(m) {
-      const wn = m[1].trim().toLowerCase();
+      const wname = m[1].trim();
+      const wn = wname.toLowerCase();
+      const gain = masteryBonus(_lvl.newLevel);
+      if(!_charMastery.some(x=>x.toLowerCase()===wn)) _charMastery.push(wname);
       rows.forEach(row=>{
         const inputs = row.querySelectorAll('td input');
         let nm = (inputs[0]?.value||'').trim();
         const bs = nm.match(/^Backstab \((.+)\)$/i);
         if(bs) nm = bs[1];
         if(nm.toLowerCase()===wn) {
-          bumpVal(inputs[1], 1);
-          if(inputs[2] && inputs[2].value.trim()) inputs[2].value = bumpDmg(inputs[2].value.trim(), 1);
+          bumpVal(inputs[1], gain);
+          if(inputs[2] && inputs[2].value.trim()) inputs[2].value = bumpDmg(inputs[2].value.trim(), gain);
         }
       });
     }
@@ -3874,6 +3908,48 @@ function lvlApply() {
       if(ab) ab.classList.add('on');
     }
   });
+
+
+  // ── Half-level scaling (Shadowdark) ──
+  // Weapon Mastery: "add half your level to these rolls (round down)".
+  // Backstab: "add additional weapon dice equal to half your level (round down)".
+  // floor(level/2) ticks up by 1 exactly on even levels, so scale then.
+  if(_lvl.newLevel % 2 === 0) {
+    const rows2 = [...document.querySelectorAll('#attacks-body tr')];
+    const bump = (el, n) => {
+      if(!el) return;
+      const cur = parseInt(el.value) || 0;
+      const v = cur + n;
+      el.value = v > 0 ? '+'+v : (v < 0 ? String(v) : '');
+    };
+    const bumpDmg2 = (d, n) => d.split('/').map(part=>{
+      const m = part.match(/^(.*?)([+-]\d+)?$/);
+      const mod = (parseInt(m[2]||'0')) + n;
+      return m[1] + (mod > 0 ? '+'+mod : (mod < 0 ? String(mod) : ''));
+    }).join('/');
+    // Add one damage die: "2d6+1" → "3d6+1"
+    const addDie = (d) => d.split('/').map(part =>
+      part.replace(/(\d*)d(\d+)/, (mm, n0, faces) => ((parseInt(n0)||1) + 1) + 'd' + faces)
+    ).join('/');
+
+    rows2.forEach(row=>{
+      const inputs = row.querySelectorAll('td input');
+      let nm = (inputs[0]?.value || '').trim();
+      if(!nm) return;
+      const bs = nm.match(/^Backstab \((.+)\)$/i);
+      const weaponName = bs ? bs[1] : nm;
+
+      // Weapon Mastery: +1 attack and +1 damage on mastered weapon types
+      if(_charMastery.some(x => x.toLowerCase() === weaponName.toLowerCase())) {
+        bump(inputs[1], 1);
+        if(inputs[2] && inputs[2].value.trim()) inputs[2].value = bumpDmg2(inputs[2].value.trim(), 1);
+      }
+      // Backstab: one more weapon die of damage
+      if(bs && _lvl.cls === 'Thief' && inputs[2] && inputs[2].value.trim()) {
+        inputs[2].value = addDie(inputs[2].value.trim());
+      }
+    });
+  }
 
   saveSheet(false);
   addLog('Level Up','⬆','Now level '+_lvl.newLevel+' (+'+_lvl.hpRoll+' HP'+(_lvl.talent?', new talent':'')+(_lvl.newSpells.length?', '+_lvl.newSpells.length+' new spell'+(_lvl.newSpells.length>1?'s':''):'')+')','normal');
