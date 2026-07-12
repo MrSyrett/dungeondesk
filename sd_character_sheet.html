@@ -181,10 +181,6 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .spell-desc{border:none;background:transparent;font-family:'Montserrat',sans-serif;font-size:10px;font-weight:500;outline:none;color:var(--muted);padding:1px 2px;resize:none;min-height:16px;width:100%;}
 .gear-slot-disabled .gear-name{text-decoration:line-through;opacity:0.35;color:var(--muted);pointer-events:none;}
 .gear-slot-disabled .gear-qty{opacity:0.35;pointer-events:none;}
-.gear-used-btn{width:18px;flex-shrink:0;padding:1px 0;background:transparent;border:1px solid var(--rule);border-radius:3px;cursor:pointer;font-size:9px;color:var(--muted);line-height:1.3;}
-.gear-used-btn.on{background:#3a1a1a;border-color:#7a2d2d;color:#df6a6a;}
-.gear-slot.used .gear-name{text-decoration:line-through;opacity:0.5;}
-.gear-slot-disabled .gear-used-btn{opacity:0.35;pointer-events:none;}
 .gear-slot-disabled{background:repeating-linear-gradient(135deg,transparent,transparent 4px,rgba(128,128,128,0.07) 4px,rgba(128,128,128,0.07) 5px);}
 .gear-disable-btn{padding:1px 3px;background:transparent;border:1px solid var(--rule);cursor:pointer;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;color:var(--muted);border-radius:2px;flex-shrink:0;}
 .gear-disable-btn.on{background:#3a1a1a;border-color:#7a2d2d;color:#df6a6a;}
@@ -816,15 +812,6 @@ function toggleSpellAdv(btn) {
   btn.classList.toggle('on');
 }
 
-// Mark a gear item expended (wand charge, one-use item, per-rest ability).
-// Rest restores everything marked this way.
-function toggleGearUsed(btn) {
-  const row = btn.closest('.gear-slot');
-  const on = btn.classList.toggle('on');
-  if(row) row.classList.toggle('used', on);
-  saveSheet(false);
-}
-
 function toggleSpellLost(btn) {
   btn.classList.toggle('on');
   btn.closest('.spell-row').classList.toggle('lost', btn.classList.contains('on'));
@@ -836,7 +823,7 @@ function buildGear() {
   // Header
   const hdr = document.createElement('div');
   hdr.style.cssText = 'display:flex;align-items:center;gap:4px;padding:2px 8px;border-bottom:2px solid var(--border);background:var(--box);';
-  hdr.innerHTML = '<span style="width:16px;"></span><span style="flex:1;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Item</span><span style="width:30px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;">Qty</span><span style="width:18px;"></span>';
+  hdr.innerHTML = '<span style="width:16px;"></span><span style="flex:1;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Item</span><span style="width:30px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;">Qty</span>';
   list.appendChild(hdr);
   for(let i=1;i<=20;i++) {
     const row = document.createElement('div');
@@ -846,7 +833,6 @@ function buildGear() {
       <span style="font-size:8px;font-weight:700;color:var(--muted);width:16px;">${i}.</span>
       <input type="text" class="gear-name" style="flex:1;border:none;background:transparent;font-family:Montserrat,sans-serif;font-size:11px;color:var(--ink);outline:none;padding:3px 0;">
       <input type="text" class="gear-qty" style="width:30px;border:none;border-bottom:1px solid var(--rule);background:transparent;font-family:Montserrat,sans-serif;font-size:11px;font-weight:700;text-align:center;color:var(--ink);outline:none;padding:2px 0;" placeholder="1">
-      <button class="gear-used-btn" onclick="toggleGearUsed(this)" title="Mark expended — Rest restores it">⟳</button>
       <button class="gear-disable-btn" onclick="toggleGearSlot(this)" title="Disable slot (exceeds STR limit)">✕</button>
     `;
     list.appendChild(row);
@@ -1234,7 +1220,6 @@ function collectSheet(){
       spellData: spellData,
       gearQtys: [...document.querySelectorAll('#gear-list .gear-qty')].map(el => el.value || ''),
       gearDisabled: [...document.querySelectorAll('#gear-list > div')].map(row => row.classList.contains('gear-slot-disabled')),
-      gearUsed: [...document.querySelectorAll('#gear-list .gear-used-btn')].map(btn => btn.classList.contains('on')),
       acBonus: document.getElementById('ac-bonus')?.value || '',
       spellStat: document.getElementById('spell-stat')?.value || '',
       spellGBonus: document.getElementById('spell-gbonus')?.value || '',
@@ -1302,12 +1287,6 @@ function _applySDData(d){
   gearQtyInputs.forEach((el, i) => {
     const qty = d._sheet?.gearQtys?.[i] || (gearSlotted[i]?.quantity > 1 ? String(gearSlotted[i].quantity) : '');
     el.value = qty;
-    const gearUsedArr = d._sheet?.gearUsed || [];
-    const usedBtn = document.querySelectorAll('#gear-list .gear-used-btn')[i];
-    if(usedBtn) {
-      usedBtn.classList.toggle('on', !!gearUsedArr[i]);
-      usedBtn.closest('.gear-slot')?.classList.toggle('used', !!gearUsedArr[i]);
-    }
     const gearDisabledArr = d._sheet?.gearDisabled || [];
     if(gearDisabledArr[i]) {
       const gRow = el.closest('div');
@@ -1556,15 +1535,6 @@ function takeRest() {
     }
   });
   if(regained) notes.push(regained + ' spell' + (regained>1?'s':'') + ' regained');
-
-  // Expended items / per-rest abilities return
-  let restored = 0;
-  document.querySelectorAll('#gear-list .gear-used-btn.on').forEach(btn => {
-    btn.classList.remove('on');
-    btn.closest('.gear-slot')?.classList.remove('used');
-    restored++;
-  });
-  if(restored) notes.push(restored + ' item' + (restored>1?'s':'') + ' recharged');
 
   // Stat damage is temporary — a successful rest clears it
   let statsHealed = 0;
@@ -3220,7 +3190,7 @@ function ccwFinish() {
   h += '</div>';
   h += '<div style="display:flex;gap:6px;align-items:stretch;margin-bottom:10px;">';
   h += '<button class="ccw-roll-btn" style="flex:1;margin:0;" onclick="ccwRollHP()">🎲 Roll HP (1'+RC_CLASS_INFO[_ccw.cls].hd.slice(1)+' '+(conMod>=0?'+':'')+conMod+' CON'+(_ccw.ancestry==='Dwarf'?' +2 Stout':'')+')</button>';
-  h += '<button class="ccw-roll-btn" style="flex:0 0 auto;margin:0;background:#1a3a4a;border-color:#2d6a7a;color:#8ad4e0;" onclick="ccwMaxHP()" title="Take the maximum die result">⬆ Max</button>';
+  h += '<button style="flex:0 0 auto;margin:0;padding:0 12px;background:#1a3a4a;border:1px solid #2d6a7a;color:#8ad4e0;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;" onclick="ccwMaxHP()" title="Take the maximum die result">⬆ Max</button>';
   h += '<div style="display:flex;align-items:center;gap:5px;background:#141414;border:1px solid #2a2a2a;padding:0 8px;">';
   h += '<span style="font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#888;">HP</span>';
   h += '<input type="number" id="ccw-hp-input" min="1" value="'+(_ccw.hp||'')+'" placeholder="—" oninput="_ccw.hp=Math.max(1,parseInt(this.value)||0)" style="width:46px;background:transparent;border:none;color:#eee;font-family:Montserrat,sans-serif;font-size:16px;font-weight:900;text-align:center;outline:none;">';
@@ -3568,7 +3538,7 @@ function lvlHP() {
   let h = '<p class="ccw-hint">Roll your class hit die (1'+hd.slice(1)+') '+(conMod!==0?((conMod>0?'+':'')+conMod+' CON '):'')+'and add the result to your maximum HP (minimum 1).</p>';
   h += '<div style="display:flex;gap:6px;align-items:stretch;margin-bottom:10px;">';
   h += '<button class="ccw-roll-btn" style="flex:1;margin:0;" onclick="lvlRollHP()">🎲 Roll 1'+hd.slice(1)+'</button>';
-  h += '<button class="ccw-roll-btn" style="flex:0 0 auto;margin:0;background:#1a3a4a;border-color:#2d6a7a;color:#8ad4e0;" onclick="lvlMaxHP()" title="Take the maximum die result">⬆ Max</button>';
+  h += '<button style="flex:0 0 auto;margin:0;padding:0 12px;background:#1a3a4a;border:1px solid #2d6a7a;color:#8ad4e0;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:10px;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap;" onclick="lvlMaxHP()" title="Take the maximum die result">⬆ Max</button>';
   h += '<div style="display:flex;align-items:center;gap:5px;background:#141414;border:1px solid #2a2a2a;padding:0 8px;">';
   h += '<span style="font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#888;">+HP</span>';
   h += '<input type="number" id="lvl-hp-input" min="1" value="'+(_lvl.hpRoll!==null?_lvl.hpRoll:'')+'" placeholder="—" oninput="_lvl.hpRoll=Math.max(1,parseInt(this.value)||0)" style="width:46px;background:transparent;border:none;color:#eee;font-family:Montserrat,sans-serif;font-size:16px;font-weight:900;text-align:center;outline:none;">';
