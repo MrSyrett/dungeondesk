@@ -102,11 +102,11 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 
 /* STATS BLOCK */
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;border-bottom:1px solid var(--rule);}
-.stat-cell{padding:8px 10px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);}
+.stat-cell{padding:8px 10px;border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);display:flex;flex-direction:column;align-items:center;}
 .stat-cell:nth-child(2n){border-right:none;}
 .stat-cell:nth-last-child(-n+2){border-bottom:none;}
-.stat-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:4px;}
-.stat-val-row{display:flex;align-items:center;gap:6px;}
+.stat-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:4px;text-align:center;}
+.stat-val-row{display:flex;align-items:center;justify-content:center;gap:6px;}
 .stat-val{width:44px;height:36px;border:2px solid var(--border);background:var(--input-bg);font-family:'Montserrat',sans-serif;font-size:18px;font-weight:900;text-align:center;color:var(--ink);outline:none;}
 .stat-mod{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;color:var(--ink);min-width:28px;background:var(--box);border:1px solid var(--rule);text-align:center;padding:2px 4px;cursor:pointer;}
 .stat-mod:hover{background:var(--black);color:white;}
@@ -121,7 +121,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .hp-box,.ac-box{flex:0 0 50%;padding:5px 6px;display:flex;flex-direction:column;align-items:center;gap:2px;box-sizing:border-box;overflow:hidden;}
 .hp-box{border-right:1px solid var(--rule);}
 .hpac-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);}
-.hpac-inputs{display:flex;align-items:center;gap:2px;overflow:hidden;}
+.hpac-inputs{display:flex;align-items:center;justify-content:center;gap:2px;overflow:hidden;}
 .hpac-input{width:36px;min-width:0;height:34px;border:2px solid var(--border);background:var(--input-bg);font-family:'Montserrat',sans-serif;font-size:16px;font-weight:900;text-align:center;color:var(--ink);outline:none;}
 .hpac-slash{font-size:13px;font-weight:700;color:var(--muted);flex-shrink:0;}
 .hpac-max{width:30px;min-width:0;height:28px;border:1px solid var(--rule);background:var(--box);font-family:'Montserrat',sans-serif;font-size:12px;font-weight:700;text-align:center;color:var(--ink);outline:none;}
@@ -191,7 +191,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 
 /* ROLL BTN */
 .stat-roll-row{margin-top:3px;}
-.stat-roll-btn{width:100%;padding:3px 0;background:var(--black);color:white;border:none;cursor:pointer;font-size:11px;line-height:1.2;}
+.stat-roll-btn{width:100%;margin-top:4px;padding:3px 0;background:var(--black);color:white;border:none;cursor:pointer;font-size:11px;line-height:1.2;}
 .stat-roll-btn:hover{background:var(--red);}
 
 /* dark mode inputs */
@@ -1602,10 +1602,19 @@ autoLoad();
   .log-action-btn.newchar{min-height:46px;}
 
   /* Core numbers: big enough to read at arm's length */
-  .hpac-input,.hpac-max{height:46px!important;font-size:24px!important;}
-  .stat-val{width:56px!important;height:46px!important;font-size:22px!important;}
-  .stat-mod{font-size:15px!important;}
-  .stat-name{font-size:10px!important;}
+  .stats-grid{grid-template-columns:1fr 1fr;}
+  .stat-cell{padding:12px 8px!important;}
+  .stat-label{font-size:12px!important;letter-spacing:.14em!important;margin-bottom:6px!important;}
+  .stat-val{width:72px!important;height:58px!important;font-size:28px!important;border-width:2px!important;}
+  .stat-mod{font-size:20px!important;min-width:42px!important;padding:8px 6px!important;}
+  .stat-roll-btn{font-size:20px!important;min-height:46px!important;}
+
+  .hp-box,.ac-box{padding:10px 6px!important;}
+  .hpac-label{font-size:11px!important;letter-spacing:.14em!important;}
+  .hpac-input{width:60px!important;height:52px!important;font-size:26px!important;}
+  .hpac-max{width:48px!important;height:40px!important;font-size:18px!important;}
+  .hpac-slash{font-size:18px!important;}
+  #ac-bonus{width:38px!important;height:34px!important;font-size:15px!important;}
   .xp-input,.lk-input{height:36px!important;width:44px!important;font-size:15px!important;}
   .lk-btn{width:32px!important;height:36px!important;font-size:15px!important;}
   .xp-label{font-size:10px!important;}
@@ -1622,7 +1631,17 @@ autoLoad();
   .spell-input,.spell-level,.spell-range,.spell-duration,.spell-damage{font-size:14px!important;min-height:32px!important;}
   .spell-desc{font-size:13px!important;}
   .sl{font-size:10px!important;letter-spacing:.12em!important;padding:6px 8px!important;}
-  .talents-area,.notes-area{font-size:14px!important;}
+
+  /* Header actions: Rest and Create / Level Up */
+  .sheet-title button{min-height:44px!important;font-size:12px!important;padding:8px 14px!important;letter-spacing:.08em!important;}
+  /* Section-bar actions: Spellbook, + Add Item, Cast Mod/bonus */
+  .sl button{min-height:40px!important;font-size:11px!important;padding:8px 12px!important;}
+  .sl select,.sl input{min-height:34px!important;font-size:13px!important;}
+  .sl label{font-size:10px!important;}
+
+  /* Talents & Notes text */
+  .talents-area,.notes-area,.info-field textarea,.info-field input{font-size:15px!important;line-height:1.5!important;}
+  .info-field label{font-size:10px!important;}
 
   /* Item shop / spellbook / wizard modals */
   .ccw-btn{min-height:46px!important;font-size:13px!important;}
