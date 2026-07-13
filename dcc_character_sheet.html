@@ -574,8 +574,8 @@ body.dark select.skill-stat-sel{background:var(--input-bg);}
     <button id="campaign-btn" class="log-action-btn" onclick="openCampaign()" style="border:1px solid #333;background:transparent;color:#888;">🔗 Campaign</button>
     <button class="log-action-btn save" onclick="saveSheet()">💾 Save</button>
     <button class="log-action-btn export" onclick="exportSheet()">↓ Export</button>
-    <button class="log-action-btn pdf" onclick="exportPDF()" title="Printer-friendly PDF">🖨 PDF</button>
     <label class="log-action-btn import" style="display:flex;align-items:center;justify-content:center;cursor:pointer;">↑ Import<input type="file" accept=".json" style="display:none" onchange="importSheet(this)"></label>
+    <button class="log-action-btn pdf" onclick="exportPDF()" title="Printer-friendly PDF">🖨 PDF</button>
   </div>
   <div class="log-entries" id="log-entries">
     <div class="log-hint">Click any stat or button to roll</div>
