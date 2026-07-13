@@ -592,9 +592,9 @@ input[type="number"] { -moz-appearance: textfield; }
 
 /* ═══ GENERATORS TOOL ═══ */
 .gen-tab-select {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700;
   letter-spacing: 0.04em;
-  padding: 8px 12px; background: var(--panel); border: 1px solid var(--border);
+  padding: 5px 9px; background: var(--panel); border: 1px solid var(--border);
   color: var(--white); cursor: pointer; outline: none; min-width: 0; max-width: 100%;
   transition: border-color 0.15s;
 }
@@ -608,14 +608,14 @@ input[type="number"] { -moz-appearance: textfield; }
   background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
 }
 .gen-label {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
   display: flex; flex-direction: column; gap: 4px;
 }
 .gen-select {
   background: var(--panel-2); border: 1px solid var(--border); color: var(--white);
-  font-family: 'Barlow Condensed', sans-serif; font-size: 18px;
-  padding: 7px 12px; outline: none; cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 13px;
+  padding: 5px 9px; outline: none; cursor: pointer;
 }
 .gen-select:focus { border-color: var(--mid); }
 .gen-results {
@@ -883,7 +883,6 @@ input[type="number"] { -moz-appearance: textfield; }
       <select class="pane-select" id="pane-1-select" onchange="setPaneTool(1, this.value)">
         <option value="adventure">📜 Adventure</option>
         <option value="maps">🗺 Maps</option>
-        <option value="combat">⚔ Combat</option>
         <option value="trackers">⏱ Trackers</option>
         <option value="notes">✎ Notes</option>
         <option value="audio">🌐 Browser</option>
@@ -901,8 +900,7 @@ input[type="number"] { -moz-appearance: textfield; }
       <select class="pane-select pane-2-select" id="pane-2-select" onchange="setPaneTool(2, this.value)">
         <option value="adventure">📜 Adventure</option>
         <option value="maps">🗺 Maps</option>
-        <option value="combat" selected>⚔ Combat</option>
-        <option value="trackers">⏱ Trackers</option>
+        <option value="trackers" selected>⏱ Trackers</option>
         <option value="notes">✎ Notes</option>
         <option value="audio">🌐 Browser</option>
         <option value="gen">🎲 Generators</option>
@@ -918,7 +916,6 @@ input[type="number"] { -moz-appearance: textfield; }
       <select class="pane-select" id="pane-3-select" onchange="setPaneTool(3, this.value)">
         <option value="adventure">📜 Adventure</option>
         <option value="maps">🗺 Maps</option>
-        <option value="combat">⚔ Combat</option>
         <option value="trackers">⏱ Trackers</option>
         <option value="notes" selected>✎ Notes</option>
         <option value="audio">🌐 Browser</option>
@@ -936,7 +933,6 @@ input[type="number"] { -moz-appearance: textfield; }
       <select class="pane-select" id="pane-4-select" onchange="setPaneTool(4, this.value)">
         <option value="adventure">📜 Adventure</option>
         <option value="maps">🗺 Maps</option>
-        <option value="combat">⚔ Combat</option>
         <option value="trackers">⏱ Trackers</option>
         <option value="notes">✎ Notes</option>
         <option value="audio">🌐 Browser</option>
@@ -1003,32 +999,12 @@ input[type="number"] { -moz-appearance: textfield; }
     </div>
   </div>
 </template>
-<template id="tpl-combat">
-  <div class="tool-instance cbt-tool" data-tool="combat">
-    <div class="toolbar-tpl" style="display:none">
-      <button class="btn small primary cbt-add-npc">+ NPC</button>
-      <div class="toolbar-spacer"></div>
-      <button class="btn small ghost cbt-reset">Clear All</button>
-    </div>
-    <div class="cbt-body cbt-single">
-      <div class="cbt-col cbt-npcs-col">
-        <div class="cbt-col-header">
-          <span class="cbt-col-title">NPCs &amp; Monsters</span>
-          <button class="btn small primary cbt-add-npc">+ NPC</button>
-        </div>
-        <div class="cbt-npc-list"></div>
-        <div class="cbt-empty cbt-npcs-empty">
-          <div class="cbt-empty-text">No combatants yet</div>
-          <div class="cbt-empty-sub">Add monsters and NPCs to track their health</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
 <template id="tpl-trackers">
   <div class="tool-instance cbt-tool trk-tool" data-tool="trackers">
     <div class="toolbar-tpl" style="display:none">
-      <button class="btn primary small trk-next-round">Next Round →</button>
+      <button class="btn small primary cbt-add-tracker">+ Timer</button>
+      <button class="btn small primary cbt-add-npc">+ Combat</button>
+      <button class="btn primary small trk-next-round">Next Round &rarr;</button>
       <span class="cbt-round-display">Round <span class="trk-round-num">1</span></span>
       <div class="toolbar-spacer"></div>
       <button class="btn small ghost trk-reset">Reset</button>
@@ -1036,13 +1012,12 @@ input[type="number"] { -moz-appearance: textfield; }
     <div class="cbt-body cbt-single">
       <div class="cbt-col cbt-trackers-col">
         <div class="cbt-col-header">
-          <span class="cbt-col-title">Round Trackers</span>
-          <button class="btn small primary cbt-add-tracker">+ Tracker</button>
+          <span class="cbt-col-title">Trackers</span>
         </div>
         <div class="cbt-tracker-list"></div>
         <div class="cbt-empty cbt-trackers-empty">
-          <div class="cbt-empty-text">No trackers yet</div>
-          <div class="cbt-empty-sub">Add round-based effects or real-time countdown timers</div>
+          <div class="cbt-empty-text">Nothing tracked yet</div>
+          <div class="cbt-empty-sub">Add timers, round trackers, or combatants &mdash; drag &#10303; or use &#9650;&#9660; to reorder</div>
         </div>
       </div>
     </div>
@@ -1504,7 +1479,7 @@ input[type="number"] { -moz-appearance: textfield; }
 // This is what makes loaded files / typed content persist.
 // ══════════════════════════════════════════
 
-const TOOL_TYPES = ['adventure', 'maps', 'combat', 'notes', 'audio', 'gen'];
+const TOOL_TYPES = ['adventure', 'maps', 'trackers', 'notes', 'audio', 'gen'];
 const instancePool = document.createElement('div');
 instancePool.style.cssText = 'position:fixed; top:0; left:-9999px; width:1px; height:1px; overflow:hidden;';
 document.body.appendChild(instancePool);
@@ -1516,9 +1491,12 @@ let splitMode = 1;
 let splitPref = 1;
 const GM_MOBILE_MQ = window.matchMedia('(max-width: 760px)');
 function isMobileView() { return GM_MOBILE_MQ.matches; }
-let paneTools = { 1: 'adventure', 2: 'combat', 3: 'notes', 4: 'dice' };
+let paneTools = { 1: 'adventure', 2: 'trackers', 3: 'notes', 4: 'dice' };
+// Combat and Trackers were merged into one tool; old saves may still say 'combat'.
+function normalizeTool(t) { return t === 'combat' ? 'trackers' : t; }
 
 function getOrCreateInstance(toolType) {
+  toolType = normalizeTool(toolType);
   if(instances[toolType]) return instances[toolType];
   const tpl = document.getElementById('tpl-' + toolType);
   const node = tpl.content.firstElementChild.cloneNode(true);
@@ -1570,7 +1548,7 @@ GM_MOBILE_MQ.addEventListener('change', () => setSplit(splitPref));
 // Each tool has a single DOM instance, so it can only live in one pane.
 // If a duplicate is found, swap that pane to the first unused tool.
 function dedupePaneTools(count) {
-  const all = ['adventure','maps','combat','trackers','notes','audio','gen','dice'];
+  const all = ['adventure','maps','trackers','notes','audio','gen','dice'];
   const used = new Set();
   for(let p = 1; p <= (count || 4); p++) {
     let tool = paneTools[p];
@@ -1585,6 +1563,7 @@ function dedupePaneTools(count) {
 }
 
 function setPaneTool(paneNum, tool) {
+  tool = normalizeTool(tool);
   // A tool has one instance, so if a visible pane already shows it, swap the two.
   const prev = paneTools[paneNum];
   for(let p = 1; p <= splitMode; p++) {
@@ -1610,15 +1589,25 @@ function setPaneTool(paneNum, tool) {
 // a multi-pane view, take another visible pane. Only in single view do we swap
 // the generator pane itself.
 
-// Sessions saved before Combat and Trackers were split store {round, trackers,
-// npcs} under 'combat'. Move the tracker half to the new 'trackers' tool.
+// Combat and Trackers are now ONE tool with a single ordered list. Older saves
+// may hold {round, trackers} under 'trackers' and/or {npcs} under 'combat' —
+// fold both into the unified 'trackers' state.
 function migrateToolState(tools) {
-  if(!tools || !tools.combat) return tools;
-  const c = tools.combat;
-  const hasTrackerData = ('trackers' in c) || ('round' in c);
-  if(hasTrackerData && !tools.trackers) {
-    tools.trackers = { round: c.round || 1, trackers: c.trackers || [] };
+  if(!tools) return tools;
+  const t = tools.trackers, c = tools.combat;
+  if(!c && !(t && (t.trackers || t.npcs))) return tools;
+
+  const merged = { round: (t && t.round) || (c && c.round) || 1, items: [] };
+  if(t && Array.isArray(t.items)) merged.items = t.items.slice();
+  else {
+    (((t && t.trackers) || (c && c.trackers) || [])).forEach(x => merged.items.push({ ...x, type: 'tracker' }));
+    (((c && c.npcs) || (t && t.npcs) || [])).forEach(x => merged.items.push({ ...x, type: 'npc' }));
   }
+  // Re-key ids so a tracker and an NPC that shared id 1 don't collide
+  let id = 1;
+  merged.items.forEach(x => { x.id = id++; });
+  tools.trackers = merged;
+  delete tools.combat;
   return tools;
 }
 
@@ -1683,7 +1672,7 @@ function syncToolbar(slot, toolNode) {
     ['.doc-zoom-out',  '.doc-zoom-out'],
     ['.doc-zoom-in',   '.doc-zoom-in'],
     ['.doc-clear',     '.doc-clear'],
-    // combat — handled by document-level delegation in init_combat, no proxy needed
+    // trackers + combat — handled by document-level delegation in init_trackers
     ['.cbt-next-round', null],
     ['.cbt-reset',      null],
     // notes
@@ -1981,16 +1970,29 @@ function init_maps(root) { initDocTool(root); }
 // ══════════════════════════════════════════
 // COMBAT & TRACKERS TOOL
 // ══════════════════════════════════════════
-function init_combat(root) {
-  let npcs = [];
-  let nextNpcId = 1;
+// ═══ TRACKERS + COMBAT (merged) ═══════════════════════════════════════════
+// One ordered list holds both kinds of card:
+//   { type:'tracker', kind:'rounds'|'timer', ... }
+//   { type:'npc',     hpMode:'standard'|'dcc', ... }
+// Cards can be reordered by dragging the ⠿ handle or with the ▲▼ buttons.
+function init_trackers(root) {
+  let round = 1;
+  let items = [];            // unified, ordered
+  let nextId = 1;
 
-  const npcList = root.querySelector('.cbt-npc-list');
-  const npcsEmpty = root.querySelector('.cbt-npcs-empty');
+  const list  = root.querySelector('.cbt-tracker-list');
+  const empty = root.querySelector('.cbt-trackers-empty');
 
   function escAttr(s) { return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  function fmtTime(sec) {
+    sec = Math.max(0, sec);
+    return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0');
+  }
+  function updateRoundDisplay() {
+    document.querySelectorAll('.trk-round-num').forEach(el => { el.textContent = round; });
+  }
   function npcHpColor(pct) {
-    if(pct <= 0) return '#3a3a3a';
+    if(pct <= 0)  return '#3a3a3a';
     if(pct <= 25) return '#b82018';
     if(pct <= 50) return '#c08020';
     if(pct <= 75) return '#c8a020';
@@ -1998,8 +2000,58 @@ function init_combat(root) {
   }
   function dccSegColor(index, total) {
     const colors = ['#b82018', '#c08020', '#c8a020', '#4caf50'];
-    const band = Math.min(3, Math.floor((index * 4) / total));
-    return colors[band];
+    return colors[Math.min(3, Math.floor((index * 4) / total))];
+  }
+
+  // ── Reordering ──
+  function moveItem(id, delta) {
+    const i = items.findIndex(x => x.id === id);
+    const j = i + delta;
+    if(i < 0 || j < 0 || j >= items.length) return;
+    [items[i], items[j]] = [items[j], items[i]];
+    render();
+  }
+  function reorderHtml(item, idx) {
+    const first = idx === 0, last = idx === items.length - 1;
+    return `
+      <div class="card-reorder">
+        <span class="card-drag" title="Drag to reorder">&#10303;</span>
+        <button class="card-move card-up" ${first ? 'disabled' : ''} title="Move up">&#9650;</button>
+        <button class="card-move card-down" ${last ? 'disabled' : ''} title="Move down">&#9660;</button>
+      </div>`;
+  }
+  function wireReorder(card, item) {
+    card.querySelector('.card-up')?.addEventListener('click', () => moveItem(item.id, -1));
+    card.querySelector('.card-down')?.addEventListener('click', () => moveItem(item.id, +1));
+    const handle = card.querySelector('.card-drag');
+    if(handle) {
+      handle.addEventListener('pointerdown', () => { card.draggable = true; });
+      handle.addEventListener('pointerup',   () => { card.draggable = false; });
+    }
+    card.addEventListener('dragstart', e => {
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', String(item.id));
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      card.draggable = false;
+      list.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+    });
+    card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drop-target'); });
+    card.addEventListener('dragleave', () => card.classList.remove('drop-target'));
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      card.classList.remove('drop-target');
+      const dragId = parseInt(e.dataTransfer.getData('text/plain'));
+      if(!dragId || dragId === item.id) return;
+      const from = items.findIndex(x => x.id === dragId);
+      const to   = items.findIndex(x => x.id === item.id);
+      if(from < 0 || to < 0) return;
+      const [moved] = items.splice(from, 1);
+      items.splice(to, 0, moved);
+      render();
+    });
   }
 
   // ── Status checklist (NPC cards) ──
@@ -2008,341 +2060,287 @@ function init_combat(root) {
       <div class="status-row" data-status-id="${s.id}">
         <input type="checkbox" class="status-check" ${s.checked ? 'checked' : ''}>
         <input type="text" class="status-text" value="${escAttr(s.text)}" placeholder="Status, condition, recharge...">
-        <button class="status-del" title="Remove">✕</button>
+        <button class="status-del" title="Remove">&#10005;</button>
       </div>
     `).join('');
-    return `
-      <div class="status-list">${rows}</div>
-      <button class="btn small ghost status-add">+ Status</button>
-    `;
+    return `<div class="status-list">${rows}</div>
+      <button class="btn small ghost status-add">+ Status</button>`;
   }
-
-  function wireStatusList(card, entity, rerenderFn) {
+  function wireStatusList(card, entity) {
     if(!entity.statuses) entity.statuses = [];
-    let nextStatusId = entity._nextStatusId || 1;
-    entity._nextStatusId = nextStatusId;
-
+    if(!entity._nextStatusId) entity._nextStatusId = 1;
     card.querySelectorAll('.status-row').forEach(row => {
       const id = parseInt(row.dataset.statusId);
-      const s = entity.statuses.find(x => x.id === id);
-      if(!s) return;
-      row.querySelector('.status-check').addEventListener('change', e => { s.checked = e.target.checked; });
-      row.querySelector('.status-text').addEventListener('input', e => { s.text = e.target.value; });
+      const st = entity.statuses.find(x => x.id === id);
+      if(!st) return;
+      row.querySelector('.status-check').addEventListener('change', e => { st.checked = e.target.checked; });
+      row.querySelector('.status-text').addEventListener('input',  e => { st.text = e.target.value; });
       row.querySelector('.status-del').addEventListener('click', () => {
         entity.statuses = entity.statuses.filter(x => x.id !== id);
-        rerenderFn();
+        render();
       });
     });
     card.querySelector('.status-add')?.addEventListener('click', () => {
       entity.statuses.push({ id: entity._nextStatusId++, checked: false, text: '' });
-      rerenderFn();
+      render();
     });
   }
 
-function renderNpcs() {
-    npcList.innerHTML = '';
-    npcsEmpty.classList.toggle('show', npcs.length === 0);
-    npcs.forEach(n => {
-      const card = document.createElement('div');
-      const mode = n.hpMode || 'standard';
+  // ── Tracker card ──
+  function buildTrackerCard(t, idx) {
+    const card = document.createElement('div');
+    card.dataset.id = t.id;
+    const expired = t.kind === 'rounds' ? t.rounds <= 0 : t.remainingSeconds <= 0;
+    card.className = 'tracker-card' + (t.kind === 'timer' ? ' timer-type' : '') + (expired ? ' expired' : '');
 
-      let hpBlockHtml = '';
-      let defeated = false;
-
-      if(mode === 'standard') {
-        const pct = n.hpMax > 0 ? Math.max(0, Math.min(100, (n.hpCurrent / n.hpMax) * 100)) : 0;
-        defeated = n.hpCurrent <= 0;
-        hpBlockHtml = `
-          <div class="npc-hp-row">
-            <input type="number" class="npc-hp-input npc-hp-current" value="${n.hpCurrent}">
-            <span class="npc-hp-slash">/</span>
-            <input type="number" class="npc-hp-input npc-hp-max" value="${n.hpMax}">
-            <div class="npc-hp-adjust">
-              <button class="npc-hp-btn dmg npc-dmg5" title="-5 HP">−5</button>
-              <button class="npc-hp-btn dmg npc-dmg1" title="-1 HP">−1</button>
-              <button class="npc-hp-btn heal npc-heal1" title="+1 HP">+1</button>
-              <button class="npc-hp-btn heal npc-heal5" title="+5 HP">+5</button>
-            </div>
-          </div>
-          <div class="npc-hp-bar-track"><div class="npc-hp-bar-fill" style="width:${pct}%;background:${npcHpColor(pct)};"></div></div>
-        `;
-      } else {
-        // DCC segmented mode: N segments, each is alive/dead (click to toggle).
-        // All segments share one global HP value, set here and applied to every segment.
-        const segCount = n.segCount || 10;
-        const segHp = n.segHp !== undefined ? n.segHp : 10;
-        if(!n.segments || n.segments.length !== segCount) {
-          n.segments = Array.from({length: segCount}, () => true); // true = alive
-        }
-        const liveSegs = n.segments.filter(Boolean).length;
-        defeated = liveSegs === 0;
-        const segHtml = n.segments.map((alive, i) => {
-          const color = dccSegColor(i, segCount);
-          return `
-            <button class="npc-seg ${alive ? '' : 'dead'}" data-seg-idx="${i}" style="--seg-color:${color};" title="Segment ${i+1}${alive ? '' : ' (down)'}">
-              <span class="npc-seg-num">${segHp}</span>
-            </button>
-          `;
-        }).join('');
-        hpBlockHtml = `
-          <div class="npc-seg-setup">
-            <span class="npc-seg-setup-label">Segments</span>
-            <input type="number" class="npc-seg-count-input" min="1" max="20" value="${segCount}">
-            <span class="npc-seg-setup-label">HP Each</span>
-            <input type="number" class="npc-seg-hp-input" min="1" value="${segHp}">
-            <button class="btn small ghost npc-seg-apply">Apply</button>
-          </div>
-          <div class="npc-seg-row">${segHtml}</div>
-        `;
-      }
-
-
-      card.className = 'npc-card' + (defeated ? ' defeated' : '');
-      card.innerHTML = `
-        <div class="npc-top">
-          <input type="text" class="npc-name-input" value="${escAttr(n.name)}" placeholder="NPC / Monster name...">
-          <input type="text" class="npc-tag-input" value="${escAttr(n.tag)}" placeholder="tag">
-          <div class="npc-mode-toggle">
-            <button class="npc-mode-btn std-active ${mode==='standard'?'active':''}" data-mode="standard">Standard</button>
-            <button class="npc-mode-btn dcc-active ${mode==='dcc'?'active':''}" data-mode="dcc">DCC</button>
-          </div>
-          <button class="npc-del" title="Remove">✕</button>
+    const bottom = t.kind === 'rounds' ? `
+        <button class="tracker-adjust-btn tracker-dec">&minus;</button>
+        <div class="tracker-rounds-display">
+          <span class="tracker-rounds ${t.rounds<=0?'zero':''}">${t.rounds}</span>
+          <span class="tracker-label">rounds</span>
         </div>
-        ${hpBlockHtml}
-        ${defeated ? '<div class="npc-defeated-tag">Defeated</div>' : ''}
-        ${statusListHtml(n.statuses)}
+        <button class="tracker-adjust-btn tracker-inc">+</button>
+        ${t.rounds <= 0 ? '<span class="tracker-expired-tag">Expired</span>' : ''}
+      ` : `
+        <div class="tracker-rounds-display">
+          <span class="timer-display ${t.remainingSeconds<=0?'zero':''}">${fmtTime(t.remainingSeconds)}</span>
+          <span class="tracker-label">${t.running ? 'running' : 'paused'}</span>
+        </div>
+        <div class="timer-controls">
+          <button class="tracker-adjust-btn timer-toggle">${t.running ? '&#9208;' : '&#9654;'}</button>
+          <button class="tracker-adjust-btn timer-reset">&#8634;</button>
+        </div>
+        ${t.remainingSeconds <= 0 ? '<span class="tracker-expired-tag">Time&#39;s Up</span>' : ''}
       `;
-      card.querySelector('.npc-name-input').addEventListener('input', e => { n.name = e.target.value; });
-      card.querySelector('.npc-tag-input').addEventListener('input', e => { n.tag = e.target.value; });
-      card.querySelector('.npc-del').addEventListener('click', () => { npcs = npcs.filter(x => x.id !== n.id); renderNpcs(); });
 
-      card.querySelectorAll('.npc-mode-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          if(btn.dataset.mode === mode) return;
-          n.hpMode = btn.dataset.mode;
-          renderNpcs();
-        });
+    card.innerHTML = `
+      <div class="tracker-top">
+        ${reorderHtml(t, idx)}
+        <input type="text" class="tracker-name-input" value="${escAttr(t.name)}" placeholder="Tracker name...">
+        <div class="tracker-type-toggle">
+          <button class="tracker-type-btn rounds-active ${t.kind==='rounds'?'active':''}" data-kind="rounds">Rounds</button>
+          <button class="tracker-type-btn timer-active ${t.kind==='timer'?'active':''}" data-kind="timer">Timer</button>
+        </div>
+        <button class="tracker-del" title="Remove">&#10005;</button>
+      </div>
+      <div class="tracker-bottom">${bottom}</div>
+      ${t.kind === 'timer' ? `
+      <div class="timer-set-row">
+        <span class="timer-set-label">Set</span>
+        <input type="number" class="timer-set-input timer-min" min="0" value="${Math.floor(t.totalSeconds/60)}">
+        <span class="timer-set-label">m</span>
+        <input type="number" class="timer-set-input timer-sec" min="0" max="59" value="${t.totalSeconds%60}">
+        <span class="timer-set-label">s</span>
+        <button class="btn small ghost timer-apply" style="margin-left:6px;">Apply</button>
+      </div>` : ''}
+    `;
+
+    card.querySelector('.tracker-name-input').addEventListener('input', e => { t.name = e.target.value; });
+    card.querySelector('.tracker-del').addEventListener('click', () => { items = items.filter(x => x.id !== t.id); render(); });
+    card.querySelectorAll('.tracker-type-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const kind = btn.dataset.kind;
+        if(kind === t.kind) return;
+        t.running = false;
+        t.kind = kind;
+        if(kind === 'timer' && t.totalSeconds === undefined) { t.totalSeconds = 60; t.remainingSeconds = 60; }
+        render();
       });
-
-      if(mode === 'standard') {
-        card.querySelector('.npc-hp-current').addEventListener('change', e => { n.hpCurrent = parseInt(e.target.value) || 0; renderNpcs(); });
-        card.querySelector('.npc-hp-max').addEventListener('change', e => { n.hpMax = parseInt(e.target.value) || 0; renderNpcs(); });
-        card.querySelector('.npc-hp-current').addEventListener('keydown', e => { if(e.key === 'Enter') e.target.blur(); });
-        card.querySelector('.npc-hp-max').addEventListener('keydown', e => { if(e.key === 'Enter') e.target.blur(); });
-        card.querySelector('.npc-dmg5').addEventListener('click', () => { n.hpCurrent = Math.max(0, n.hpCurrent - 5); renderNpcs(); });
-        card.querySelector('.npc-dmg1').addEventListener('click', () => { n.hpCurrent = Math.max(0, n.hpCurrent - 1); renderNpcs(); });
-        card.querySelector('.npc-heal1').addEventListener('click', () => { n.hpCurrent = Math.min(n.hpMax, n.hpCurrent + 1); renderNpcs(); });
-        card.querySelector('.npc-heal5').addEventListener('click', () => { n.hpCurrent = Math.min(n.hpMax, n.hpCurrent + 5); renderNpcs(); });
-      } else {
-        card.querySelector('.npc-seg-apply').addEventListener('click', () => {
-          const count = Math.max(1, Math.min(20, parseInt(card.querySelector('.npc-seg-count-input').value) || 1));
-          const hp = Math.max(1, parseInt(card.querySelector('.npc-seg-hp-input').value) || 1);
-          n.segCount = count;
-          n.segHp = hp;
-          n.segments = Array.from({length: count}, () => true);
-          renderNpcs();
-        });
-        card.querySelectorAll('.npc-seg').forEach(seg => {
-          seg.addEventListener('click', () => {
-            const idx = parseInt(seg.dataset.segIdx);
-            n.segments[idx] = !n.segments[idx];
-            renderNpcs();
-          });
-        });
-      }
-      wireStatusList(card, n, renderNpcs);
-      npcList.appendChild(card);
     });
-  }
-
-  function onCbtClick(e) {
-    const btn = e.target.closest('.cbt-reset, .cbt-add-npc');
-    if(!btn) return;
-    const paneContent = root.closest('.pane-content');
-    const paneNum = paneContent ? paneContent.id.replace('pane-','').replace('-content','') : null;
-    const toolbarSlot = paneNum ? document.getElementById('pane-' + paneNum + '-toolbar') : null;
-    const inRoot = root.contains(btn) || (toolbarSlot && toolbarSlot.contains(btn));
-    if(!inRoot) return;
-
-    if(btn.classList.contains('cbt-reset')) {
-      if(!confirm('Remove all NPCs and monsters?')) return;
-      npcs = [];
-      renderNpcs();
-    } else if(btn.classList.contains('cbt-add-npc')) {
-      npcs.push({ id: nextNpcId++, name: '', tag: '', hpCurrent: 10, hpMax: 10 });
-      renderNpcs();
+    if(t.kind === 'rounds') {
+      card.querySelector('.tracker-dec').addEventListener('click', () => { t.rounds = Math.max(0, t.rounds - 1); render(); });
+      card.querySelector('.tracker-inc').addEventListener('click', () => { t.rounds += 1; render(); });
+    } else {
+      card.querySelector('.timer-toggle').addEventListener('click', () => { t.running = !t.running; render(); });
+      card.querySelector('.timer-reset').addEventListener('click',  () => { t.running = false; t.remainingSeconds = t.totalSeconds; render(); });
+      card.querySelector('.timer-apply')?.addEventListener('click', () => {
+        const min = parseInt(card.querySelector('.timer-min').value) || 0;
+        const sec = parseInt(card.querySelector('.timer-sec').value) || 0;
+        t.totalSeconds = min * 60 + sec;
+        t.remainingSeconds = t.totalSeconds;
+        t.running = false;
+        render();
+      });
     }
-  }
-  document.addEventListener('click', onCbtClick);
-
-  renderNpcs();
-
-  root._getState = () => ({ npcs });
-  root._setState = (s) => {
-    if(!s) return;
-    npcs = s.npcs || [];
-    renderNpcs();
-  };
-}
-
-function init_trackers(root) {
-  let round = 1;
-  let trackers = [];
-  let nextTrackerId = 1;
-
-  function updateRoundDisplay() {
-    document.querySelectorAll('.trk-round-num').forEach(el => {
-      el.textContent = round;
-    });
-  }
-  const trackerList = root.querySelector('.cbt-tracker-list');
-  const trackersEmpty = root.querySelector('.cbt-trackers-empty');
-
-  function escAttr(s) { return (s || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
-  function fmtTime(sec) {
-    sec = Math.max(0, sec);
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return m + ':' + String(s).padStart(2, '0');
+    return card;
   }
 
-function renderTrackers() {
-    trackerList.innerHTML = '';
-    trackersEmpty.classList.toggle('show', trackers.length === 0);
-    trackers.forEach(t => {
-      const card = document.createElement('div');
-      card.dataset.id = t.id;
-      const isExpired = t.kind === 'rounds' ? t.rounds <= 0 : t.remainingSeconds <= 0;
-      card.className = 'tracker-card' + (t.kind === 'timer' ? ' timer-type' : '') + (isExpired ? ' expired' : '');
+  // ── NPC / combatant card ──
+  function buildNpcCard(n, idx) {
+    const card = document.createElement('div');
+    card.dataset.id = n.id;
+    const mode = n.hpMode || 'standard';
+    let hpBlockHtml = '', defeated = false;
 
-      let bottomHtml = '';
-      if(t.kind === 'rounds') {
-        bottomHtml = `
-          <button class="tracker-adjust-btn tracker-dec">−</button>
-          <div class="tracker-rounds-display">
-            <span class="tracker-rounds ${t.rounds<=0?'zero':''}">${t.rounds}</span>
-            <span class="tracker-label">rounds</span>
+    if(mode === 'standard') {
+      const pct = n.hpMax > 0 ? Math.max(0, Math.min(100, (n.hpCurrent / n.hpMax) * 100)) : 0;
+      defeated = n.hpCurrent <= 0;
+      hpBlockHtml = `
+        <div class="npc-hp-row">
+          <input type="number" class="npc-hp-input npc-hp-current" value="${n.hpCurrent}">
+          <span class="npc-hp-slash">/</span>
+          <input type="number" class="npc-hp-input npc-hp-max" value="${n.hpMax}">
+          <div class="npc-hp-adjust">
+            <button class="npc-hp-btn dmg npc-dmg5" title="-5 HP">&minus;5</button>
+            <button class="npc-hp-btn dmg npc-dmg1" title="-1 HP">&minus;1</button>
+            <button class="npc-hp-btn heal npc-heal1" title="+1 HP">+1</button>
+            <button class="npc-hp-btn heal npc-heal5" title="+5 HP">+5</button>
           </div>
-          <button class="tracker-adjust-btn tracker-inc">+</button>
-          ${t.rounds <= 0 ? '<span class="tracker-expired-tag">Expired</span>' : ''}
-        `;
-      } else {
-        bottomHtml = `
-          <div class="tracker-rounds-display">
-            <span class="timer-display ${t.remainingSeconds<=0?'zero':''}">${fmtTime(t.remainingSeconds)}</span>
-            <span class="tracker-label">${t.running ? 'running' : 'paused'}</span>
-          </div>
-          <div class="timer-controls">
-            <button class="tracker-adjust-btn timer-toggle">${t.running ? '⏸' : '▶'}</button>
-            <button class="tracker-adjust-btn timer-reset">↺</button>
-          </div>
-          ${t.remainingSeconds <= 0 ? '<span class="tracker-expired-tag">Time&#39;s Up</span>' : ''}
-        `;
-      }
-
-      card.innerHTML = `
-        <div class="tracker-top">
-          <input type="text" class="tracker-name-input" value="${escAttr(t.name)}" placeholder="Tracker name...">
-          <div class="tracker-type-toggle">
-            <button class="tracker-type-btn rounds-active ${t.kind==='rounds'?'active':''}" data-kind="rounds">Rounds</button>
-            <button class="tracker-type-btn timer-active ${t.kind==='timer'?'active':''}" data-kind="timer">Timer</button>
-          </div>
-          <button class="tracker-del" title="Remove">✕</button>
         </div>
-        <div class="tracker-bottom">${bottomHtml}</div>
-        ${t.kind === 'timer' ? `
-        <div class="timer-set-row">
-          <span class="timer-set-label">Set</span>
-          <input type="number" class="timer-set-input timer-min" min="0" value="${Math.floor(t.totalSeconds/60)}">
-          <span class="timer-set-label">m</span>
-          <input type="number" class="timer-set-input timer-sec" min="0" max="59" value="${t.totalSeconds%60}">
-          <span class="timer-set-label">s</span>
-          <button class="btn small ghost timer-apply" style="margin-left:6px;">Apply</button>
-        </div>` : ''}
+        <div class="npc-hp-bar-track"><div class="npc-hp-bar-fill" style="width:${pct}%;background:${npcHpColor(pct)};"></div></div>
       `;
+    } else {
+      const segCount = n.segCount || 10;
+      const segHp = n.segHp !== undefined ? n.segHp : 10;
+      if(!n.segments || n.segments.length !== segCount) n.segments = Array.from({length: segCount}, () => true);
+      defeated = n.segments.filter(Boolean).length === 0;
+      const segHtml = n.segments.map((alive, i) => `
+          <button class="npc-seg ${alive ? '' : 'dead'}" data-seg-idx="${i}" style="--seg-color:${dccSegColor(i, segCount)};" title="Segment ${i+1}${alive ? '' : ' (down)'}">
+            <span class="npc-seg-num">${segHp}</span>
+          </button>`).join('');
+      hpBlockHtml = `
+        <div class="npc-seg-setup">
+          <span class="npc-seg-setup-label">Segments</span>
+          <input type="number" class="npc-seg-count-input" min="1" max="20" value="${segCount}">
+          <span class="npc-seg-setup-label">HP Each</span>
+          <input type="number" class="npc-seg-hp-input" min="1" value="${segHp}">
+          <button class="btn small ghost npc-seg-apply">Apply</button>
+        </div>
+        <div class="npc-seg-row">${segHtml}</div>
+      `;
+    }
 
-      card.querySelector('.tracker-name-input').addEventListener('input', e => { t.name = e.target.value; });
-      card.querySelector('.tracker-del').addEventListener('click', () => {
-        trackers = trackers.filter(x => x.id !== t.id);
-        renderTrackers();
+    card.className = 'npc-card' + (defeated ? ' defeated' : '');
+    card.innerHTML = `
+      <div class="npc-top">
+        ${reorderHtml(n, idx)}
+        <input type="text" class="npc-name-input" value="${escAttr(n.name)}" placeholder="NPC / Monster name...">
+        <input type="text" class="npc-tag-input" value="${escAttr(n.tag)}" placeholder="tag">
+        <div class="npc-mode-toggle">
+          <button class="npc-mode-btn std-active ${mode==='standard'?'active':''}" data-mode="standard">Standard</button>
+          <button class="npc-mode-btn dcc-active ${mode==='dcc'?'active':''}" data-mode="dcc">DCC</button>
+        </div>
+        <button class="npc-del" title="Remove">&#10005;</button>
+      </div>
+      ${hpBlockHtml}
+      ${defeated ? '<div class="npc-defeated-tag">Defeated</div>' : ''}
+      ${statusListHtml(n.statuses)}
+    `;
+
+    card.querySelector('.npc-name-input').addEventListener('input', e => { n.name = e.target.value; });
+    card.querySelector('.npc-tag-input').addEventListener('input', e => { n.tag = e.target.value; });
+    card.querySelector('.npc-del').addEventListener('click', () => { items = items.filter(x => x.id !== n.id); render(); });
+    card.querySelectorAll('.npc-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if(btn.dataset.mode === mode) return;
+        n.hpMode = btn.dataset.mode;
+        render();
       });
+    });
 
-      card.querySelectorAll('.tracker-type-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const kind = btn.dataset.kind;
-          if(kind === t.kind) return;
-          t.running = false;
-          t.kind = kind;
-          if(kind === 'timer' && t.totalSeconds === undefined) { t.totalSeconds = 60; t.remainingSeconds = 60; }
-          renderTrackers();
+    if(mode === 'standard') {
+      card.querySelector('.npc-hp-current').addEventListener('change', e => { n.hpCurrent = parseInt(e.target.value) || 0; render(); });
+      card.querySelector('.npc-hp-max').addEventListener('change',     e => { n.hpMax = parseInt(e.target.value) || 0; render(); });
+      card.querySelector('.npc-hp-current').addEventListener('keydown', e => { if(e.key === 'Enter') e.target.blur(); });
+      card.querySelector('.npc-hp-max').addEventListener('keydown',     e => { if(e.key === 'Enter') e.target.blur(); });
+      card.querySelector('.npc-dmg5').addEventListener('click',  () => { n.hpCurrent = Math.max(0, n.hpCurrent - 5); render(); });
+      card.querySelector('.npc-dmg1').addEventListener('click',  () => { n.hpCurrent = Math.max(0, n.hpCurrent - 1); render(); });
+      card.querySelector('.npc-heal1').addEventListener('click', () => { n.hpCurrent = Math.min(n.hpMax, n.hpCurrent + 1); render(); });
+      card.querySelector('.npc-heal5').addEventListener('click', () => { n.hpCurrent = Math.min(n.hpMax, n.hpCurrent + 5); render(); });
+    } else {
+      card.querySelector('.npc-seg-apply').addEventListener('click', () => {
+        const count = Math.max(1, Math.min(20, parseInt(card.querySelector('.npc-seg-count-input').value) || 1));
+        const hp = Math.max(1, parseInt(card.querySelector('.npc-seg-hp-input').value) || 1);
+        n.segCount = count; n.segHp = hp;
+        n.segments = Array.from({length: count}, () => true);
+        render();
+      });
+      card.querySelectorAll('.npc-seg').forEach(seg => {
+        seg.addEventListener('click', () => {
+          const i = parseInt(seg.dataset.segIdx);
+          n.segments[i] = !n.segments[i];
+          render();
         });
       });
+    }
+    wireStatusList(card, n);
+    return card;
+  }
 
-      if(t.kind === 'rounds') {
-        card.querySelector('.tracker-dec').addEventListener('click', () => { t.rounds = Math.max(0, t.rounds - 1); renderTrackers(); });
-        card.querySelector('.tracker-inc').addEventListener('click', () => { t.rounds += 1; renderTrackers(); });
-      } else {
-        card.querySelector('.timer-toggle').addEventListener('click', () => {
-          t.running = !t.running;
-          renderTrackers();
-        });
-        card.querySelector('.timer-reset').addEventListener('click', () => {
-          t.running = false;
-          t.remainingSeconds = t.totalSeconds;
-          renderTrackers();
-        });
-        card.querySelector('.timer-apply')?.addEventListener('click', () => {
-          const min = parseInt(card.querySelector('.timer-min').value) || 0;
-          const sec = parseInt(card.querySelector('.timer-sec').value) || 0;
-          t.totalSeconds = min * 60 + sec;
-          t.remainingSeconds = t.totalSeconds;
-          t.running = false;
-          renderTrackers();
-        });
-      }
-
-      trackerList.appendChild(card);
+  function render() {
+    list.innerHTML = '';
+    empty.classList.toggle('show', items.length === 0);
+    items.forEach((it, idx) => {
+      const card = it.type === 'npc' ? buildNpcCard(it, idx) : buildTrackerCard(it, idx);
+      wireReorder(card, it);
+      list.appendChild(card);
     });
   }
 
-  function onTrkClick(e) {
-    const btn = e.target.closest('.trk-next-round, .trk-reset, .cbt-add-tracker');
+  // Running timers tick once a second (only re-render if something changed).
+  setInterval(() => {
+    let dirty = false;
+    items.forEach(it => {
+      if(it.type === 'tracker' && it.kind === 'timer' && it.running && it.remainingSeconds > 0) {
+        it.remainingSeconds = Math.max(0, it.remainingSeconds - 1);
+        if(it.remainingSeconds === 0) it.running = false;
+        dirty = true;
+      }
+    });
+    if(dirty) render();
+  }, 1000);
+
+  function onClick(e) {
+    const btn = e.target.closest('.trk-next-round, .trk-reset, .cbt-add-tracker, .cbt-add-npc, .cbt-reset');
     if(!btn) return;
     const paneContent = root.closest('.pane-content');
     const paneNum = paneContent ? paneContent.id.replace('pane-','').replace('-content','') : null;
     const toolbarSlot = paneNum ? document.getElementById('pane-' + paneNum + '-toolbar') : null;
-    const inRoot = root.contains(btn) || (toolbarSlot && toolbarSlot.contains(btn));
-    if(!inRoot) return;
+    if(!(root.contains(btn) || (toolbarSlot && toolbarSlot.contains(btn)))) return;
 
     if(btn.classList.contains('trk-next-round')) {
       round += 1;
       updateRoundDisplay();
-      trackers.forEach(t => { if(t.kind === 'rounds') t.rounds = Math.max(0, t.rounds - 1); });
-      renderTrackers();
-    } else if(btn.classList.contains('trk-reset')) {
-      if(!confirm('Reset the round counter and clear all trackers?')) return;
-      round = 1; trackers = [];
-      updateRoundDisplay(); renderTrackers();
+      items.forEach(it => { if(it.type === 'tracker' && it.kind === 'rounds') it.rounds = Math.max(0, it.rounds - 1); });
+      render();
+    } else if(btn.classList.contains('trk-reset') || btn.classList.contains('cbt-reset')) {
+      if(!confirm('Reset the round counter and clear all trackers and combatants?')) return;
+      round = 1; items = [];
+      updateRoundDisplay(); render();
     } else if(btn.classList.contains('cbt-add-tracker')) {
-      trackers.push({ id: nextTrackerId++, name: '', kind: 'rounds', rounds: 1, totalSeconds: 60, remainingSeconds: 60, running: false });
-      renderTrackers();
+      items.push({ id: nextId++, type: 'tracker', name: '', kind: 'rounds', rounds: 1, totalSeconds: 60, remainingSeconds: 60, running: false });
+      render();
+    } else if(btn.classList.contains('cbt-add-npc')) {
+      items.push({ id: nextId++, type: 'npc', name: '', tag: '', hpMode: 'standard', hpCurrent: 10, hpMax: 10, statuses: [] });
+      render();
     }
   }
-  document.addEventListener('click', onTrkClick);
+  document.addEventListener('click', onClick);
 
-  renderTrackers();
+  render();
   updateRoundDisplay();
 
-  root._getState = () => ({ round, trackers });
-  root._setState = (s) => {
-    if(!s) return;
-    round = s.round || 1;
+  root._getState = () => ({ round, items });
+  root._setState = (st) => {
+    if(!st) return;
+    round = st.round || 1;
+    // Accept the new unified shape, and migrate old saves that kept
+    // { trackers: [...] } and { npcs: [...] } in two separate tools.
+    let list_ = Array.isArray(st.items) ? st.items.slice() : [];
+    if(!list_.length) {
+      (st.trackers || []).forEach(t => list_.push({ ...t, type: 'tracker' }));
+      (st.npcs || []).forEach(n => list_.push({ ...n, type: 'npc' }));
+    }
+    items = list_.map(it => ({ ...it, type: it.type || (it.kind ? 'tracker' : 'npc'), running: false }));
+    nextId = items.reduce((m, it) => Math.max(m, it.id || 0), 0) + 1;
+    items.forEach((it, i) => { if(!it.id) it.id = nextId++; });
     updateRoundDisplay();
-    trackers = (s.trackers || []).map(t => ({...t, running: false, intervalId: null}));
-    renderTrackers();
+    render();
   };
 }
 window.init_trackers = init_trackers;
+// Old sessions may still ask for the 'combat' tool; it's the same tool now.
+window.init_combat = init_trackers;
 </script>
 
 </script>
@@ -5920,6 +5918,148 @@ window.init_gen = function(root) {
   min-width: 0 !important; white-space: nowrap; letter-spacing: 0 !important;
   padding-left: 0 !important; padding-right: 0 !important;
 }
+/* ══ REORDER HANDLES (tracker + combat cards) ════════════════════════════ */
+.card-reorder { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.card-drag {
+  cursor: grab; color: var(--muted); font-size: 20px; line-height: 1;
+  padding: 2px 4px; user-select: none; touch-action: none;
+}
+.card-drag:active { cursor: grabbing; color: var(--gold); }
+.card-move {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
+  cursor: pointer; width: 34px; height: 28px; font-size: 12px; line-height: 1;
+  border-radius: 5px; display: flex; align-items: center; justify-content: center;
+}
+.card-move:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+.card-move:disabled { opacity: 0.3; cursor: default; }
+.tracker-card.dragging, .npc-card.dragging { opacity: 0.45; }
+.tracker-card.drop-target, .npc-card.drop-target { outline: 2px dashed var(--gold); outline-offset: 2px; }
+
+/* ══ DICE: hard-lock the tray to ONE row, whatever the width ══════════════ */
+.dice-btn-row, .pane.narrow .dice-btn-row {
+  display: grid !important;
+  grid-template-columns: none !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: minmax(0, 1fr) !important;
+  gap: 3px !important;
+}
+.dice-die, .pane.narrow .dice-die {
+  min-width: 0 !important; overflow: hidden;
+  white-space: nowrap; letter-spacing: 0 !important;
+  padding-left: 0 !important; padding-right: 0 !important;
+}
+@media (max-width: 760px) {
+  .dice-die, .pane.narrow .dice-die { font-size: 13px !important; padding: 15px 0 !important; }
+}
+
+/* ══ MOBILE: tracker + combat cards, doubled again ═══════════════════════ */
+@media (max-width: 760px) {
+  .tracker-card, .npc-card,
+  .pane.narrow .tracker-card, .pane.narrow .npc-card { padding: 22px !important; }
+
+  /* Name gets its own full-width line so the big controls have room */
+  .tracker-top, .npc-top { flex-wrap: wrap !important; gap: 12px !important; margin-bottom: 16px !important; }
+  .card-reorder { order: 1; }
+  .tracker-del, .npc-del { order: 2; margin-left: auto !important; font-size: 34px !important; padding: 4px 10px !important; }
+  .tracker-type-toggle, .npc-mode-toggle { order: 3; }
+  .npc-tag-input { order: 4; }
+  .tracker-name-input, .npc-name-input {
+    order: 5; flex: 1 1 100% !important; font-size: 32px !important; padding: 6px 0 !important;
+  }
+  .npc-tag-input, .pane.narrow .npc-tag-input {
+    width: 120px !important; font-size: 22px !important; text-align: left !important;
+  }
+  .tracker-type-btn, .npc-mode-btn {
+    font-size: 19px !important; padding: 15px 20px !important; min-height: 60px !important;
+  }
+
+  /* Steppers + numbers */
+  .tracker-adjust-btn, .npc-hp-btn,
+  .pane.narrow .tracker-adjust-btn, .pane.narrow .npc-hp-btn {
+    width: 72px !important; height: 72px !important; font-size: 30px !important;
+  }
+  .npc-hp-row { flex-wrap: wrap !important; gap: 12px !important; }
+  .npc-hp-adjust {
+    width: 100% !important; margin-left: 0 !important;
+    justify-content: space-between !important; gap: 10px !important;
+  }
+  .npc-hp-adjust .npc-hp-btn { flex: 1 1 0 !important; }
+  .npc-hp-input, .pane.narrow .npc-hp-input {
+    width: 118px !important; font-size: 34px !important; padding: 12px 6px !important;
+  }
+  .npc-hp-slash { font-size: 30px !important; }
+  .tracker-bottom { gap: 16px !important; }
+  .tracker-rounds { font-size: 64px !important; }
+  .tracker-rounds-display { min-width: 92px !important; }
+  .tracker-label, .timer-set-label, .tracker-expired-tag,
+  .npc-seg-setup-label, .npc-defeated-tag { font-size: 20px !important; }
+  .timer-display { font-size: 52px !important; min-width: 150px !important; }
+  .timer-set-input, .pane.narrow .timer-set-input {
+    width: 110px !important; font-size: 28px !important; min-height: 64px !important; padding: 12px 4px !important;
+  }
+  .timer-set-row { flex-wrap: wrap !important; gap: 12px !important; }
+
+  /* DCC segments */
+  .npc-seg, .pane.narrow .npc-seg { height: 76px !important; }
+  .npc-seg-num, .pane.narrow .npc-seg-num { font-size: 26px !important; }
+  .npc-seg-count-input, .npc-seg-hp-input {
+    width: 100px !important; font-size: 26px !important; padding: 12px 4px !important;
+  }
+
+  /* Statuses + in-card buttons */
+  .status-text { font-size: 20px !important; padding: 8px 6px !important; }
+  .status-check { width: 28px !important; height: 28px !important; }
+  .status-del { font-size: 26px !important; }
+  .status-add, .npc-seg-apply, .timer-apply {
+    font-size: 18px !important; min-height: 58px !important; padding: 15px 20px !important;
+  }
+
+  /* Reorder controls sized for thumbs */
+  .card-drag { font-size: 34px !important; padding: 4px 8px !important; }
+  .card-move { width: 56px !important; height: 46px !important; font-size: 18px !important; }
+}
+/* ══ CARD CONTROLS — final size pass ═════════════════════════════════════
+   Buttons and toggles living inside tracker / combat cards. Appended last so
+   it beats every earlier rule (including the .pane.narrow shrink rules). */
+
+/* Desktop */
+.tracker-type-btn, .npc-mode-btn {
+  font-size: 16px !important; padding: 12px 20px !important; min-height: 46px !important;
+}
+.tracker-adjust-btn, .npc-hp-btn { width: 56px !important; height: 56px !important; font-size: 26px !important; }
+.tracker-del, .npc-del { font-size: 28px !important; padding: 4px 10px !important; }
+.status-add, .npc-seg-apply, .timer-apply {
+  font-size: 15px !important; padding: 11px 16px !important; min-height: 44px !important;
+}
+.status-del { font-size: 22px !important; padding: 2px 6px !important; }
+.status-check { width: 22px !important; height: 22px !important; }
+.status-text { font-size: 16px !important; padding: 7px 8px !important; }
+
+/* Mobile — everything in a card is thumb-sized */
+@media (max-width: 760px) {
+  .tracker-type-toggle, .npc-mode-toggle { flex-shrink: 0; }
+  .tracker-type-btn, .npc-mode-btn {
+    font-size: 24px !important; padding: 18px 26px !important; min-height: 74px !important;
+    letter-spacing: .04em !important;
+  }
+  .tracker-adjust-btn, .npc-hp-btn,
+  .pane.narrow .tracker-adjust-btn, .pane.narrow .npc-hp-btn {
+    width: 84px !important; height: 84px !important; font-size: 34px !important;
+  }
+  .timer-controls .tracker-adjust-btn { font-size: 30px !important; }
+  .tracker-del, .npc-del { font-size: 42px !important; padding: 4px 12px !important; }
+  .status-add, .npc-seg-apply, .timer-apply {
+    font-size: 22px !important; padding: 18px 26px !important; min-height: 70px !important;
+  }
+  .status-del { font-size: 30px !important; padding: 4px 8px !important; }
+  .status-check { width: 32px !important; height: 32px !important; }
+  .status-text { font-size: 22px !important; padding: 12px 10px !important; }
+  .status-row { gap: 12px !important; margin-bottom: 10px !important; }
+  .card-drag { font-size: 40px !important; padding: 4px 10px !important; }
+  .card-move { width: 64px !important; height: 54px !important; font-size: 20px !important; }
+  .npc-seg, .pane.narrow .npc-seg { height: 84px !important; }
+  .npc-seg-num, .pane.narrow .npc-seg-num { font-size: 28px !important; }
+}
 </style>
 </head><body>${bodyHtml}</body></html>`;
 
@@ -6471,7 +6611,7 @@ function loadSession(input) {
       if(data.splitMode) setSplit(data.splitMode);
       if(data.paneTools) {
         setPaneTool(1, data.paneTools[1] || 'adventure');
-        setPaneTool(2, data.paneTools[2] || 'combat');
+        setPaneTool(2, data.paneTools[2] || 'trackers');
       }
 
       // Restore each tool's state (instantiate it first if not yet created)
@@ -6513,7 +6653,7 @@ window.__gmScreenSetState = function(data) {
   if(data.splitMode) setSplit(data.splitMode);
   if(data.paneTools) {
     setPaneTool(1, data.paneTools[1] || 'adventure');
-    setPaneTool(2, data.paneTools[2] || 'combat');
+    setPaneTool(2, data.paneTools[2] || 'trackers');
   }
   if(data.tools) {
     migrateToolState(data.tools);
