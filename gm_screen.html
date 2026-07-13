@@ -2272,21 +2272,27 @@ function init_trackers(root) {
     });
   }
 
-  // ── Status checklist (NPC cards) ──
-  function statusListHtml(statuses) {
-    const rows = (statuses || []).map(s => `
+  // ── Tag field + Status list (NPC cards) ──
+  // The tag sits on the same row as the + Status button; statuses stack below.
+  function statusListHtml(entity) {
+    const rows = (entity.statuses || []).map(s => `
       <div class="status-row" data-status-id="${s.id}">
         <input type="checkbox" class="status-check" ${s.checked ? 'checked' : ''}>
         <input type="text" class="status-text" value="${escAttr(s.text)}" placeholder="Status, condition, recharge...">
         <button class="status-del" title="Remove">&#10005;</button>
       </div>
     `).join('');
-    return `<div class="status-list">${rows}</div>
-      <button class="btn small ghost status-add">+ Status</button>`;
+    return `
+      <div class="status-bar">
+        <input type="text" class="npc-tag-input" value="${escAttr(entity.tag || '')}" placeholder="Tag (elite, minion, ...)">
+        <button class="btn small ghost status-add">+ Status</button>
+      </div>
+      <div class="status-list">${rows}</div>`;
   }
   function wireStatusList(card, entity) {
     if(!entity.statuses) entity.statuses = [];
     if(!entity._nextStatusId) entity._nextStatusId = 1;
+    card.querySelector('.npc-tag-input')?.addEventListener('input', e => { entity.tag = e.target.value; });
     card.querySelectorAll('.status-row').forEach(row => {
       const id = parseInt(row.dataset.statusId);
       const st = entity.statuses.find(x => x.id === id);
@@ -2335,10 +2341,10 @@ function init_trackers(root) {
       <div class="tracker-top">
         ${reorderHtml(t, idx)}
         <input type="text" class="tracker-name-input" value="${escAttr(t.name)}" placeholder="Tracker name...">
-        <div class="tracker-type-toggle">
-          <button class="tracker-type-btn rounds-active ${t.kind==='rounds'?'active':''}" data-kind="rounds">Rounds</button>
-          <button class="tracker-type-btn timer-active ${t.kind==='timer'?'active':''}" data-kind="timer">Timer</button>
-        </div>
+        <select class="card-select tracker-type-select ${t.kind}-active" title="Tracker type">
+          <option value="rounds" ${t.kind==='rounds'?'selected':''}>Rounds</option>
+          <option value="timer"  ${t.kind==='timer' ?'selected':''}>Timer</option>
+        </select>
         <button class="tracker-del" title="Remove">&#10005;</button>
       </div>
       <div class="tracker-bottom">${bottom}</div>
@@ -2355,15 +2361,13 @@ function init_trackers(root) {
 
     card.querySelector('.tracker-name-input').addEventListener('input', e => { t.name = e.target.value; });
     card.querySelector('.tracker-del').addEventListener('click', () => { items = items.filter(x => x.id !== t.id); render(); });
-    card.querySelectorAll('.tracker-type-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const kind = btn.dataset.kind;
-        if(kind === t.kind) return;
-        t.running = false;
-        t.kind = kind;
-        if(kind === 'timer' && t.totalSeconds === undefined) { t.totalSeconds = 60; t.remainingSeconds = 60; }
-        render();
-      });
+    card.querySelector('.tracker-type-select').addEventListener('change', e => {
+      const kind = e.target.value;
+      if(kind === t.kind) return;
+      t.running = false;
+      t.kind = kind;
+      if(kind === 'timer' && t.totalSeconds === undefined) { t.totalSeconds = 60; t.remainingSeconds = 60; }
+      render();
     });
     if(t.kind === 'rounds') {
       card.querySelector('.tracker-dec').addEventListener('click', () => { t.rounds = Math.max(0, t.rounds - 1); render(); });
@@ -2433,27 +2437,23 @@ function init_trackers(root) {
       <div class="npc-top">
         ${reorderHtml(n, idx)}
         <input type="text" class="npc-name-input" value="${escAttr(n.name)}" placeholder="NPC / Monster name...">
-        <input type="text" class="npc-tag-input" value="${escAttr(n.tag)}" placeholder="tag">
-        <div class="npc-mode-toggle">
-          <button class="npc-mode-btn std-active ${mode==='standard'?'active':''}" data-mode="standard">Standard</button>
-          <button class="npc-mode-btn dcc-active ${mode==='dcc'?'active':''}" data-mode="dcc">DCC</button>
-        </div>
+        <select class="card-select npc-mode-select ${mode==='dcc'?'dcc-active':'std-active'}" title="HP mode">
+          <option value="standard" ${mode==='standard'?'selected':''}>Standard</option>
+          <option value="dcc"      ${mode==='dcc'     ?'selected':''}>DCC</option>
+        </select>
         <button class="npc-del" title="Remove">&#10005;</button>
       </div>
       ${hpBlockHtml}
       ${defeated ? '<div class="npc-defeated-tag">Defeated</div>' : ''}
-      ${statusListHtml(n.statuses)}
+      ${statusListHtml(n)}
     `;
 
     card.querySelector('.npc-name-input').addEventListener('input', e => { n.name = e.target.value; });
-    card.querySelector('.npc-tag-input').addEventListener('input', e => { n.tag = e.target.value; });
     card.querySelector('.npc-del').addEventListener('click', () => { items = items.filter(x => x.id !== n.id); render(); });
-    card.querySelectorAll('.npc-mode-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if(btn.dataset.mode === mode) return;
-        n.hpMode = btn.dataset.mode;
-        render();
-      });
+    card.querySelector('.npc-mode-select').addEventListener('change', e => {
+      if(e.target.value === mode) return;
+      n.hpMode = e.target.value;
+      render();
     });
 
     if(mode === 'standard') {
@@ -5914,6 +5914,37 @@ window.init_gen = function(root) {
   .npc-hp-row { flex-wrap: wrap; }
   .npc-hp-adjust { width: 100%; margin-left: 0; justify-content: space-between; }
   .npc-hp-adjust .npc-hp-btn { flex: 1 1 0; }
+}
+/* ══ CARD DROPDOWNS + STATUS BAR ═════════════════════════════════════════
+   The Rounds/Timer and Standard/DCC segmented toggles were wider than the
+   card in a narrow pane, so they're dropdowns now. The tag field moved down
+   beside "+ Status", with the statuses stacking underneath. */
+.card-select {
+  flex-shrink: 0;
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--light);
+  font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 5px 6px; min-height: 28px; border-radius: 5px; cursor: pointer; outline: none;
+}
+.card-select:focus { border-color: var(--gold); }
+.tracker-type-select.rounds-active { border-color: var(--gold); color: var(--gold); }
+.tracker-type-select.timer-active  { border-color: #6a9fc8; color: #6a9fc8; }
+.npc-mode-select.std-active { border-color: var(--green); color: var(--green-light); }
+.npc-mode-select.dcc-active { border-color: var(--amber); color: var(--amber); }
+
+.status-bar { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.status-bar .npc-tag-input {
+  flex: 1; min-width: 0; width: auto; text-align: left;
+  border-bottom: 1px dotted var(--border);
+}
+.status-bar .status-add { margin-top: 0; flex-shrink: 0; }
+.status-list { margin-top: 6px; }
+.status-list:empty { margin-top: 0; }
+
+@media (max-width: 760px) {
+  .card-select { font-size: 14px; padding: 9px 8px; min-height: 44px; }
+  .status-bar { gap: 10px; margin-top: 10px; }
+  .status-bar .npc-tag-input { font-size: 14px; padding: 8px 0; }
 }
 </style>
 </head><body>${bodyHtml}</body></html>`;
