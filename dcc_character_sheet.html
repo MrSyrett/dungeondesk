@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- BUILD: DCC Character Sheet — 2026-07-13 02:50 UTC -->
-<script>window.__BUILD__="DCC Character Sheet — 2026-07-13 02:50 UTC";</script>
+<!-- BUILD: DCC Character Sheet — 2026-07-13 03:04 UTC -->
+<script>window.__BUILD__="DCC Character Sheet — 2026-07-13 03:04 UTC";</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DCC Character Sheet</title>
@@ -108,6 +108,8 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--ink);min-h
 .evade-roll-btn:hover{background:var(--red);}
 
 .mana-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid var(--rule);}
+.mana-group{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.debuff-group{display:flex;align-items:center;gap:8px;flex:1;min-width:0;margin-left:10px;}
 .mana-label{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--ink);}
 .mana-input{width:44px;height:28px;border:1px solid var(--input-border);background:var(--input-bg);font-family:'Share Tech Mono',monospace;font-size:13px;text-align:center;outline:none;}
 .mana-input[readonly]{background:var(--box);cursor:default;}
@@ -440,12 +442,16 @@ body.dark select.skill-stat-sel{background:var(--input-bg);}
 
           <!-- MANA / DEBUFFS -->
           <div class="mana-row">
-            <span class="mana-label">Mana</span>
-            <input type="text" class="mana-input" id="mana-current" placeholder="0">
-            <span class="mana-slash">/</span>
-            <input type="text" class="mana-input" id="mana-max" readonly placeholder="0" title="Equals Enhanced INT" style="background:var(--box);cursor:default;">
-            <span class="mana-label" style="margin-left:10px;">Debuffs</span>
-            <input type="text" class="debuff-input" id="debuffs" placeholder="">
+            <div class="mana-group">
+              <span class="mana-label">Mana</span>
+              <input type="text" class="mana-input" id="mana-current" placeholder="0">
+              <span class="mana-slash">/</span>
+              <input type="text" class="mana-input" id="mana-max" readonly placeholder="0" title="Equals Enhanced INT" style="background:var(--box);cursor:default;">
+            </div>
+            <div class="debuff-group">
+              <span class="mana-label">Debuffs</span>
+              <input type="text" class="debuff-input" id="debuffs" placeholder="">
+            </div>
           </div>
 
           <!-- ATTACKS -->
@@ -1583,9 +1589,35 @@ autoLoad();
     padding: 8px 10px !important;
     margin-top: 6px;
   }
-  .combat-side .formula-total { height: 34px !important; font-size: 15px !important; }
+  /* ── (1) Evade + DR: the label sits on its own line so the three boxes
+         can share the full width of the screen ── */
+  .combat-row { flex-direction: column; align-items: stretch; gap: 5px; margin-bottom: 10px; }
+  .combat-tag { min-width: 0; font-size: 15px; }
+  .formula-box { flex-wrap: nowrap; align-items: flex-start; gap: 5px; }
+  .formula-extra-item { flex: 1 1 0; min-width: 0; }
+  .formula-eq { flex: 0 0 auto; align-self: center; padding-top: 10px; font-size: 15px; }
+  .formula-input, .formula-total { width: 100%; height: 48px; font-size: 20px; }
+  .formula-sublabel { font-size: 9px; }
+  /* an earlier mobile rule sets width:100% — with flex:0 0 auto in a nowrap
+     row that would let the button eat the whole line, so pin it back to auto */
+  .evade-roll-btn { flex: 0 0 auto; width: auto !important; align-self: flex-start;
+                    margin-left: 4px !important; height: 48px; padding: 0 10px !important; }
+
+  /* ── (2) Move / Step / AI Favor / Size: taller boxes, bigger numbers.
+         (their inline styles set height/font, so these need !important) ── */
+  .combat-side .formula-total { height: 46px !important; font-size: 19px !important; padding: 0 2px !important; }
   .combat-side .formula-sublabel { font-size: 10px !important; }
-  .combat-tag { min-width: 92px; font-size: 16px; }
+
+  /* ── (3) Mana gets its own row; Debuffs drops below it ── */
+  .mana-row { flex-direction: column; align-items: stretch; gap: 8px; padding: 8px 10px; }
+  /* Mana boxes match the Evade/DR boxes: let them flex to fill the row
+     (48px tall, 20px numbers) rather than sitting at a fixed narrow width */
+  .mana-group { justify-content: flex-start; width: 100%; gap: 6px; }
+  .mana-input { flex: 1 1 0; min-width: 0; width: auto; height: 48px; font-size: 20px; }
+  .mana-slash { flex: 0 0 auto; font-size: 22px; }
+  .mana-label { flex: 0 0 auto; font-size: 13px; }
+  .debuff-group { margin-left: 0; width: 100%; gap: 6px; }
+  .debuff-input { flex: 1 1 0; min-width: 0; height: 48px; font-size: 17px; }
 
   /* ── (2) Attacks + Skills: slightly smaller type ── */
   .attacks-table th { font-size: 10px; padding: 4px 4px; }
@@ -1610,10 +1642,6 @@ autoLoad();
          type a touch and drop the padding rather than letting them wrap ── */
   .log-actions { flex-wrap: nowrap; gap: 3px; }
   .log-actions .log-action-btn { font-size: 11px !important; padding: 9px 2px !important; letter-spacing: .02em; }
-  .combat-tag { min-width: 92px; font-size: 16px; }
-  .formula-input { width: 46px; height: 34px; font-size: 15px; }
-  .formula-total { width: 52px; height: 34px; font-size: 16px; }
-  .mana-input { width: 52px; font-size: 16px; }
   .atk-formula input { width: 34px; font-size: 14px; }
   .skill-stat-sel { width: 58px; font-size: 14px; padding: 5px 4px; }
   /* ── Health bar: taller pips, readable values ── */
