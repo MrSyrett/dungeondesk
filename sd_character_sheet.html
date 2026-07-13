@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- BUILD: SD Character Sheet — 2026-07-13 01:09 UTC -->
+<script>window.__BUILD__="SD Character Sheet — 2026-07-13 01:09 UTC";console.info("%cBUILD: SD Character Sheet — 2026-07-13 01:09 UTC","color:#e8c84a;font-weight:bold");</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shadowdark Character Sheet</title>
@@ -70,6 +72,7 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .dice-roll-btn:hover{background:var(--red);}
 .dice-clear-btn{padding:5px 8px;background:#1a1a1a;border:1px solid #333;color:#555;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;cursor:pointer;}
 .dice-clear-btn:hover{background:#333;color:#aaa;}
+.btn-die{font-family:'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',sans-serif;font-size:1.05em;line-height:1;vertical-align:-1px;}
 
 /* DARK TOGGLE */
 .dm-toggle-wrap{display:flex;align-items:center;gap:5px;}
@@ -405,7 +408,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
     <div class="log-hint">Click a stat or roll button</div>
   </div>
   <div class="dice-tray">
-    <div class="dice-tray-label">Dice Tray</div>
+    <div class="dice-pool-display" id="dice-pool-display"><span>Empty</span></div>
     <div class="adv-btns">
       <button class="adv-btn" id="adv-btn" onclick="toggleAdv('advantage')">▲ Advantage</button>
       <button class="adv-btn" id="dis-btn" onclick="toggleAdv('disadvantage')">▼ Disadvantage</button>
@@ -419,9 +422,8 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
       <button class="dice-btn" onclick="addDie(4)">D4</button>
       <button class="dice-btn" onclick="addDie(2)">D2</button>
     </div>
-    <div class="dice-pool-display" id="dice-pool-display"><span>Empty</span></div>
     <div class="dice-tray-actions">
-      <button class="dice-roll-btn" onclick="rollDicePool()">Roll</button>
+      <button class="dice-roll-btn" onclick="rollDicePool()" title="Roll dice pool"><span class="btn-die">&#127922;</span> Roll</button>
       <button class="dice-clear-btn" onclick="clearDicePool()">Clear</button>
     </div>
   </div>

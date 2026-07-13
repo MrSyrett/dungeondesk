@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- BUILD: DCC Character Sheet — 2026-07-13 01:09 UTC -->
+<script>window.__BUILD__="DCC Character Sheet — 2026-07-13 01:09 UTC";console.info("%cBUILD: DCC Character Sheet — 2026-07-13 01:09 UTC","color:#e8c84a;font-weight:bold");</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>DCC Character Sheet</title>
@@ -29,6 +31,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--ink);min-h
 .log-entry .roll-result{font-family:'Share Tech Mono',monospace;font-size:22px;font-weight:700;color:var(--log-text);line-height:1;}
 .log-entry .roll-detail{font-family:'Share Tech Mono',monospace;font-size:10px;color:#666;margin-top:2px;}
 .log-entry.crit .roll-result{color:#ffd700;}.log-entry.fumble .roll-result{color:#ff4444;}
+.log-entry.remote{border-left:3px solid #8a7ac8;background:#1c1a24;}
 .log-entry.crit{border-color:#ffd700;}.log-entry.fumble{border-color:#ff4444;}
 .log-hint{color:#444;font-size:11px;font-family:'Barlow Condensed',sans-serif;text-align:center;padding:20px 10px;letter-spacing:.06em;text-transform:uppercase;}
 
@@ -562,13 +565,16 @@ body.dark select.skill-stat-sel{background:var(--input-bg);}
     <label class="log-action-btn import" style="display:flex;align-items:center;justify-content:center;cursor:pointer;">↑ Import<input type="file" accept=".json" style="display:none" onchange="importSheet(this)"></label>
     <button class="log-action-btn" onclick="newCharacter()" style="background:#1a1a2e;color:#8888dd;border:1px solid #2a2a5a;flex:1;">✦ New</button>
   </div>
+  <div class="log-actions">
+    <button id="campaign-btn" class="log-action-btn" onclick="openCampaign()" style="border:1px solid #333;background:transparent;color:#888;">🔗 Campaign</button>
+  </div>
   <div class="log-entries" id="log-entries">
     <div class="log-hint">Click any stat or button to roll</div>
   </div>
 
   <!-- DICE TRAY -->
   <div class="dice-tray">
-    <div class="dice-tray-label">Dice Tray</div>
+    <div class="dice-pool-display" id="dice-pool-display"><span>Empty — add dice below</span></div>
     <div class="adv-btns">
       <button class="adv-btn" id="adv-btn" onclick="toggleAdv('advantage')">▲ Advantage</button>
       <button class="adv-btn" id="dis-btn" onclick="toggleAdv('disadvantage')">▼ Disadvantage</button>
@@ -582,7 +588,6 @@ body.dark select.skill-stat-sel{background:var(--input-bg);}
       <button class="dice-btn" onclick="addDie(4)">D4</button>
       <button class="dice-btn" onclick="addDie(2)">D2</button>
     </div>
-    <div class="dice-pool-display" id="dice-pool-display"><span>Empty — add dice above</span></div>
     <div class="dice-tray-actions">
       <button class="dice-roll-btn" onclick="rollDicePool()" title="Roll dice pool"><span class="btn-die">&#127922;</span> Roll</button>
       <button class="dice-clear-btn" onclick="clearDicePool()">Clear</button>
@@ -914,6 +919,7 @@ function addLog(label, result, detail, type='normal') {
   const advLabel = advState === 'advantage' ? ' <span style="color:#6dbf6d;font-size:9px;">▲ADV</span>'
                  : advState === 'disadvantage' ? ' <span style="color:#df6a6a;font-size:9px;">▼DIS</span>' : '';
   div.innerHTML = `<div class="roll-label">${label}${advLabel}</div><div class="roll-result">${result}</div><div class="roll-detail">${detail}</div>`;
+  if(typeof campaignBroadcast === 'function') campaignBroadcast(label, result, detail, type);
   entries.insertBefore(div, entries.firstChild);
   entries.scrollTop = 0;
   showRollToast(label, result, detail, type);
@@ -1180,6 +1186,10 @@ function collectSheet() {
   const portraitImg = document.getElementById('portrait-img');
   data.portrait = (portraitImg && portraitImg.style.display !== 'none') ? portraitImg.src : '';
 
+  // Campaign link
+  data.campaign = (typeof _campaign !== 'undefined' && _campaign)
+    ? { id: _campaign.id, code: _campaign.code, name: _campaign.name } : null;
+
   return data;
 }
 
@@ -1301,6 +1311,9 @@ function applySheet(data) {
     if(img) { img.src = data.portrait; img.style.display = 'block'; }
     if(placeholder) placeholder.style.display = 'none';
   }
+
+  // Campaign link
+  if(typeof campaignRestore === 'function') campaignRestore(data.campaign);
 }
 
 function newCharacter() {
@@ -1372,10 +1385,11 @@ function newCharacter() {
 
   // Clear localStorage
   localStorage.removeItem('dcc_sheet');
+  if(typeof campaignLeaveSilent === 'function') campaignLeaveSilent();
   addLog('New Character', '✦', 'Sheet cleared', 'normal');
 }
 
-function saveSheet() {
+function saveSheet(quiet) {
   const data = collectSheet();
   const toSave = {...data, portrait: data.portrait ? '__has_portrait__' : ''};
   const json = JSON.stringify(toSave);
@@ -1383,7 +1397,7 @@ function saveSheet() {
   try { localStorage.setItem('dcc_sheet', json); } catch(e) {}
   // Save directly to server (primary path — doesn't rely on localStorage patch)
   if(window.__ddSave) window.__ddSave({ dcc_sheet: json });
-  addLog('Sheet Saved', '💾', 'Saved', 'normal');
+  if(quiet !== true) addLog('Sheet Saved', '💾', 'Saved', 'normal');
 }
 
 function exportSheet() {
@@ -1696,6 +1710,202 @@ document.addEventListener('visibilitychange', function() {
   document.addEventListener('input', go);
   document.addEventListener('change', go);
 })();
+</script>
+
+<div id="campaign-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#1a1a1a;border:2px solid #8a7ac8;border-radius:6px;max-width:420px;width:100%;display:flex;flex-direction:column;">
+    <div style="background:#0a0a0a;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:18px;letter-spacing:.1em;text-transform:uppercase;color:#b8aae0;line-height:1;">Campaign</div>
+      <button onclick="closeCampaign()" style="background:transparent;border:none;color:#888;font-size:20px;cursor:pointer;padding:0 4px;">&#10005;</button>
+    </div>
+    <div id="campaign-body" style="padding:14px 16px;"></div>
+  </div>
+</div>
+
+<script>
+// ═══ CAMPAIGN LINK (shared roll log) ════════════════════════════════════════
+// Ported from the Shadowdark sheet; same /api/campaigns contract, so a DCC
+// sheet and an SD sheet can even share one campaign code.
+let _campaign = null; // {id, code, name}
+const _campaignClientKey = 'ck-' + Math.random().toString(36).slice(2, 12);
+let _campaignLastId = 0;
+let _campaignTimer = null;
+
+function campaignPlayerName() {
+  return document.getElementById('f-name')?.value.trim() || 'Player';
+}
+
+function campaignUpdateBtn() {
+  const btn = document.getElementById('campaign-btn');
+  if(!btn) return;
+  if(_campaign) {
+    btn.textContent = '🔗 ' + _campaign.name;
+    btn.style.background = '#241f10'; btn.style.color = '#e8c84a'; btn.style.borderColor = '#7a5a00';
+  } else {
+    btn.textContent = '🔗 Campaign';
+    btn.style.background = 'transparent'; btn.style.color = '#888'; btn.style.borderColor = '#333';
+  }
+}
+
+function openCampaign() {
+  document.getElementById('campaign-overlay').style.display = 'flex';
+  campaignRenderModal();
+}
+function closeCampaign() { document.getElementById('campaign-overlay').style.display = 'none'; }
+
+function campaignRenderModal() {
+  const body = document.getElementById('campaign-body');
+  const hint = 'font-family:\'Barlow\',sans-serif;font-size:12px;color:#888;margin:0 0 12px;line-height:1.5;';
+  const inputStyle = 'width:100%;padding:9px 10px;background:#141414;border:1px solid #2a2a2a;border-radius:5px;color:#eee;font-family:Barlow,sans-serif;font-size:13px;outline:none;box-sizing:border-box;';
+  const btnStyle = 'padding:9px 14px;border:none;border-radius:5px;cursor:pointer;font-family:\'Barlow Condensed\',sans-serif;font-weight:900;font-size:11px;letter-spacing:.1em;text-transform:uppercase;';
+  if(_campaign) {
+    body.innerHTML =
+      '<p style="'+hint+'">Connected — your rolls are shared with everyone in this campaign.</p>'
+      + '<div style="background:#0f0f0f;border:1px solid #7a5a00;border-radius:5px;padding:12px;margin-bottom:12px;">'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:15px;font-weight:900;color:#e8c84a;">'+_campaign.name+'</div>'
+      + '<div style="font-family:Barlow,sans-serif;font-size:11px;color:#888;margin-top:4px;">Join code: <b style="color:#eee;font-family:\'Share Tech Mono\',monospace;font-size:15px;letter-spacing:.2em;">'+_campaign.code+'</b></div>'
+      + '<div style="font-family:Barlow,sans-serif;font-size:11px;color:#666;margin-top:4px;">Share this code with your table.</div>'
+      + '</div>'
+      + '<button onclick="campaignLeave()" style="'+btnStyle+'background:#3a1a1a;color:#df8a8a;border:1px solid #7a2d2d;width:100%;">Leave Campaign</button>';
+  } else {
+    body.innerHTML =
+      '<p style="'+hint+'">Create a campaign and share the code, or join with a code from your GM. Rolls appear in everyone\'s roll log.</p>'
+      + '<div style="margin-bottom:14px;">'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#e8c84a;margin-bottom:5px;">Create New</div>'
+      + '<div style="display:flex;gap:6px;"><input type="text" id="campaign-name-input" placeholder="Campaign name..." style="'+inputStyle+'flex:1;">'
+      + '<button onclick="campaignCreate()" style="'+btnStyle+'background:#e8c84a;color:#1a1a1a;flex-shrink:0;">Create</button></div>'
+      + '</div>'
+      + '<div>'
+      + '<div style="font-family:\'Barlow Condensed\',sans-serif;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.12em;color:#6ac8df;margin-bottom:5px;">Join Existing</div>'
+      + '<div style="display:flex;gap:6px;"><input type="text" id="campaign-code-input" placeholder="Join code (e.g. K7XP2M)" maxlength="6" style="'+inputStyle+'flex:1;text-transform:uppercase;letter-spacing:.15em;">'
+      + '<button onclick="campaignJoin()" style="'+btnStyle+'background:#1a5a7a;color:#fff;flex-shrink:0;">Join</button></div>'
+      + '</div>'
+      + '<div id="campaign-error" style="font-family:Barlow,sans-serif;font-size:12px;color:#df6a6a;margin-top:10px;"></div>';
+  }
+}
+
+function campaignError(msg) {
+  const el = document.getElementById('campaign-error');
+  if(el) el.textContent = msg;
+}
+
+async function campaignCreate() {
+  const name = document.getElementById('campaign-name-input')?.value.trim() || 'New Campaign';
+  try {
+    const r = await fetch('/api/campaigns', {
+      method: 'POST', credentials: 'same-origin',
+      headers: {'content-type':'application/json'},
+      body: JSON.stringify({ name })
+    });
+    if(!r.ok) throw new Error(r.status);
+    _campaign = await r.json();
+    campaignConnected();
+  } catch(e) {
+    campaignError('Could not create campaign — are you signed in to the app?');
+  }
+}
+
+async function campaignJoin() {
+  const code = (document.getElementById('campaign-code-input')?.value || '').trim().toUpperCase();
+  if(!code) { campaignError('Enter a join code.'); return; }
+  try {
+    const r = await fetch('/api/campaigns?code=' + encodeURIComponent(code), { credentials: 'same-origin' });
+    if(r.status === 404) { campaignError('No campaign found with that code.'); return; }
+    if(!r.ok) throw new Error(r.status);
+    _campaign = await r.json();
+    campaignConnected();
+  } catch(e) {
+    campaignError('Could not join — are you signed in to the app?');
+  }
+}
+
+function campaignConnected() {
+  _campaignLastId = 0;
+  campaignUpdateBtn();
+  campaignRenderModal();
+  campaignStartPolling();
+  addLog('Campaign', '🔗', 'Connected to "'+_campaign.name+'" ('+_campaign.code+')', 'normal');
+  saveSheet(true);
+}
+
+function campaignLeaveSilent() {
+  if(_campaignTimer) { clearInterval(_campaignTimer); _campaignTimer = null; }
+  _campaign = null;
+  _campaignLastId = 0;
+  campaignUpdateBtn();
+}
+
+function campaignLeave() {
+  const name = _campaign ? _campaign.name : '';
+  campaignLeaveSilent();
+  campaignRenderModal();
+  addLog('Campaign', '🔗', 'Left "'+name+'"', 'normal');
+  saveSheet(true);
+}
+
+// Only real rolls are shared — sheet housekeeping stays local.
+const CAMPAIGN_SKIP_LABELS = new Set([
+  'Sheet Saved','Exported','Imported','New Character','Item Added','Level Up','Rest'
+]);
+function campaignBroadcast(label, result, detail, type) {
+  if(!_campaign) return;
+  if(CAMPAIGN_SKIP_LABELS.has(String(label))) return;
+  fetch('/api/campaigns/' + _campaign.id + '/rolls', {
+    method: 'POST', credentials: 'same-origin',
+    headers: {'content-type':'application/json'},
+    body: JSON.stringify({
+      clientKey: _campaignClientKey,
+      source: campaignPlayerName(),
+      label: String(label), result: String(result), detail: String(detail||''), type: type||'normal'
+    })
+  }).catch(()=>{});
+}
+
+// Remote entries render directly (never through addLog, so they don't rebroadcast)
+function campaignAddRemote(roll) {
+  const entries = document.getElementById('log-entries');
+  if(!entries) return;
+  const hint = entries.querySelector('.log-hint');
+  if(hint) hint.remove();
+  const div = document.createElement('div');
+  div.className = 'log-entry remote' + (roll.type==='crit'?' crit':roll.type==='fumble'?' fumble':'');
+  const esc = (s)=>String(s).replace(/</g,'&lt;');
+  div.innerHTML = '<div class="roll-label"><span style="color:#8a7ac8;">'+esc(roll.source)+'</span> · '+esc(roll.label)+'</div>'
+    + '<div class="roll-result">'+esc(roll.result)+'</div>'
+    + (roll.detail?'<div class="roll-detail">'+esc(roll.detail)+'</div>':'');
+  entries.insertBefore(div, entries.firstChild);
+  entries.scrollTop = 0;
+  while(entries.children.length > 60) entries.removeChild(entries.lastChild);
+}
+
+async function campaignPoll() {
+  if(!_campaign) return;
+  try {
+    const url = '/api/campaigns/' + _campaign.id + '/rolls' + (_campaignLastId ? '?since='+_campaignLastId : '');
+    const r = await fetch(url, { credentials: 'same-origin' });
+    if(!r.ok) return;
+    const data = await r.json();
+    (data.rolls||[]).forEach(roll=>{
+      if(roll.clientKey !== _campaignClientKey) campaignAddRemote(roll);
+    });
+    if(data.last) _campaignLastId = data.last;
+  } catch(e) {}
+}
+
+function campaignStartPolling() {
+  if(_campaignTimer) clearInterval(_campaignTimer);
+  campaignPoll();
+  _campaignTimer = setInterval(campaignPoll, 4000);
+}
+
+function campaignRestore(saved) {
+  if(saved && saved.id && saved.code) {
+    _campaign = { id: saved.id, code: saved.code, name: saved.name || 'Campaign' };
+    campaignStartPolling();
+  }
+  campaignUpdateBtn();
+}
+campaignUpdateBtn();
 </script>
 </body>
 </html>
