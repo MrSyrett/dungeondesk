@@ -592,9 +592,9 @@ input[type="number"] { -moz-appearance: textfield; }
 
 /* ═══ GENERATORS TOOL ═══ */
 .gen-tab-select {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 12px; font-weight: 700;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700;
   letter-spacing: 0.04em;
-  padding: 5px 8px; background: var(--panel); border: 1px solid var(--border);
+  padding: 8px 12px; background: var(--panel); border: 1px solid var(--border);
   color: var(--white); cursor: pointer; outline: none; min-width: 0; max-width: 100%;
   transition: border-color 0.15s;
 }
@@ -608,14 +608,14 @@ input[type="number"] { -moz-appearance: textfield; }
   background: var(--panel); border-bottom: 1px solid var(--border); flex-shrink: 0;
 }
 .gen-label {
-  font-family: 'Barlow Condensed', sans-serif; font-size: 10px; font-weight: 700;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 700;
   letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
   display: flex; flex-direction: column; gap: 4px;
 }
 .gen-select {
   background: var(--panel-2); border: 1px solid var(--border); color: var(--white);
-  font-family: 'Barlow Condensed', sans-serif; font-size: 12px;
-  padding: 4px 8px; outline: none; cursor: pointer;
+  font-family: 'Barlow Condensed', sans-serif; font-size: 18px;
+  padding: 7px 12px; outline: none; cursor: pointer;
 }
 .gen-select:focus { border-color: var(--mid); }
 .gen-results {
@@ -1075,8 +1075,6 @@ input[type="number"] { -moz-appearance: textfield; }
       <button class="btn small primary aud-load">Go</button>
       <button class="btn small ghost aud-clear">Clear</button>
       <button class="btn small ghost aud-tta" title="TabletopAudio">🎵 TTA</button>
-      <button class="btn small ghost aud-sdl" title="Shadowdarklings">⚔ SDL</button>
-      <button class="btn small ghost aud-dndb" title="D&D Beyond">🐉 DnDB</button>
       <button class="btn small ghost aud-npc" title="NPC Generator">👤 NPC</button>
       <button class="btn small ghost aud-wata" title="Watabou Generators">🗺 Wata</button>
       <button class="btn small ghost aud-ds" title="DungeonScrawl">🏰 DS</button>
@@ -1698,8 +1696,6 @@ function syncToolbar(slot, toolNode) {
     ['.gen-roll',      '.gen-roll'],
     ['.aud-clear',     '.aud-clear'],
     ['.aud-tta',       '.aud-tta'],
-    ['.aud-sdl',       '.aud-sdl'],
-    ['.aud-dndb',      '.aud-dndb'],
     ['.aud-npc',       '.aud-npc'],
     ['.aud-wata',      '.aud-wata'],
     ['.aud-ds',        '.aud-ds'],
@@ -5750,6 +5746,180 @@ window.init_gen = function(root) {
   .dice-pool-clear { font-size: 13px; padding: 11px 12px; min-height: 44px; }
   .dice-camp-btn, .dice-hide-btn { font-size: 15px; padding: 11px 12px; min-height: 44px; }
 }
+/* ══ MOBILE TOUCH-TARGET PASS ═════════════════════════════════════════════
+   Appended last so it beats both the earlier @media rules AND the
+   .pane.narrow rules (which fire on phone-width panes and were shrinking
+   buttons/dropdowns back down). Everything below is ~50-100% larger. */
+@media (max-width: 760px) {
+
+  /* ── Buttons ── */
+  .btn,
+  .pane.narrow .btn {
+    font-size: 15px !important; padding: 13px 18px !important;
+    min-height: 50px !important; letter-spacing: .04em;
+  }
+  .btn.small,
+  .pane.narrow .btn.small {
+    font-size: 14px !important; padding: 11px 15px !important;
+    min-height: 46px !important;
+  }
+  .pane-toolbar-slot .btn,
+  .pane-toolbar-slot button,
+  .pane.narrow .pane-toolbar-slot .btn,
+  .pane.narrow .pane-toolbar-slot button {
+    font-size: 14px !important; padding: 11px 14px !important;
+    min-height: 46px !important;
+  }
+  .pane-toolbar-slot label,
+  .pane.narrow .pane-toolbar-slot label { font-size: 12px !important; gap: 6px; }
+  .pane-header, .pane.narrow .pane-header { padding: 8px 10px !important; gap: 8px; }
+  .pane-toolbar-slot, .pane.narrow .pane-toolbar-slot { gap: 8px !important; }
+  .toolrow, .pane.narrow .toolrow { padding: 12px 12px !important; gap: 10px; }
+
+  /* ── Dropdowns / text + number inputs ── */
+  select,
+  .pane-select, .pane.narrow .pane-select,
+  .split-select, .gen-tab-select, .gen-select,
+  .pane-toolbar-slot select, .pane.narrow .pane-toolbar-slot select {
+    font-size: 16px !important;          /* 16px also stops iOS zoom-on-focus */
+    padding: 13px 12px !important;
+    min-height: 50px !important;
+    max-width: none !important;
+  }
+  .pane-select, .pane.narrow .pane-select { flex: 1 1 auto !important; }
+  .pane-toolbar-slot input,
+  .pane.narrow .pane-toolbar-slot input {
+    font-size: 16px !important; padding: 12px 10px !important;
+    min-height: 48px !important; max-width: none !important;
+  }
+  .gen-controls, .pane.narrow .gen-controls { padding: 14px 14px !important; gap: 12px !important; }
+  .gen-label { font-size: 13px !important; }
+
+  /* ── Combat / tracker steppers ── */
+  .npc-hp-btn, .tracker-adjust-btn,
+  .pane.narrow .npc-hp-btn, .pane.narrow .tracker-adjust-btn {
+    width: 54px !important; height: 54px !important;
+    font-size: 24px !important; border-radius: 6px;
+  }
+  .tracker-type-btn, .npc-mode-btn {
+    font-size: 13px !important; padding: 13px 16px !important; min-height: 50px !important;
+  }
+  .tracker-del, .npc-del {
+    font-size: 20px !important; padding: 8px 11px !important;
+    min-height: 40px !important; min-width: 40px !important;
+  }
+  .npc-hp-input, .pane.narrow .npc-hp-input {
+    width: 72px !important; font-size: 19px !important;
+    padding: 12px 4px !important; min-height: 52px !important;
+  }
+  .timer-set-input { width: 72px !important; font-size: 17px !important; min-height: 52px !important; }
+  .tracker-name-input, .npc-name-input,
+  .pane.narrow .tracker-name-input, .pane.narrow .npc-name-input { font-size: 17px !important; }
+  .npc-seg, .pane.narrow .npc-seg { height: 36px !important; }
+  .npc-seg-num, .pane.narrow .npc-seg-num { font-size: 13px !important; }
+
+  /* ── Dice tray (still one row of 7) ── */
+  .dice-btn-row, .pane.narrow .dice-btn-row {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 4px !important;
+  }
+  .dice-die, .pane.narrow .dice-die {
+    padding: 17px 0 !important; font-size: 15px !important;
+    min-height: 56px !important; letter-spacing: 0;
+  }
+  .dice-count, .pane.narrow .dice-count {
+    min-width: 18px; height: 18px; line-height: 18px; font-size: 11px;
+  }
+  .dice-mod, .pane.narrow .dice-mod {
+    width: 58px !important; font-size: 16px !important;
+    padding: 13px 4px !important; min-height: 50px !important;
+  }
+  .dice-advbtn, .pane.narrow .dice-advbtn {
+    font-size: 13px !important; padding: 14px 12px !important; min-height: 50px !important;
+  }
+  .dice-roll-go, .pane.narrow .dice-roll-go {
+    font-size: 14px !important; padding: 15px 18px !important; min-height: 50px !important;
+  }
+  .dice-pool-clear, .pane.narrow .dice-pool-clear {
+    font-size: 14px !important; padding: 14px 14px !important; min-height: 50px !important;
+  }
+  .dice-camp-btn, .dice-hide-btn,
+  .pane.narrow .dice-camp-btn, .pane.narrow .dice-hide-btn {
+    font-size: 16px !important; padding: 13px 14px !important; min-height: 50px !important;
+  }
+  .dice-pool, .pane.narrow .dice-pool { padding: 6px 10px 10px !important; }
+  .dice-pool-row, .pane.narrow .dice-pool-row { gap: 6px !important; }
+
+  /* ── Notes tabs ── */
+  .nts-tab { font-size: 14px !important; padding: 11px 17px 12px !important; min-height: 44px !important; }
+  .nts-tab-add { font-size: 17px !important; padding: 11px 16px 12px !important; min-height: 44px !important; }
+  .nts-tab-x { font-size: 16px !important; padding: 0 4px !important; }
+  .nts-editor { padding: 58px 16px 16px !important; }
+}
+/* ══ TRACKER / NPC CARD SIZE PASS (2x) ═══════════════════════════════════
+   Everything inside a tracker or NPC card is doubled, at every width. These
+   selectors also beat the .pane.narrow rules that used to shrink them. */
+.cbt-tracker-list, .cbt-npc-list,
+.pane.narrow .cbt-tracker-list, .pane.narrow .cbt-npc-list { padding: 14px !important; gap: 14px !important; }
+
+.tracker-card, .npc-card,
+.pane.narrow .tracker-card, .pane.narrow .npc-card { padding: 18px 20px !important; border-left-width: 5px !important; }
+.tracker-top, .npc-top { gap: 14px !important; margin-bottom: 14px !important; }
+.tracker-bottom, .npc-hp-row { gap: 14px !important; }
+
+/* Names + tags */
+.tracker-name-input, .npc-name-input,
+.pane.narrow .tracker-name-input, .pane.narrow .npc-name-input {
+  font-size: 24px !important; padding: 4px 0 !important;
+}
+.npc-tag-input, .pane.narrow .npc-tag-input { width: 130px !important; font-size: 18px !important; padding: 4px 0 !important; }
+
+/* Rounds / Timer + Std / DCC toggles */
+.tracker-type-btn, .npc-mode-btn {
+  font-size: 15px !important; padding: 9px 15px !important; letter-spacing: .06em;
+}
+
+/* Delete "x" */
+.tracker-del, .npc-del { font-size: 26px !important; padding: 4px 9px !important; }
+
+/* +/- steppers */
+.tracker-adjust-btn, .npc-hp-btn,
+.pane.narrow .tracker-adjust-btn, .pane.narrow .npc-hp-btn {
+  width: 52px !important; height: 52px !important; font-size: 24px !important;
+}
+.npc-hp-adjust { gap: 7px !important; }
+
+/* Numbers */
+.tracker-rounds { font-size: 44px !important; }
+.tracker-rounds-display { min-width: 64px !important; }
+.tracker-label, .timer-set-label, .tracker-expired-tag, .npc-seg-setup-label { font-size: 16px !important; }
+.timer-display { font-size: 40px !important; min-width: 128px !important; }
+.timer-set-input, .pane.narrow .timer-set-input {
+  width: 96px !important; font-size: 22px !important; padding: 9px 4px !important;
+}
+.timer-set-row { gap: 12px !important; margin-top: 12px !important; }
+.timer-controls { gap: 8px !important; }
+.npc-hp-input, .pane.narrow .npc-hp-input {
+  width: 92px !important; font-size: 26px !important; padding: 10px 4px !important;
+}
+.npc-hp-slash { font-size: 24px !important; }
+
+/* DCC segments */
+.npc-seg-setup { gap: 10px !important; margin-bottom: 14px !important; }
+.npc-seg-count-input, .npc-seg-hp-input { width: 80px !important; font-size: 20px !important; padding: 8px 4px !important; }
+.npc-seg-row, .pane.narrow .npc-seg-row { gap: 5px !important; }
+.npc-seg, .pane.narrow .npc-seg { height: 56px !important; min-width: 0 !important; flex: 1 1 0 !important; }
+.npc-seg-num, .pane.narrow .npc-seg-num { font-size: 20px !important; }
+
+/* ══ DICE: always one row of 7, at every width ═══════════════════════════ */
+.dice-btn-row, .pane.narrow .dice-btn-row {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 4px !important;
+}
+.dice-die, .pane.narrow .dice-die {
+  min-width: 0 !important; white-space: nowrap; letter-spacing: 0 !important;
+  padding-left: 0 !important; padding-right: 0 !important;
+}
 </style>
 </head><body>${bodyHtml}</body></html>`;
 
@@ -5778,8 +5948,6 @@ function init_audio(root) {
   const empty    = root.querySelector('.aud-empty');
 
   const ttaBtn   = root.querySelector('.aud-tta');
-  const sdlBtn   = root.querySelector('.aud-sdl');
-  const dndbBtn  = root.querySelector('.aud-dndb');
   const npcBtn   = root.querySelector('.aud-npc');
   const wataBtn  = root.querySelector('.aud-wata');
   const dsBtn    = root.querySelector('.aud-ds');
@@ -5806,8 +5974,6 @@ function init_audio(root) {
   loadBtn.addEventListener('click', () => loadUrl(urlInput.value));
   urlInput.addEventListener('keydown', e => { if(e.key === 'Enter') loadUrl(urlInput.value); });
   ttaBtn.addEventListener('click', () => loadUrl('https://tabletopaudio.com/'));
-  sdlBtn.addEventListener('click', () => loadUrl('https://shadowdarklings.net/#!'));
-  dndbBtn.addEventListener('click', () => loadUrl('https://www.dndbeyond.com/'));
   npcBtn.addEventListener('click', () => loadUrl('https://www.npcgenerator.com/'));
   wataBtn.addEventListener('click', () => loadUrl('https://watabou.github.io/'));
   dsBtn.addEventListener('click', () => loadUrl('https://app.dungeonscrawl.com/'));
