@@ -463,17 +463,6 @@ document.addEventListener("DOMContentLoaded", function() {
         <textarea id="f-notes" rows="4" style="width:100%;background:var(--ui-panel);border:1px solid var(--ui-border);border-radius:3px;color:var(--ui-text);font-size:12px;padding:6px 8px;resize:vertical;outline:none;font-family:'Barlow',sans-serif;" placeholder="Session notes, reminders, GM notes..." oninput="autosave()"></textarea>
       </div>
 
-      <div class="section-divider" style="border-left-color:#7a5a00;">Hooks &amp; Strong Open</div>
-      <div class="field-group" style="margin-bottom:6px;">
-        <label class="field-label gold">Hooks</label>
-        <div id="hooks-list" class="entity-list"></div>
-        <button class="btn-add" onclick="addHook()">+ Add Hook</button>
-      </div>
-      <div class="field-group">
-        <label class="field-label accent">Strong Open</label>
-        <div id="strongopen-list"></div>
-        <button class="btn-add" onclick="addStrongOpen()">+ Add Strong Open</button>
-      </div>
     </div>
 
     <!-- ENCOUNTERS -->
@@ -714,8 +703,7 @@ function paginatePages() {
   if(locsEl) runPagination(locsEl,COL_H*2,'p2',isDark,null,document.getElementById('page-two'),false);
 
   // PAGE 4: Stat blocks
-  const sbEl=document.getElementById('p-statblocks');
-  if(sbEl) runPagination(sbEl,USABLE_H,'p4S',isDark,null,document.getElementById('page-four'),false);
+  // Stat blocks render inline on the main pages; page-four pagination no longer needed
 
   // PAGE 3: Maps
   const mapsEl=document.getElementById('p-maps-container');
@@ -1012,17 +1000,7 @@ function readFields() {
     stats:c.querySelector('.reward-stats-input')?.value.trim()||''
   })).filter(r=>r.name||r.flavor);
   state.notes=document.getElementById('f-notes')?.value||'';
-  state.hooks=[...document.querySelectorAll('#hooks-list .entity-card')].map(c=>({
-    header:c.querySelector('.hook-hdr-input')?.value.trim()||'',
-    text:c.querySelector('.hook-text-input')?.value.trim()||''
-  })).filter(h=>h.header||h.text);
-  state.strongopen=[...document.querySelectorAll('#strongopen-list .location-card')].map(c=>({
-    name:c.querySelector('.so-name-input')?.value.trim()||'',
-    tag:c.querySelector('.so-tag-input')?.value.trim()||'',
-    readaloud:c.querySelector('.so-ra-input')?.value.trim()||'',
-    desc:c.querySelector('.so-desc-input')?.value.trim()||'',
-    type:c.querySelector('.so-type-input:checked')?.value||'combat'
-  })).filter(s=>s.name);
+  state.hooks=[]; state.strongopen=[];   // sections removed from the builder
   state.locations=[...document.querySelectorAll('#locations-list .location-card')].map(c=>({
     name:c.querySelector('.loc-name-input')?.value.trim()||'',
     tag:c.querySelector('.loc-tag-input')?.value.trim()||'',
@@ -1067,10 +1045,7 @@ function buildSidebarFromState() {
   state.clues.forEach(c=>addClue(c));
   const _el_rewards_list=document.getElementById('rewards-list'); if(_el_rewards_list) _el_rewards_list.innerHTML='';
   state.rewards.forEach(r=>addReward(r));
-  const _el_hooks_list=document.getElementById('hooks-list'); if(_el_hooks_list) _el_hooks_list.innerHTML='';
-  state.hooks.forEach(h=>addHook(h));
-  const _el_strongopen_list=document.getElementById('strongopen-list'); if(_el_strongopen_list) _el_strongopen_list.innerHTML='';
-  state.strongopen.forEach(s=>addStrongOpen(s));
+
   const _el_locations_list=document.getElementById('locations-list'); if(_el_locations_list) _el_locations_list.innerHTML='';
   state.locations.forEach(l=>addLocation(l));
   const _el_statblocks_list=document.getElementById('statblocks-list'); if(_el_statblocks_list) _el_statblocks_list.innerHTML='';
@@ -1145,6 +1120,7 @@ function addReward(data={}) {
 
 function addHook(data={}) {
   const list=document.getElementById('hooks-list');
+  if(!list) return;   // Hooks section removed from the builder
   const div=document.createElement('div'); div.className='entity-card';
   div.innerHTML=`
     <div class="entity-card-header">
@@ -1164,6 +1140,7 @@ function addHook(data={}) {
 
 function addStrongOpen(data={}) {
   const list=document.getElementById('strongopen-list');
+  if(!list) return;   // Strong Open section removed from the builder
   const div=document.createElement('div'); div.className='location-card';
   const type=data.type||'combat';
   const typeColors={'combat':'#C0392B','exploration':'#2d6a2d','npc':'#1a4a8a'};
@@ -1450,11 +1427,6 @@ function renderPreview() {
     const rightEl = document.getElementById('p1-right');
     if(!leftEl || !rightEl) return;
 
-    const sbt={mob:'#C0392B',boss:'#6a2d8a',npc:'#1a4a8a'};
-    const soc={'combat':'#C0392B','exploration':'#2d6a2d','npc':'#1a4a8a'};
-    const npcs=state.statblocks.filter(s=>s.sbtype==='npc');
-    const mobs=state.statblocks.filter(s=>s.sbtype!=='npc');
-
     // Build HTML strings for each section
     const sections = [];
 
@@ -1475,31 +1447,32 @@ function renderPreview() {
       sections.push(h+'</div>');
     }
 
-    // NPCs & Mobs
-    if(npcs.length||mobs.length){
-      let h='<div class="p-section"><div class="sl" style="color:#1a4a8a;border-bottom-color:#1a4a8a;">NPCs &amp; Mobs</div>';
-      npcs.forEach(e=>{h+='<div class="npc-block" style="border-left-color:'+sbt.npc+';"><div class="entry-name">'+escH(e.name)+'</div>'+(e.type?'<div class="entry-meta">'+escH(e.type)+'</div>':'')+'</div>';});
-      mobs.forEach(e=>{h+='<div class="mob-block" style="border-left-color:'+(sbt[e.sbtype]||sbt.mob)+';"><div class="entry-name">'+escH(e.name)+'</div>'+(e.type?'<div class="entry-meta">'+escH(e.type)+'</div>':'')+'</div>';});
-      sections.push(h+'</div>');
-    }
-
     // Notes
     if(state.notes && state.notes.trim()){
       sections.push('<div class="p-section"><div class="sl">Notes</div><p class="p-text">'+fmtText(state.notes)+'</p></div>');
     }
 
-    // Hooks
-    if((state.hooks||[]).length){
-      let h='<div class="p-section"><div class="sl" style="color:#7a5a00;border-bottom-color:#c89020;">Hooks</div>';
-      (state.hooks||[]).forEach(hk=>{h+='<div class="clue-item hook-item" style="border-left-color:#c89020;">'+(hk.header?'<span class="clue-hdr">'+escH(hk.header)+'</span>'+(hk.text?' — ':''): '')+fmtText(hk.text)+'</div>';});
-      sections.push(h+'</div>');
-    }
-
-    // Strong Open items - one per section
-    (state.strongopen||[]).forEach(s=>{
-      const sc=soc[s.type]||soc.combat;
-      sections.push('<div class="location-block"><div class="loc-name" style="color:'+sc+';border-bottom:1.5px solid '+sc+';padding-bottom:1px;font-family:Barlow Condensed,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;display:block;margin-bottom:4px;">'+escH(s.name)+'</div>'+(s.tag?'<div class="loc-tag">'+escH(s.tag)+'</div>':'')+(s.readaloud?'<div class="read-aloud"><p>'+fmtText(s.readaloud)+'</p></div>':'')+(s.desc?'<p class="loc-desc">'+fmtText(s.desc)+'</p>':'')+'</div>');
+    // Encounters inline on page 1 (spills onto page 2 when they don't fit)
+    const _typeC={'combat':'#C0392B','exploration':'#2d6a2d','npc':'#1a4a8a'};
+    (state.locations||[]).forEach(l=>{
+      const c=_typeC[l.type]||_typeC.combat;
+      const displayName = l.name || l.tag || '';
+      const showTag = l.tag && l.name;
+      sections.push('<div class="location-block"><div class="loc-name" style="color:'+c+';border-bottom:1.5px solid '+c+';padding-bottom:1px;font-family:Barlow Condensed,sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;display:block;margin-bottom:4px;">'+escH(displayName)+'</div>'+(showTag?'<div class="loc-tag">'+escH(l.tag)+'</div>':'')+(l.readaloud?'<div class="read-aloud"><p>'+fmtText(l.readaloud)+'</p></div>':'')+(l.desc?'<p class="loc-desc">'+fmtText(l.desc)+'</p>':'')+'</div>');
     });
+
+    // Full NPC / Mob stat blocks after the encounters
+    if((state.statblocks||[]).length){
+      sections.push('<div class="p-section" style="margin-top:4px;"><div class="sl" style="color:#1a4a8a;border-bottom-color:#1a4a8a;">NPCs &amp; Mobs</div></div>');
+      state.statblocks.forEach(sb=>{
+        const sbDiv = buildSB(sb);
+        sbDiv.classList.add('full-width');
+        sbDiv.style.width='100%';
+        sbDiv.style.flex='0 0 100%';
+        sbDiv.style.marginBottom='8px';
+        sections.push(sbDiv.outerHTML);
+      });
+    }
 
     // Put all items in left first to measure real heights
     leftEl.innerHTML = sections.join('');
@@ -1528,23 +1501,30 @@ function renderPreview() {
     }
   })();
 
-  // Locations
+  // Page 2: only the encounters that didn't fit on page 1
   const typeColors={'combat':'#C0392B','exploration':'#2d6a2d','npc':'#1a4a8a'};
-  document.getElementById('p-locations').innerHTML=state.locations.map(l=>`
-    <div class="location-block">
-      <div class="loc-name" style="color:${typeColors[l.type]||typeColors.combat};border-bottom:1.5px solid ${typeColors[l.type]||typeColors.combat};padding-bottom:1px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;display:block;margin-bottom:4px;">${escH(l.name)}</div>
-      ${l.tag?`<div class="loc-tag">${escH(l.tag)}</div>`:''}
-      ${l.readaloud?`<div class="read-aloud"><p>${fmtText(l.readaloud)}</p></div>`:''}
-      ${l.desc?`<p class="loc-desc">${fmtText(l.desc)}</p>`:''}
-    </div>`).join('');
+  const locsEl2 = document.getElementById('p-locations');
+  const pageTwo = document.getElementById('page-two');
+  if(locsEl2) {
+    const p1LocCount = document.querySelectorAll('#p1-left .location-block, #p1-right .location-block').length;
+    const overflowLocs = (state.locations||[]).slice(p1LocCount);
+    locsEl2.innerHTML = overflowLocs.map(l=>`
+      <div class="location-block">
+        <div class="loc-name" style="color:${typeColors[l.type]||typeColors.combat};border-bottom:1.5px solid ${typeColors[l.type]||typeColors.combat};padding-bottom:1px;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;display:block;margin-bottom:4px;">${escH(l.name||l.tag||'')}</div>
+        ${l.tag&&l.name?`<div class="loc-tag">${escH(l.tag)}</div>`:''}
+        ${l.readaloud?`<div class="read-aloud"><p>${fmtText(l.readaloud)}</p></div>`:''}
+        ${l.desc?`<p class="loc-desc">${fmtText(l.desc)}</p>`:''}
+      </div>`).join('');
+    // Hide page 2 entirely when nothing overflowed
+    if(pageTwo) pageTwo.style.display = overflowLocs.length ? '' : 'none';
+  }
 
   // Flowchart - render on both page 1 and page 2
   const renderFlowchart = (fcId) => {
     const fc=document.getElementById(fcId);
     if(!fc) return;
-    const soNodes=state.strongopen.map(s=>({name:s.name,type:s.type||'combat'}));
-    const locNodes=state.locations.map(l=>({name:l.name,type:l.type||'combat'}));
-    const allNodes=[...soNodes,...locNodes];
+    const locNodes=state.locations.map(l=>({name:l.name||l.tag||'Encounter',type:l.type||'combat'}));
+    const allNodes=[...locNodes];
     if(!allNodes.length){fc.innerHTML='';return;}
     const typeNodeColors={
       combat:{bg:'#C0392B',txt:'white'},
@@ -1581,14 +1561,13 @@ function renderPreview() {
     }
   }
 
-  // Stat blocks page 2
+  // Pages 3 & 4: maps only on 3; stat blocks now render inline on the main pages
+  const _p3 = document.getElementById('page-three');
+  const _p4 = document.getElementById('page-four');
+  if(_p3) _p3.style.display = (state.maps||[]).length ? '' : 'none';
+  if(_p4) _p4.style.display = 'none';
   const sbEl=document.getElementById('p-statblocks');
-  if(sbEl) {
-  sbEl.innerHTML='';
-  const half=state.statblocks.filter(s=>!s.fullwidth);
-  const full=state.statblocks.filter(s=>s.fullwidth);  if(half.length){const row=document.createElement('div');row.className='statblocks';half.forEach(s=>row.appendChild(buildSB(s)));sbEl.appendChild(row);}
-  if(full.length){const row=document.createElement('div');row.className='statblocks';row.style.marginTop='12px';full.forEach(s=>row.appendChild(buildSB(s)));sbEl.appendChild(row);}
-  }
+  if(sbEl) sbEl.innerHTML='';
   applyGradients();
   // Run pagination after DOM has painted
   requestAnimationFrame(()=>requestAnimationFrame(paginatePages));
@@ -1793,8 +1772,7 @@ function clearAll() {
   if(mapLbl) mapLbl.textContent='Click to upload map image';
   if(fileInput) fileInput.value='';
   document.getElementById('maps-list').innerHTML='';
-  document.getElementById('hooks-list').innerHTML='';
-  document.getElementById('strongopen-list').innerHTML='';
+
   saveState();buildSidebarFromState();renderPreview();
 }
 
