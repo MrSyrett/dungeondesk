@@ -269,6 +269,8 @@ body.dark select.skill-stat-sel{background:var(--input-bg);}
 .log-action-btn.save:hover{background:#2d5a2d;color:white;}
 .log-action-btn.export{background:#1a2a3a;color:#6aabdf;border:1px solid #1a4a8a;}
 .log-action-btn.export:hover{background:#1a4a8a;color:white;}
+.log-action-btn.pdf{background:#3a2a10;color:#dfa96a;border:1px solid #8a5a1a;}
+.log-action-btn.pdf:hover{background:#8a5a1a;color:white;}
 .log-action-btn.import{background:#2a1a1a;color:#df6a6a;border:1px solid #5a1a1a;}
 .log-action-btn.import:hover{background:#5a1a1a;color:white;}
 
@@ -572,6 +574,7 @@ body.dark select.skill-stat-sel{background:var(--input-bg);}
     <button id="campaign-btn" class="log-action-btn" onclick="openCampaign()" style="border:1px solid #333;background:transparent;color:#888;">🔗 Campaign</button>
     <button class="log-action-btn save" onclick="saveSheet()">💾 Save</button>
     <button class="log-action-btn export" onclick="exportSheet()">↓ Export</button>
+    <button class="log-action-btn pdf" onclick="exportPDF()" title="Printer-friendly PDF">🖨 PDF</button>
     <label class="log-action-btn import" style="display:flex;align-items:center;justify-content:center;cursor:pointer;">↑ Import<input type="file" accept=".json" style="display:none" onchange="importSheet(this)"></label>
   </div>
   <div class="log-entries" id="log-entries">
@@ -1415,6 +1418,247 @@ function syncDocTitle() {
   if(name && window.__ddSaveTitle) window.__ddSaveTitle(name);
 }
 
+
+// ═══ PRINTER-FRIENDLY PDF EXPORT ══════════════════════════════════════════
+// Rebuilds the sheet as clean black-on-white letter-sized pages and hands it
+// to the browser's print dialog ("Save as PDF"). Real selectable text, a few
+// KB — not a screenshot of the dark UI.
+function exportPDF() {
+  const d   = collectSheet();
+  const V   = id => (document.getElementById(id)?.value || '').trim();
+  const T   = id => (document.getElementById(id)?.textContent || '').trim();
+  const esc = t => String(t == null ? '' : t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const nl  = t => esc(t).replace(/\n/g,'<br>');
+
+  const name  = d.header['f-name'] || 'Unnamed Crawler';
+  const conMod = (typeof getStatMod === 'function') ? getStatMod('con') : 0;
+
+  // ── Stats: show whichever score feeds the mod, plus both scores ──
+  const statCells = STATS.map(st => {
+    const enh = d.stats[st.id]?.enh || '—';
+    const un  = d.stats[st.id]?.unenh || '—';
+    return `<div class="stat">
+      <div class="stat-abbr">${esc(st.abbr)}</div>
+      <div class="stat-val">${esc(T(st.id+'-mod'))}</div>
+      <div class="stat-scores">${esc(enh)} / ${esc(un)}</div>
+    </div>`;
+  }).join('');
+
+  const attacks = (d.attacks||[]).filter(a => a.name);
+  const attackRows = attacks.length ? attacks.map(a =>
+    `<tr><td>${esc(a.name)}</td>`
+    + `<td class="c">${esc(a.rank)}${a.toHitStat ? ' + ' + esc(a.toHitStat.toUpperCase()) : ''}</td>`
+    + `<td class="c">${esc(a.dice)}${a.dmgStat ? ' + ' + esc(a.dmgStat.toUpperCase()) : ''}</td>`
+    + `<td>${esc(a.effects)}</td></tr>`).join('')
+    : '<tr><td colspan="4" class="empty">—</td></tr>';
+
+  const skills = (d.skills||[]).filter(sk => sk.name);
+  const skillRows = skills.length ? skills.map(sk =>
+    `<tr><td class="c">${sk.checked ? '&#9632;' : '&#9633;'}</td>`
+    + `<td>${esc(sk.name)}</td><td class="c">${esc(sk.rank)}</td>`
+    + `<td class="c">${esc((sk.stat||'').toUpperCase())}</td>`
+    + `<td class="c">${esc(sk.checkType)}</td><td>${esc(sk.notes)}</td></tr>`).join('')
+    : '<tr><td colspan="6" class="empty">—</td></tr>';
+
+  const inv = (d.inventory||[]).filter(i => i.item);
+  const invRows = inv.length ? inv.map(i =>
+    `<tr><td>${esc(i.item)}</td><td class="c">${esc(i.qty)}</td><td>${esc(i.notes)}</td></tr>`).join('')
+    : '<tr><td colspan="3" class="empty">—</td></tr>';
+
+  const GEAR_SLOTS = ['Head','Torso','Arms','Hands / Holding','Legs','Feet'];
+  const gearRows = GEAR_SLOTS.map((label, i) =>
+    `<div class="fld"><span class="fld-l">${esc(label)}</span><span class="fld-v">${esc((d.gear||[])[i] || '') || '&nbsp;'}</span></div>`).join('');
+
+  const accs = (d.accessories||[]).filter(Boolean);
+  const hots = (d.hotlist||[]).filter(Boolean);
+  const buffs = (d.extBuffs||[]).filter(Boolean);
+
+  const BG_LABELS = ['Popularity','Past Trauma','Loose Ends','Regrets','Notes'];
+  const bgBoxes = BG_LABELS.map((label, i) => {
+    const val = (d.background||[])[i] || '';
+    if(!val.trim()) return '';
+    return `<div class="bg-box${i===4 ? ' wide' : ''}"><div class="bg-l">${esc(label)}</div><div class="bg-v">${nl(val)}</div></div>`;
+  }).join('');
+
+  const doc = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>${esc(name)} — DCC</title>
+<style>
+  @page { size: letter portrait; margin: 0.5in; }
+  * { box-sizing: border-box; }
+  body { margin: 0; color: #000; background: #fff;
+         font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10px; line-height: 1.4; }
+  h1 { font-size: 21px; margin: 0; }
+  .sub-title { font-size: 10px; color: #444; margin-top: 2px; }
+  header { display: flex; justify-content: space-between; align-items: flex-end;
+           border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 10px; }
+  .lvl { font-size: 11px; font-weight: 700; text-align: right; white-space: nowrap; }
+
+  h2 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em;
+       margin: 0 0 5px; padding-bottom: 2px; border-bottom: 1px solid #000; }
+  .h2sub { font-weight: 400; text-transform: none; letter-spacing: 0; color: #666; font-size: 9px; }
+  section { margin-bottom: 12px; break-inside: avoid; }
+
+  .row { display: flex; gap: 10px; align-items: stretch; margin-bottom: 12px; }
+  .stats { display: flex; gap: 5px; }
+  .stat { border: 1.5px solid #000; width: 56px; text-align: center; padding: 3px 0; }
+  .stat-abbr   { font-size: 8px; font-weight: 700; letter-spacing: .1em; }
+  .stat-val    { font-size: 19px; font-weight: 700; line-height: 1.1; }
+  .stat-scores { font-size: 8px; color: #555; border-top: 1px solid #ccc; }
+  .vitals { display: flex; gap: 5px; margin-left: auto; }
+  .vital { border: 1.5px solid #000; padding: 3px 9px; text-align: center; min-width: 58px; }
+  .vital-l { font-size: 8px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .vital-v { font-size: 17px; font-weight: 700; line-height: 1.2; }
+
+  .hp-track { display: flex; gap: 3px; margin-bottom: 10px; }
+  .hp-box { flex: 1; border: 1.5px solid #000; height: 24px; text-align: center;
+            font-size: 11px; font-weight: 700; line-height: 22px; }
+
+  table.grid { width: 100%; border-collapse: collapse; }
+  table.grid th { font-size: 8px; text-transform: uppercase; letter-spacing: .08em; color: #555;
+                  text-align: left; border-bottom: 1px solid #000; padding: 2px 4px; }
+  table.grid td { border-bottom: 1px solid #ddd; padding: 3px 4px; vertical-align: top; }
+  table.grid td.c { text-align: center; }
+  .empty { color: #999; }
+
+  .cols { display: flex; gap: 14px; }
+  .col { flex: 1; }
+  .fld { display: flex; gap: 6px; border-bottom: 1px dotted #999; padding: 2px 0; }
+  .fld-l { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+           color: #666; min-width: 74px; padding-top: 1px; }
+  .fld-v { font-size: 10px; flex: 1; }
+  ul.plain { list-style: none; margin: 0; padding: 0; }
+  ul.plain li { border-bottom: 1px dotted #bbb; padding: 2px 0; font-size: 10px; }
+
+  .bg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .bg-box { border: 1px solid #000; padding: 5px 7px; break-inside: avoid; }
+  .bg-box.wide { grid-column: 1 / -1; }
+  .bg-l { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em;
+          color: #666; margin-bottom: 2px; }
+  .bg-v { font-size: 10px; white-space: pre-wrap; }
+
+  footer { margin-top: 10px; border-top: 1px solid #ccc; padding-top: 4px;
+           font-size: 8px; color: #888; display: flex; justify-content: space-between; }
+</style></head>
+<body>
+  <header>
+    <div>
+      <h1>${esc(name)}</h1>
+      <div class="sub-title">${esc([d.header['f-race'], d.header['f-class'], d.header['f-gender']].filter(Boolean).join(' · ')) || '&nbsp;'}</div>
+    </div>
+    <div class="lvl">Level ${esc(d.header['f-level'] || '1')}${d.header['f-crawler'] ? '<br>Crawler #' + esc(d.header['f-crawler']) : ''}</div>
+  </header>
+
+  <div class="row">
+    <div class="stats">${statCells}</div>
+    <div class="vitals">
+      <div class="vital"><div class="vital-l">Evade</div><div class="vital-v">${esc(V('evade-total') || '—')}</div></div>
+      <div class="vital"><div class="vital-l">DR</div><div class="vital-v">${esc(V('dr-total') || '—')}</div></div>
+      <div class="vital"><div class="vital-l">Mana</div><div class="vital-v">${esc(V('mana-current') || '0')}<span style="font-size:11px;color:#666;">/${esc(V('mana-max') || '0')}</span></div></div>
+    </div>
+  </div>
+
+  <section>
+    <h2>Health Bar <span class="h2sub">${conMod > 0 ? esc(conMod) + ' HP per box · tick as they go' : 'CON mod per box'}</span></h2>
+    <div class="hp-track">${Array.from({length: 10}, () => `<div class="hp-box">${conMod > 0 ? conMod : ''}</div>`).join('')}</div>
+  </section>
+
+  <div class="cols">
+    <div class="col">
+      <section>
+        <h2>Evade</h2>
+        <div class="fld"><span class="fld-l">DEX Mod</span><span class="fld-v">${esc(V('evade-dex'))}</span></div>
+        <div class="fld"><span class="fld-l">Buffs</span><span class="fld-v">${esc(V('evade-buffs'))}</span></div>
+        <div class="fld"><span class="fld-l">Move</span><span class="fld-v">${esc(V('evade-move'))}</span></div>
+        <div class="fld"><span class="fld-l">Step</span><span class="fld-v">${esc(V('evade-step'))}</span></div>
+      </section>
+    </div>
+    <div class="col">
+      <section>
+        <h2>Damage Reduction</h2>
+        <div class="fld"><span class="fld-l">Armor</span><span class="fld-v">${esc(V('dr-armor'))}</span></div>
+        <div class="fld"><span class="fld-l">Buffs</span><span class="fld-v">${esc(V('dr-buffs'))}</span></div>
+        <div class="fld"><span class="fld-l">AI Favor</span><span class="fld-v">${esc(V('dr-aifavor'))}</span></div>
+        <div class="fld"><span class="fld-l">Size</span><span class="fld-v">${esc(V('dr-size'))}</span></div>
+      </section>
+    </div>
+  </div>
+
+  ${V('debuffs') ? `<section><h2>Debuffs</h2><div class="fld-v">${nl(V('debuffs'))}</div></section>` : ''}
+
+  <section>
+    <h2>Attacks</h2>
+    <table class="grid">
+      <thead><tr><th>Name</th><th class="c" style="width:90px">To Hit</th><th class="c" style="width:100px">Damage</th><th style="width:34%">Effects</th></tr></thead>
+      <tbody>${attackRows}</tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Skills</h2>
+    <table class="grid">
+      <thead><tr><th class="c" style="width:22px"></th><th>Name</th><th class="c" style="width:36px">Rank</th><th class="c" style="width:44px">Stat</th><th class="c" style="width:70px">Check</th><th style="width:32%">Notes</th></tr></thead>
+      <tbody>${skillRows}</tbody>
+    </table>
+  </section>
+
+  ${hots.length ? `<section><h2>Hotlist</h2><ul class="plain">${hots.map(h => `<li>${nl(h)}</li>`).join('')}</ul></section>` : ''}
+  ${buffs.length ? `<section><h2>External Buffs</h2><ul class="plain">${buffs.map(b => `<li>${esc(b)}</li>`).join('')}</ul></section>` : ''}
+
+  <div class="cols">
+    <div class="col">
+      <section>
+        <h2>Worn Gear</h2>
+        ${gearRows}
+        ${accs.length ? `<div style="margin-top:6px;"><div class="fld-l" style="margin-bottom:2px;">Accessories</div><ul class="plain">${accs.map(a => `<li>${esc(a)}</li>`).join('')}</ul></div>` : ''}
+      </section>
+    </div>
+    <div class="col">
+      <section>
+        <h2>Inventory</h2>
+        <table class="grid">
+          <thead><tr><th>Item</th><th class="c" style="width:34px">Qty</th><th style="width:42%">Notes</th></tr></thead>
+          <tbody>${invRows}</tbody>
+        </table>
+      </section>
+    </div>
+  </div>
+
+  ${bgBoxes ? `<section><h2>Background</h2><div class="bg-grid">${bgBoxes}</div></section>` : ''}
+
+  <footer>
+    <span>Dungeon Crawler Carl character sheet</span>
+    <span>${new Date().toLocaleDateString()}</span>
+  </footer>
+</body></html>`;
+
+  // Hidden iframe + print — no pop-up blocker, live sheet untouched.
+  const old = document.getElementById('pdf-print-frame');
+  if(old) old.remove();
+  const frame = document.createElement('iframe');
+  frame.id = 'pdf-print-frame';
+  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+  document.body.appendChild(frame);
+
+  const fdoc = frame.contentWindow.document;
+  fdoc.open(); fdoc.write(doc); fdoc.close();
+
+  const go = () => {
+    try {
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+    } catch(e) {
+      const w = window.open('', '_blank');
+      if(w) { w.document.write(doc); w.document.close(); w.focus(); w.print(); }
+      else alert('Your browser blocked the print window. Allow pop-ups for this page and try again.');
+    }
+  };
+  if(fdoc.readyState === 'complete') setTimeout(go, 120);
+  else frame.onload = () => setTimeout(go, 120);
+
+  addLog('Sheet Exported', '🖨', 'Print / Save as PDF', 'normal');
+}
+
 function exportSheet() {
   const data = collectSheet();
   const name = document.getElementById('f-name')?.value || 'character';
@@ -1927,7 +2171,7 @@ function campaignLeave() {
 
 // Only real rolls are shared — sheet housekeeping stays local.
 const CAMPAIGN_SKIP_LABELS = new Set([
-  'Sheet Saved','Exported','Imported','New Character','Item Added','Level Up','Rest'
+  'Sheet Saved','Sheet Exported','Exported','Imported','New Character','Item Added','Level Up','Rest'
 ]);
 function campaignBroadcast(label, result, detail, type) {
   if(!_campaign) return;

@@ -41,6 +41,8 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .log-action-btn.save:hover{background:#2d5a2d;color:white;}
 .log-action-btn.export{background:#1a2a3a;color:#6aabdf;border:1px solid #1a4a8a;}
 .log-action-btn.export:hover{background:#1a4a8a;color:white;}
+.log-action-btn.pdf{background:#241f10;color:#c8a020;border:1px solid #7a5a00;}
+.log-action-btn.pdf:hover{background:#7a5a00;color:white;}
 .log-action-btn.import{background:#2a1a1a;color:#df6a6a;border:1px solid #5a1a1a;}
 .log-action-btn.import:hover{background:#5a1a1a;color:white;}
 .log-action-btn.newchar{background:#1a1a2e;color:#8888dd;border:1px solid #2a2a5a;}
@@ -402,6 +404,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
     <button id="campaign-btn" class="log-action-btn" onclick="openCampaign()" style="border:1px solid var(--rule);">🔗 Campaign</button>
     <button class="log-action-btn save" onclick="saveSheet(true)">💾 Save</button>
     <button class="log-action-btn export" onclick="exportSheet()">↓ Export</button>
+    <button class="log-action-btn pdf" onclick="exportPDF()" title="Printer-friendly PDF">🖨 PDF</button>
     <label class="log-action-btn import" style="display:flex;align-items:center;justify-content:center;cursor:pointer;">↑ Import<input type="file" accept=".json" style="display:none" onchange="importSheet(this)"></label>
   </div>
   <div class="log-entries" id="log-entries">
@@ -1773,6 +1776,384 @@ function saveSheet(manual=false){
   if(window.__ddSave) window.__ddSave({ sd_sheet: json });
   if(manual) addLog('Sheet Saved','💾','Saved','normal');
 }
+
+// ═══ PRINTER-FRIENDLY PDF EXPORT ══════════════════════════════════════════
+// Rather than screenshotting the dark UI, this rebuilds the sheet as a clean
+// black-on-white letter-sized document and hands it to the browser's print
+// dialog ("Save as PDF"). The result is real, selectable text — a few KB
+// instead of a multi-megabyte raster, and it actually reads on paper.
+
+// ═══ PDF EXPORT — OFFICIAL FILLABLE SHEET ═════════════════════════════════
+// Fills The Arcane Library's fillable character sheet (an AcroForm PDF served
+// from /shadowdark-sheet-fillable.pdf) with pdf-lib, then downloads it. The
+// fields stay editable, so it can still be tweaked in any PDF reader.
+// If the form or the library can't be loaded, falls back to exportPrintable().
+let _pdfLibPromise = null;
+function loadPdfLib() {
+  if(window.PDFLib) return Promise.resolve(window.PDFLib);
+  if(_pdfLibPromise) return _pdfLibPromise;
+  _pdfLibPromise = new Promise((resolve, reject) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+    sc.onload  = () => resolve(window.PDFLib);
+    sc.onerror = () => reject(new Error('pdf-lib failed to load'));
+    document.head.appendChild(sc);
+  });
+  return _pdfLibPromise;
+}
+
+async function exportPDF() {
+  const V = id => (document.getElementById(id)?.value || '').trim();
+
+  try {
+    const [PDFLib, bytes] = await Promise.all([
+      loadPdfLib(),
+      fetch('/shadowdark-sheet-fillable.pdf').then(r => {
+        if(!r.ok) throw new Error('sheet template ' + r.status);
+        return r.arrayBuffer();
+      })
+    ]);
+
+    const pdf  = await PDFLib.PDFDocument.load(bytes);
+    const form = pdf.getForm();
+    const set  = (field, value) => {
+      if(value === undefined || value === null || value === '') return;
+      try { form.getTextField(field).setText(String(value)); } catch(e) { /* field absent */ }
+    };
+
+    // ── Header ──
+    set('Name',       V('f-name'));
+    set('Race',       V('f-ancestry'));
+    set('Class',      V('f-class'));
+    set('Title',      V('f-title'));
+    set('Level',      V('f-level'));
+    set('Alignment',  V('f-alignment'));
+    set('Background', V('f-background'));
+    set('Deity',      V('f-deity'));
+    set('XP Current', V('xp-current'));
+    set('XP Target',  V('xp-next'));
+
+    // ── Stats: the form wants full names ──
+    const STAT_FIELD = { STR:'Strength', DEX:'Dexterity', CON:'Constitution',
+                         INT:'Intelligence', WIS:'Wisdom', CHA:'Charisma' };
+    STATS.forEach(st => {
+      const full = STAT_FIELD[st.name];
+      if(!full) return;
+      set(full + ' Total',    document.getElementById(st.id+'-val')?.value || '');
+      set(full + ' Modifier', document.getElementById(st.id+'-mod')?.textContent || '');
+    });
+
+    // ── Vitals ──
+    const hpCur = V('hp-current'), hpMax = V('hp-max');
+    set('Hit Points', hpMax ? (hpCur || '0') + ' / ' + hpMax : hpCur);
+    set('Armor Class', V('ac-val'));
+    set('Gold Pieces',   V('coin-gp'));
+    set('Silver Pieces', V('coin-sp'));
+    set('Copper Pieces', V('coin-cp'));
+
+    // ── Attacks (multiline box) ──
+    const attacks = [...document.querySelectorAll('#attacks-body tr')].map(tr => {
+      const txt = tr.querySelectorAll('input[type="text"]');
+      const sel = tr.querySelectorAll('select');
+      const name = (txt[0]?.value || '').trim();
+      if(!name) return null;
+      const bonus = (txt[1]?.value || '').trim();
+      const stat  = (sel[0]?.value || '').toUpperCase();
+      const range = (sel[1]?.value || '').trim();
+      const dmg   = (txt[2]?.value || '').trim();
+      const adv   = tr.querySelector('.atk-adv-btn.on') ? ' [ADV]' : '';
+      const bits  = [bonus && (bonus.startsWith('+') || bonus.startsWith('-') ? bonus : '+' + bonus),
+                     stat && '(' + stat + ')', dmg, range].filter(Boolean).join(' ');
+      return name + (bits ? ', ' + bits : '') + adv;
+    }).filter(Boolean);
+    set('Attacks', attacks.join('\n'));
+
+    // ── Talents / Spells (multiline box) ──
+    const spells = [...document.querySelectorAll('#spells-list .spell-row')].map(row => {
+      const nm = (row.querySelector('.spell-input')?.value || '').trim();
+      if(!nm) return null;
+      const tier = row.querySelector('.spell-level')?.value || '';
+      const rng  = row.querySelector('.spell-range')?.value || '';
+      const dur  = row.querySelector('.spell-duration')?.value || '';
+      const dmg  = row.querySelector('.spell-damage')?.value || '';
+      const meta = [tier && 'T' + tier, rng, dur, dmg].filter(Boolean).join(', ');
+      return (row.classList.contains('lost') ? '(lost) ' : '') + nm + (meta ? ' — ' + meta : '');
+    }).filter(Boolean);
+
+    const talentBlock = [
+      V('talents-text'),
+      spells.length ? 'SPELLS\n' + spells.join('\n') : ''
+    ].filter(t => t && t.trim()).join('\n\n');
+    set('Talents / Spells', talentBlock);
+
+    // ── Gear: 20 numbered lines ──
+    const gear = [...document.querySelectorAll('#gear-list > div')].map(row => {
+      const nm = (row.querySelector('.gear-name')?.value || '').trim();
+      if(!nm) return null;
+      const qty = (row.querySelector('.gear-qty')?.value || '').trim();
+      const off = row.classList.contains('gear-slot-disabled');
+      return (off ? '— ' : '') + nm + (qty && qty !== '1' ? ' x' + qty : '');
+    }).filter(Boolean);
+    gear.slice(0, 20).forEach((item, i) => set('Gear ' + (i + 1), item));
+    if(gear.length > 20) set('Gear 20', gear.slice(19).join(' · '));   // don't silently drop the tail
+
+    set('Free To Carry', V('free-carry'));
+
+    // Bake the values into the field appearances so every reader shows them
+    try { form.updateFieldAppearances(); } catch(e) {}
+
+    const out  = await pdf.save();
+    const blob = new Blob([out], { type: 'application/pdf' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = ((V('f-name') || 'shadowdark-character').replace(/[^a-z0-9]+/gi, '_').toLowerCase()) + '.pdf';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+
+    addLog('Sheet Exported', '🖨', 'Official sheet PDF', 'normal');
+  } catch(err) {
+    console.warn('Fillable-form export failed, falling back to print view:', err);
+    exportPrintable();
+  }
+}
+
+// ── Fallback: a plain printable HTML rendering of the sheet ──
+function exportPrintable() {
+  const V   = id => (document.getElementById(id)?.value || '').trim();
+  const esc = t => String(t == null ? '' : t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const nl  = t => esc(t).replace(/\n/g,'<br>');
+
+  // ── Gather ──
+  const name = V('f-name') || 'Unnamed Adventurer';
+
+  const stats = STATS.map(st => ({
+    abbr: st.name,
+    val:  document.getElementById(st.id+'-val')?.value || '',
+    mod:  document.getElementById(st.id+'-mod')?.textContent || ''
+  }));
+
+  const attacks = [...document.querySelectorAll('#attacks-body tr')].map(tr => {
+    const txt = tr.querySelectorAll('input[type="text"]');
+    const sel = tr.querySelectorAll('select');
+    return {
+      name:  txt[0]?.value || '',
+      bonus: txt[1]?.value || '',
+      stat:  (sel[0]?.value || '').toUpperCase(),
+      range: sel[1]?.value || '',
+      dmg:   txt[2]?.value || '',
+      adv:   !!tr.querySelector('.atk-adv-btn.on')
+    };
+  }).filter(a => a.name);
+
+  const spells = [...document.querySelectorAll('#spells-list .spell-row')].map(row => ({
+    name: row.querySelector('.spell-input')?.value || '',
+    tier: row.querySelector('.spell-level')?.value || '',
+    bonus: row.querySelector('.spell-bonus')?.value || '',
+    range: row.querySelector('.spell-range')?.value || '',
+    dur:  row.querySelector('.spell-duration')?.value || '',
+    dmg:  row.querySelector('.spell-damage')?.value || '',
+    desc: row.querySelector('.spell-desc')?.value || '',
+    lost: row.classList.contains('lost')
+  })).filter(sp => sp.name);
+
+  const gear = [...document.querySelectorAll('#gear-list > div')].map(row => ({
+    name: row.querySelector('.gear-name')?.value || '',
+    qty:  row.querySelector('.gear-qty')?.value || '',
+    off:  row.classList.contains('gear-slot-disabled')
+  })).filter(g => g.name);
+
+  // ── Build ──
+  const statCells = stats.map(st =>
+    `<div class="stat"><div class="stat-abbr">${esc(st.abbr)}</div>`
+    + `<div class="stat-val">${esc(st.val)}</div>`
+    + `<div class="stat-mod">${esc(st.mod)}</div></div>`).join('');
+
+  const field = (label, val) =>
+    `<div class="fld"><span class="fld-l">${esc(label)}</span><span class="fld-v">${esc(val) || '&nbsp;'}</span></div>`;
+
+  const attackRows = attacks.length ? attacks.map(a =>
+    `<tr><td>${esc(a.name)}${a.adv ? ' <span class="adv">ADV</span>' : ''}</td>`
+    + `<td class="c">${esc(a.bonus)}</td><td class="c">${esc(a.stat)}</td>`
+    + `<td class="c">${esc(a.range)}</td><td class="c">${esc(a.dmg)}</td></tr>`).join('')
+    : '<tr><td colspan="5" class="empty">—</td></tr>';
+
+  const spellRows = spells.length ? spells.map(sp =>
+    `<tr class="${sp.lost ? 'lost' : ''}">`
+    + `<td class="c">${esc(sp.tier)}</td>`
+    + `<td>${esc(sp.name)}${sp.desc ? `<div class="sub">${esc(sp.desc)}</div>` : ''}</td>`
+    + `<td class="c">${esc(sp.bonus)}</td><td class="c">${esc(sp.range)}</td>`
+    + `<td class="c">${esc(sp.dur)}</td><td class="c">${esc(sp.dmg)}</td>`
+    + `<td class="c box"></td></tr>`).join('')
+    : '<tr><td colspan="7" class="empty">—</td></tr>';
+
+  const gearRows = gear.length ? gear.map(g =>
+    `<li class="${g.off ? 'off' : ''}">${esc(g.name)}${g.qty && g.qty !== '1' ? ` <span class="qty">×${esc(g.qty)}</span>` : ''}</li>`).join('')
+    : '<li class="empty">—</li>';
+
+  const spellsBlock = spells.length ? `
+    <section>
+      <h2>Spells <span class="h2sub">${esc(V('spell-stat').toUpperCase())} · struck-through = lost</span></h2>
+      <table class="grid">
+        <thead><tr><th class="c" style="width:26px">Tier</th><th>Spell</th><th class="c" style="width:38px">Bonus</th><th class="c" style="width:48px">Range</th><th class="c" style="width:70px">Duration</th><th class="c" style="width:52px">Damage</th><th class="c" style="width:32px">Lost</th></tr></thead>
+        <tbody>${spellRows}</tbody>
+      </table>
+    </section>` : '';
+
+  const doc = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>${esc(name)} — Shadowdark</title>
+<style>
+  @page { size: letter portrait; margin: 0.5in; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; color: #000; background: #fff;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; font-size: 10px; line-height: 1.4;
+  }
+  h1 { font-size: 21px; margin: 0; letter-spacing: .02em; }
+  .sub-title { font-size: 10px; color: #444; margin-top: 2px; }
+  header { display: flex; justify-content: space-between; align-items: flex-end;
+           border-bottom: 2px solid #000; padding-bottom: 6px; margin-bottom: 10px; }
+  .lvl { font-size: 11px; font-weight: 700; text-align: right; white-space: nowrap; }
+
+  h2 { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .12em;
+       margin: 0 0 5px; padding-bottom: 2px; border-bottom: 1px solid #000; }
+  .h2sub { font-weight: 400; text-transform: none; letter-spacing: 0; color: #666; font-size: 9px; }
+  section { margin-bottom: 12px; break-inside: avoid; }
+
+  .fields { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px 14px; margin-bottom: 10px; }
+  .fld { display: flex; gap: 5px; border-bottom: 1px dotted #999; padding-bottom: 1px; }
+  .fld-l { font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em;
+           color: #666; min-width: 62px; padding-top: 1px; }
+  .fld-v { font-size: 11px; }
+
+  .row { display: flex; gap: 12px; align-items: stretch; margin-bottom: 12px; }
+  .stats { display: flex; gap: 5px; }
+  .stat { border: 1.5px solid #000; width: 50px; text-align: center; padding: 3px 0; }
+  .stat-abbr { font-size: 8px; font-weight: 700; letter-spacing: .1em; }
+  .stat-val  { font-size: 19px; font-weight: 700; line-height: 1.1; }
+  .stat-mod  { font-size: 9px; color: #444; border-top: 1px solid #ccc; }
+  .vitals { display: flex; gap: 5px; margin-left: auto; }
+  .vital { border: 1.5px solid #000; padding: 3px 10px; text-align: center; min-width: 62px; }
+  .vital-l { font-size: 8px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+  .vital-v { font-size: 17px; font-weight: 700; line-height: 1.2; }
+
+  table.grid { width: 100%; border-collapse: collapse; }
+  table.grid th { font-size: 8px; text-transform: uppercase; letter-spacing: .08em; color: #555;
+                  text-align: left; border-bottom: 1px solid #000; padding: 2px 4px; }
+  table.grid td { border-bottom: 1px solid #ddd; padding: 3px 4px; vertical-align: top; }
+  table.grid td.c { text-align: center; }
+  table.grid tr.lost td { text-decoration: line-through; color: #777; }
+  .box { }
+  td.box::after { content: ''; display: inline-block; width: 9px; height: 9px; border: 1px solid #000; }
+  .adv { font-size: 7px; border: 1px solid #000; padding: 0 2px; vertical-align: middle; }
+  .sub { font-size: 9px; color: #555; }
+  .empty { color: #999; }
+
+  .cols { display: flex; gap: 14px; }
+  .col { flex: 1; }
+  ul.gear { list-style: none; margin: 0; padding: 0; columns: 2; column-gap: 14px; }
+  ul.gear li { border-bottom: 1px dotted #bbb; padding: 2px 0; break-inside: avoid; font-size: 10px; }
+  ul.gear li.off { text-decoration: line-through; color: #999; }
+  .qty { color: #666; font-size: 9px; }
+  .coins { display: flex; gap: 6px; margin-bottom: 6px; }
+  .coin { border: 1px solid #000; padding: 2px 8px; font-size: 10px; }
+  .coin b { font-size: 8px; letter-spacing: .08em; }
+  .free { font-size: 9px; color: #444; margin-top: 5px; }
+  .notes { border: 1px solid #000; padding: 6px 8px; font-size: 10px; min-height: 60px; white-space: pre-wrap; }
+  footer { margin-top: 10px; border-top: 1px solid #ccc; padding-top: 4px;
+           font-size: 8px; color: #888; display: flex; justify-content: space-between; }
+</style></head>
+<body>
+  <header>
+    <div>
+      <h1>${esc(name)}</h1>
+      <div class="sub-title">${esc([V('f-ancestry'), V('f-class'), V('f-title')].filter(Boolean).join(' · ')) || '&nbsp;'}</div>
+    </div>
+    <div class="lvl">Level ${esc(V('f-level') || '1')}<br>${esc(V('f-alignment'))}</div>
+  </header>
+
+  <div class="fields">
+    ${field('Background', V('f-background'))}
+    ${field('Deity', V('f-deity'))}
+    ${field('XP', V('xp-current') + ' / ' + V('xp-next'))}
+  </div>
+
+  <div class="row">
+    <div class="stats">${statCells}</div>
+    <div class="vitals">
+      <div class="vital"><div class="vital-l">HP</div><div class="vital-v">${esc(V('hp-current'))}<span style="font-size:11px;color:#666;">/${esc(V('hp-max'))}</span></div></div>
+      <div class="vital"><div class="vital-l">AC</div><div class="vital-v">${esc(V('ac-val'))}</div></div>
+      <div class="vital"><div class="vital-l">Luck</div><div class="vital-v">${esc(V('lk-val') || '0')}</div></div>
+    </div>
+  </div>
+
+  <section>
+    <h2>Attacks</h2>
+    <table class="grid">
+      <thead><tr><th>Weapon / Attack</th><th class="c" style="width:44px">Bonus</th><th class="c" style="width:36px">Stat</th><th class="c" style="width:48px">Range</th><th class="c" style="width:62px">Damage</th></tr></thead>
+      <tbody>${attackRows}</tbody>
+    </table>
+  </section>
+
+  ${spellsBlock}
+
+  <div class="cols">
+    <div class="col">
+      <section>
+        <h2>Gear <span class="h2sub">${gear.filter(g=>!g.off).length} slots used</span></h2>
+        <div class="coins">
+          <div class="coin"><b>GP</b> ${esc(V('coin-gp') || '0')}</div>
+          <div class="coin"><b>SP</b> ${esc(V('coin-sp') || '0')}</div>
+          <div class="coin"><b>CP</b> ${esc(V('coin-cp') || '0')}</div>
+        </div>
+        <ul class="gear">${gearRows}</ul>
+        ${V('free-carry') ? `<div class="free"><b>Free to carry:</b> ${esc(V('free-carry'))}</div>` : ''}
+      </section>
+    </div>
+    <div class="col">
+      <section>
+        <h2>Talents &amp; Features</h2>
+        <div class="notes">${nl(V('talents-text'))}</div>
+      </section>
+    </div>
+  </div>
+
+  <footer>
+    <span>Shadowdark RPG character sheet</span>
+    <span>${new Date().toLocaleDateString()}</span>
+  </footer>
+</body></html>`;
+
+  // Render in a hidden iframe and print from it — avoids popup blockers, and
+  // leaves the live sheet untouched.
+  const old = document.getElementById('pdf-print-frame');
+  if(old) old.remove();
+  const frame = document.createElement('iframe');
+  frame.id = 'pdf-print-frame';
+  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+  document.body.appendChild(frame);
+
+  const fdoc = frame.contentWindow.document;
+  fdoc.open(); fdoc.write(doc); fdoc.close();
+
+  const go = () => {
+    try {
+      frame.contentWindow.focus();
+      frame.contentWindow.print();
+    } catch(e) {
+      // Sandboxed contexts can refuse to print an iframe — fall back to a tab
+      const w = window.open('', '_blank');
+      if(w) { w.document.write(doc); w.document.close(); w.focus(); w.print(); }
+      else alert('Your browser blocked the print window. Allow pop-ups for this page and try again.');
+    }
+  };
+  if(fdoc.readyState === 'complete') setTimeout(go, 120);
+  else frame.onload = () => setTimeout(go, 120);
+
+  addLog('Sheet Exported', '🖨', 'Print / Save as PDF', 'normal');
+}
+
 function exportSheet(){
   const data = collectSheet();
   const name = data.name || 'character';
@@ -5276,7 +5657,7 @@ function campaignLeave() {
 // events (purchases, level ups, saves, etc.) stay local.
 const CAMPAIGN_SKIP_LABELS = new Set([
   'Character Created','Exported','Imported','Item Added','Level Up',
-  'New Character','Purchase','Random Character','Rest','Sheet Saved',
+  'New Character','Purchase','Random Character','Rest','Sheet Exported','Sheet Saved',
   'Spell Learned','Spell Unlearned'
 ]);
 function campaignBroadcast(label, result, detail, type) {
