@@ -104,7 +104,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--ink);min-h
 .formula-total{width:50px;height:28px;border:2px solid var(--border);background:var(--box);font-family:'Share Tech Mono',monospace;font-size:14px;font-weight:700;text-align:center;outline:none;color:var(--ink);}
 .formula-sublabel{font-family:'Barlow Condensed',sans-serif;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;margin-top:1px;}
 .formula-extra{display:flex;gap:6px;margin-left:auto;}
-.evade-roll-btn{background:var(--section-hdr);color:white;border:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:4px 10px;transition:background .1s;}
+.evade-roll-btn{background:var(--section-hdr);color:white;border:none;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:.1em;text-transform:uppercase;height:28px;padding:0 14px;display:inline-flex;align-items:center;gap:4px;transition:background .1s;}
 .evade-roll-btn:hover{background:var(--red);}
 
 .mana-row{display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:1px solid var(--rule);}
@@ -127,7 +127,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--ink);min-h
 .atk-formula{display:flex;align-items:center;gap:2px;justify-content:center;}
 .atk-formula input{width:30px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:11px;}
 .atk-plus{font-family:'Barlow Condensed',sans-serif;font-size:14px;color:var(--muted);}
-.atk-roll-btn{padding:2px 6px;background:transparent;border:1px solid var(--rule);cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;color:var(--muted);transition:all .1s;}
+.atk-roll-btn{height:24px;min-width:34px;padding:0 8px;background:transparent;border:1px solid var(--rule);cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:var(--muted);transition:all .1s;}
 .atk-roll-btn:hover{background:var(--red);border-color:var(--red);color:white;}
 
 /* HOTLIST inline */
@@ -167,7 +167,7 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--ink);min-h
 .skill-stat-sel{border:1px solid var(--rule);background:var(--input-bg);font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;outline:none;padding:2px 3px;color:var(--ink);width:52px;}
 .skill-mod-input{width:32px;border:none;border-bottom:1px solid var(--rule);background:transparent;font-family:'Share Tech Mono',monospace;font-size:11px;outline:none;text-align:center;padding:2px;}
 .skill-check{width:18px;height:18px;cursor:pointer;accent-color:var(--red);}
-.skill-roll-btn{padding:2px 5px;background:transparent;border:1px solid var(--rule);cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:9px;font-weight:700;color:var(--muted);white-space:nowrap;}
+.skill-roll-btn{height:24px;min-width:32px;padding:0 7px;background:transparent;border:1px solid var(--rule);cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;color:var(--muted);white-space:nowrap;}
 .skill-roll-btn:hover{background:var(--red);border-color:var(--red);color:white;}
 .skill-del-btn{padding:1px 4px;background:transparent;border:1px solid var(--rule);cursor:pointer;font-size:10px;color:var(--muted);}
 .skill-del-btn:hover{background:#c0251e;border-color:#c0251e;color:white;}
@@ -209,8 +209,8 @@ body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--ink);min-h
 /* DICE TRAY */
 .dice-tray{border-top:2px solid #222;padding:10px;background:#0e0e0e;flex-shrink:0;}
 .dice-tray-label{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:#555;margin-bottom:6px;}
-.dice-btns{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:6px;}
-.dice-btn{padding:5px 2px;background:#1a1a1a;border:1px solid #333;color:#aaa;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;cursor:pointer;text-align:center;transition:all .1s;letter-spacing:.04em;}
+.dice-btns{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;margin-bottom:6px;}
+.dice-btn{min-width:0;padding:5px 2px;background:#1a1a1a;border:1px solid #333;color:#aaa;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;cursor:pointer;text-align:center;transition:all .1s;letter-spacing:.04em;}
 .dice-btn:hover{background:#c0251e;border-color:#c0251e;color:white;}
 .dice-btn.active{background:#c0251e;border-color:#ff4444;color:white;}
 .dice-pool-display{font-family:'Share Tech Mono',monospace;font-size:10px;color:#888;min-height:16px;margin-bottom:6px;word-break:break-all;}
@@ -593,10 +593,11 @@ body.dark select.skill-stat-sel{background:var(--input-bg);}
       <button class="dice-btn" onclick="addDie(10)">D10</button>
       <button class="dice-btn" onclick="addDie(12)">D12</button>
       <button class="dice-btn" onclick="addDie(20)">D20</button>
+      <button class="dice-btn" onclick="addDie(100)">D100</button>
     </div>
     <div class="dice-tray-actions">
-      <button class="dice-roll-btn" onclick="rollDicePool()" title="Roll dice pool"><span class="btn-die">&#127922;</span> Roll</button>
       <button class="dice-clear-btn" onclick="clearDicePool()">Clear</button>
+      <button class="dice-roll-btn" onclick="rollDicePool()" title="Roll dice pool"><span class="btn-die">&#127922;</span> Roll</button>
     </div>
   </div>
 </div>
@@ -1786,7 +1787,7 @@ document.getElementById('f-name')?.addEventListener('change', syncDocTitle);
   function go() {
     if(!_pageReady) return;
     if(t) clearTimeout(t);
-    t = setTimeout(function() { try { saveSheet(); } catch(e) {} }, 1500);
+    t = setTimeout(function() { try { saveSheet(true); } catch(e) {} }, 1500);   // silent autosave
   }
   document.addEventListener('input', go);
   document.addEventListener('change', go);

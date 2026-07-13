@@ -680,14 +680,18 @@ function paginatePages() {
           const keep=new Set(buckets[0]);
           rightItems.forEach(k=>{if(!keep.has(k)){k.style.display='none';k.setAttribute('data-paginated-hidden','1');}});
           let after=document.getElementById('page-one');
-          for(let i=1;i<buckets.length;i++){
+          // Each bucket is one column's worth, so a continuation page takes TWO
+          // buckets: the first fills its left column, the second its right.
+          for(let i=1;i<buckets.length;i+=2){
             const cp=buildContinuationPage(document.getElementById('page-one'),'p1'+i,isDark,false);
             const cc=cp.querySelector('.cont-container');
             cc.style.cssText='display:flex;gap:14px;flex:1;min-height:0;overflow:hidden;';
             const cLeft=document.createElement('div'); cLeft.style.cssText='flex:1;min-width:0;overflow:hidden;';
             const cRight=document.createElement('div'); cRight.style.cssText='flex:1;min-width:0;overflow:hidden;';
             cc.appendChild(cLeft); cc.appendChild(cRight);
-            buckets[i].forEach(k=>{const cl=k.cloneNode(true);cl.style.display='';cl.removeAttribute('data-paginated-hidden');cLeft.appendChild(cl);});
+            const fill=(bucket,col)=>{ (bucket||[]).forEach(k=>{const cl=k.cloneNode(true);cl.style.display='';cl.removeAttribute('data-paginated-hidden');col.appendChild(cl);}); };
+            fill(buckets[i], cLeft);
+            fill(buckets[i+1], cRight);
             const fc=document.createElement('div');fc.className='p-footer';fc.style.flexShrink='0';
             fc.innerHTML='<div class="flowchart">'+(document.getElementById('p-flowchart')?.innerHTML||'')+'</div>';
             cp.querySelector('.page-inner').appendChild(fc);

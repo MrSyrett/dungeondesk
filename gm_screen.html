@@ -6825,7 +6825,7 @@ function init_dice(root) {
   }
   function campStop() { if(campTimer) { clearInterval(campTimer); campTimer = null; } }
 
-  const DICE = [4, 6, 8, 10, 12, 20, 100];
+  const DICE = [2, 4, 6, 8, 10, 12, 20, 100];
 
   function poolLabel() {
     const parts = Object.entries(pool).filter(([,n])=>n>0).map(([d,n])=>n+'d'+d);
