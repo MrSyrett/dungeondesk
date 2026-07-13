@@ -1235,7 +1235,7 @@ input[type="number"] { -moz-appearance: textfield; }
         <div class="cbt-tracker-list"></div>
         <div class="cbt-empty cbt-trackers-empty">
           <div class="cbt-empty-text">Nothing tracked yet</div>
-          <div class="cbt-empty-sub">Add timers, round trackers, or combatants &mdash; drag &#10303; or use &#9650;&#9660; to reorder</div>
+          <div class="cbt-empty-sub">Add timers, round trackers, or combatants &mdash; use &#9650;&#9660; to reorder</div>
         </div>
       </div>
     </div>
@@ -2231,9 +2231,9 @@ function init_trackers(root) {
   }
   function reorderHtml(item, idx) {
     const first = idx === 0, last = idx === items.length - 1;
+    // Stacked ▲▼ in one narrow column — keeps the delete button on the card
     return `
       <div class="card-reorder">
-        <span class="card-drag" title="Drag to reorder">&#10303;</span>
         <button class="card-move card-up" ${first ? 'disabled' : ''} title="Move up">&#9650;</button>
         <button class="card-move card-down" ${last ? 'disabled' : ''} title="Move down">&#9660;</button>
       </div>`;
@@ -2241,35 +2241,6 @@ function init_trackers(root) {
   function wireReorder(card, item) {
     card.querySelector('.card-up')?.addEventListener('click', () => moveItem(item.id, -1));
     card.querySelector('.card-down')?.addEventListener('click', () => moveItem(item.id, +1));
-    const handle = card.querySelector('.card-drag');
-    if(handle) {
-      handle.addEventListener('pointerdown', () => { card.draggable = true; });
-      handle.addEventListener('pointerup',   () => { card.draggable = false; });
-    }
-    card.addEventListener('dragstart', e => {
-      card.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', String(item.id));
-    });
-    card.addEventListener('dragend', () => {
-      card.classList.remove('dragging');
-      card.draggable = false;
-      list.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
-    });
-    card.addEventListener('dragover', e => { e.preventDefault(); card.classList.add('drop-target'); });
-    card.addEventListener('dragleave', () => card.classList.remove('drop-target'));
-    card.addEventListener('drop', e => {
-      e.preventDefault();
-      card.classList.remove('drop-target');
-      const dragId = parseInt(e.dataTransfer.getData('text/plain'));
-      if(!dragId || dragId === item.id) return;
-      const from = items.findIndex(x => x.id === dragId);
-      const to   = items.findIndex(x => x.id === item.id);
-      if(from < 0 || to < 0) return;
-      const [moved] = items.splice(from, 1);
-      items.splice(to, 0, moved);
-      render();
-    });
   }
 
   // ── Tag field + Status list (NPC cards) ──
@@ -2284,8 +2255,8 @@ function init_trackers(root) {
     `).join('');
     return `
       <div class="status-bar">
-        <input type="text" class="npc-tag-input" value="${escAttr(entity.tag || '')}" placeholder="Tag (elite, minion, ...)">
         <button class="btn small ghost status-add">+ Status</button>
+        <input type="text" class="npc-tag-input" value="${escAttr(entity.tag || '')}" placeholder="Tag (elite, minion, ...)">
       </div>
       <div class="status-list">${rows}</div>`;
   }
@@ -5523,13 +5494,16 @@ window.init_gen = function(root) {
       }
 
     } else if(activeTab==='encounter') {
+      // The dropdown's random option is 'random_all' — 'random' never matched,
+      // so it fell through and asked genEncounterItem for an unknown type.
       const type=root.querySelector('#gen-enc-type').value;
+      const count=parseInt(root.querySelector('#gen-enc-count').value)||1;
       const res=root.querySelector('#gen-enc-results'); res.innerHTML='';
-      if(type==='random') {
-        const t=ALL_ENC_TYPES[Math.floor(Math.random()*ALL_ENC_TYPES.length)];
+      for(let i=0;i<count;i++){
+        const t = (type==='random_all' || type==='random')
+          ? ALL_ENC_TYPES[Math.floor(Math.random()*ALL_ENC_TYPES.length)]
+          : type;
         res.appendChild(genEncounterItem(t));
-      } else {
-        res.appendChild(genEncounterItem(type));
       }
 
     } else if(activeTab==='shop') {
@@ -5937,7 +5911,7 @@ window.init_gen = function(root) {
   flex: 1; min-width: 0; width: auto; text-align: left;
   border-bottom: 1px dotted var(--border);
 }
-.status-bar .status-add { margin-top: 0; flex-shrink: 0; }
+.status-bar .status-add { margin-top: 0; flex-shrink: 0; order: -1; }
 .status-list { margin-top: 6px; }
 .status-list:empty { margin-top: 0; }
 
@@ -5945,6 +5919,45 @@ window.init_gen = function(root) {
   .card-select { font-size: 14px; padding: 9px 8px; min-height: 44px; }
   .status-bar { gap: 10px; margin-top: 10px; }
   .status-bar .npc-tag-input { font-size: 14px; padding: 8px 0; }
+}
+/* ══ REORDER CONTROLS — compact stacked arrows ═══════════════════════════
+   Drag-to-reorder is gone; ▲▼ stack in one narrow column so the delete
+   button still fits on the card in a phone-width pane. */
+.card-reorder { flex-direction: column; gap: 2px; }
+.card-drag { display: none; }
+.card-move { width: 22px; height: 16px; font-size: 8px; border-radius: 3px; padding: 0; }
+@media (max-width: 760px) {
+  .card-move { width: 28px; height: 20px; font-size: 9px; }
+}
+/* ══ COMPACT CHROME ══════════════════════════════════════════════════════
+   Slims the top bar and the generator control strip so more of the screen
+   goes to actual content. Desktop only — the mobile passes above keep the
+   larger touch targets. */
+@media (min-width: 761px) {
+  /* ── Top bar: 56px → 38px ── */
+  .topbar { height: 38px; gap: 12px; padding: 0 12px; }
+  .brand { font-size: 14px; gap: 6px; }
+  .brand-tag { font-size: 8px; letter-spacing: 0.2em; }
+  .session-controls { gap: 3px; margin-left: 6px; padding-left: 9px; }
+  .topbar .btn.small { padding: 3px 8px; font-size: 9px; min-height: 24px; }
+  .view-controls { gap: 4px; }
+  .split-label { font-size: 8px; margin-right: 2px; }
+  .split-select { height: 24px; font-size: 11px; padding: 0 6px; }
+
+  /* ── Pane header ── */
+  .pane-header { padding: 4px 8px; gap: 6px; }
+  .pane-select { font-size: 12px; padding: 2px 4px; }
+  .pane-toolbar-slot .btn.small { padding: 3px 8px; font-size: 9px; min-height: 24px; }
+
+  /* ── Generator controls: labels inline, tighter strip ── */
+  .gen-controls { gap: 8px 12px; padding: 7px 12px; }
+  .gen-label {
+    flex-direction: row; align-items: center; gap: 5px;
+    font-size: 9px; letter-spacing: 0.08em;
+  }
+  .gen-select { font-size: 12px; padding: 3px 6px; }
+  .gen-tab-select { font-size: 12px; padding: 3px 7px; }
+  .gen-results { padding: 10px 12px; gap: 8px; }
 }
 </style>
 </head><body>${bodyHtml}</body></html>`;

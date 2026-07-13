@@ -4781,7 +4781,7 @@ function shopRender() {
     filterBar.innerHTML =
         '<label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#888;">'
       +   '<input type="checkbox" '+(_shopClassOnly?'checked':'')+' onchange="shopToggleClassOnly(this.checked)" style="accent-color:#c8a020;width:15px;height:15px;cursor:pointer;">'
-      +   'Only show what a '+cls+' can use'
+      +   cls+' Only'
       + '</label>'
       + (_shopClassOnly && hidden ? '<span style="margin-left:auto;font-family:Montserrat,sans-serif;font-size:9px;color:#5a5a5a;">'+hidden+' hidden</span>' : '');
   } else {
