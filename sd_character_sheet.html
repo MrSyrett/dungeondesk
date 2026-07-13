@@ -587,9 +587,55 @@ const SD_SPELLS = [
   // Tier 5
   {name:'Earthquake',    tier:'5', caster:'Druid', range:'Double near', duration:'Instant',   damage:'4d6', desc:"The earth splits open. All creatures on the ground within double near take 4d6 damage. Each affected creature of LV 9 or less must pass a DEX check equal to the damage taken or be swallowed by the earth forever."},
   {name:'Naming',        tier:'5', caster:'Druid', range:'Close',       duration:'Instant',   damage:'',    desc:"Learn the True Name of one creature you touch. If willing, you may give it a new True Name (once in its lifetime) — doing so changes its alignment to match yours."},
+  // ══ CURSED SCROLL 6: MAGE SPELLS (lawful wizards only) ══
+  // Tier 1
+  {name:'Cleanse',           tier:'1', caster:'Mage', range:'Close', duration:'Instant',    damage:'',    desc:"You expunge natural toxins from one creature you touch, ending the effects of one poison currently affecting the target."},
+  {name:'Flare',             tier:'1', caster:'Mage', range:'Near',  duration:'1 round',    damage:'',    desc:"A flash of blinding, white light bursts from you. All enemies in range who see it are blinded for the spell's duration."},
+  {name:'Reveal',            tier:'1', caster:'Mage', range:'Near',  duration:'Instant',    damage:'',    desc:"End all invisibility effects out to a near distance from you. You also become aware of the location of any hiding creatures within range."},
+  {name:'Ward',              tier:'1', caster:'Mage', range:'Self',  duration:'10 rounds',  damage:'',    desc:"You ward yourself with a magical charm against ambush. You can't be surprised (you roll initiative during surprise rounds and are treated as aware of all enemies)."},
+  // Tier 2
+  {name:'Absorb',            tier:'2', caster:'Mage', range:'Self',  duration:'5 rounds',   damage:'',    desc:"You create an absorptive barrier of force around you. Halve all damage you take for the spell's duration (round down)."},
+  {name:'Meld',              tier:'2', caster:'Mage', range:'Self',  duration:'5 rounds',   damage:'',    desc:"You merge slightly with the ethereal plane, freeing yourself from physical hindrances. You may ignore any effect that would impact your movement for the duration."},
+  {name:'Pacify',            tier:'2', caster:'Mage', range:'Near',  duration:'Instant',    damage:'',    desc:"Choose one creature within range of LV 3 or less. It must make a morale check (creatures immune to morale checks are not affected)."},
+  {name:'Push/Pull',         tier:'2', caster:'Mage', range:'Near',  duration:'Instant',    damage:'',    desc:"You move one human-sized object or a creature of LV 4 or less a near distance. If the target is anchored in a way that prevents free movement, the DC to cast is 18."},
+  // Tier 3
+  {name:'Banish',            tier:'3', caster:'Mage', range:'Near',  duration:'Instant',    damage:'',    desc:"With a word of power, you send one extraplanar creature of LV 6 or less who hears you back to its dimension of origin."},
+  {name:'Forbid',            tier:'3', caster:'Mage', range:'Self',  duration:'10 rounds',  damage:'',    desc:"Creatures cannot teleport into, out of, or within an area of effect extending out to double near from you. The area moves with you."},
+  {name:'Identify',          tier:'3', caster:'Mage', range:'Touch', duration:'Instant',    damage:'',    desc:"You learn all the magical properties of one item you touch. You cannot cast this spell again until you complete a rest."},
+  {name:'Speak With Object', tier:'3', caster:'Mage', range:'Close', duration:'Instant',    damage:'',    desc:"An object you touch mentally answers up to three yes/no questions (one at a time); the GM answers truthfully. Its wit matches the rarity of its materials. Cast twice in 24 hours and a failed check becomes a critical failure."},
+  // Tier 4
+  {name:'Glyph',             tier:'4', caster:'Mage', range:'Close', duration:'1 week',     damage:'3d6', desc:"Draw an arcane symbol on an object with one effect: Bind (reader of LV 6 or less is paralyzed 1 hour); Harm (reader takes 3d6 damage); Message (reader hears a brief mental message); or Teleportation Sigil (treat as a sigil per teleport). The glyph disappears once activated."},
+  {name:'Stasis',            tier:'4', caster:'Mage', range:'Close', duration:'Indefinite', damage:'',    desc:"A willing creature you touch is suspended in time (unwilling targets must be LV 5 or less). It becomes unconscious, does not age, and its bodily functions cease, though it remains alive. End the spell at will or on a condition you set while casting."},
+  // Tier 5
+  {name:'Abjure',            tier:'5', caster:'Mage', range:'Close', duration:'Instant',    damage:'',    desc:"You and one creature you touch both die."},
+  {name:'Permanence',        tier:'5', caster:'Mage', range:'Close', duration:'1 year',     damage:'',    desc:"Sprinkle a powdered diamond on one object in range that is under the effects of a spell you cast; that spell's duration becomes 1 year. You cannot alter the original spell's effects afterward."},
+
+  // ══ CURSED SCROLL 5: SORCERER SPELLS (chaotic wizards only) ══
+  // Tier 1
+  {name:'Blight',                tier:'1', caster:'Sorcerer', range:'Self',  duration:'5 rounds', damage:'',    desc:"A close-sized patch of earth around you crumbles into lifeless ash. You gain +1 to your spellcasting checks for the spell's duration."},
+  {name:'Eyebite',               tier:'1', caster:'Sorcerer', range:'Near',  duration:'Instant',  damage:'1d4', desc:"One creature you target takes 1d4 damage, and it can't see you until the end of its next turn."},
+  {name:'Mischief',              tier:'1', caster:'Sorcerer', range:'Near',  duration:'5 rounds', damage:'',    desc:"Beguile one humanoid of LV 2 or less. Each round it tries to commit a sneaky, cruel act that hinders or inconveniences its nearest ally. The spell ends if you or your allies do anything to hurt the target that it notices."},
+  {name:'Protection From Good',  tier:'1', caster:'Sorcerer', range:'Close', duration:'Focus',    damage:'',    desc:"Lawful beings have disadvantage on attack rolls and hostile spellcasting checks against the target, and can't possess, compel, or beguile it. Cast on an already-possessed target, the possessing entity makes a CHA check vs. your last spellcasting check or is expelled."},
+  // Tier 2
+  {name:'Envenom',               tier:'2', caster:'Sorcerer', range:'Close', duration:'Instant',  damage:'',    desc:"Turn one cup or vial of potable liquid into a toxic poison that still appears to be the original liquid. A living creature of LV 10 or less who drinks it must pass a DC 15 CON check or go to 0 HP."},
+  {name:'Phantoms',              tier:'2', caster:'Sorcerer', range:'Near',  duration:'Instant',  damage:'',    desc:"A terrifying illusion appears in the mind of one target of LV 3 or less in range. The target must immediately make a morale check."},
+  {name:'Wither',                tier:'2', caster:'Sorcerer', range:'Close', duration:'Instant',  damage:'1d6', desc:"Your touch drains the life-energy of one target in range, dealing 1d6 damage. The target takes double damage from the next attack or damage-dealing spell that strikes it."},
+  {name:'Wrack',                 tier:'2', caster:'Sorcerer', range:'Far',   duration:'Focus',    damage:'',    desc:"One creature you can see of LV 5 or less is overcome by agonizing pain. It must pass a CON check on its turn equal to your last spellcasting check or it cannot move or act."},
+  // Tier 3
+  {name:'Betrayal',              tier:'3', caster:'Sorcerer', range:'Near',  duration:'Focus',    damage:'',    desc:"One creature of LV 7 or less you can see turns on its allies, regarding them as hostile enemies for the spell's duration."},
+  {name:'Defile',                tier:'3', caster:'Sorcerer', range:'Self',  duration:'5 rounds', damage:'',    desc:"A near-sized circle of earth around you disintegrates into infertile ash. For the duration, treat all tier 1-3 spells you successfully cast as critical successes. You cannot cast this spell while under its effects."},
+  {name:"Mazzim's Mesmerism",    tier:'3', caster:'Sorcerer', range:'Near',  duration:'Focus',    damage:'',    desc:"At the start of their turn, all humanoid creatures of LV 5 or less in range must pass a CHA check vs. your last spellcasting check. Creatures who fail stand motionless and agape, staring at unseen images."},
+  {name:'Unlife',                tier:'3', caster:'Sorcerer', range:'Close', duration:'1 day',    damage:'',    desc:"A humanoid skull you touch animates with red witchlight in its eyes and can converse in Common. It retains its personality and memories, though recall can be spotty. When the spell ends, the skull crumbles into grave dust."},
+  // Tier 4
+  {name:'Dismember',             tier:'4', caster:'Sorcerer', range:'Near',  duration:'Focus',    damage:'1d8', desc:"One creature of LV 9 or less loses an arm or leg (roll randomly), taking 1d8 damage each time. It loses a new limb each round of the duration; with no limbs left, it is beheaded and dies."},
+  {name:'Dominate',              tier:'4', caster:'Sorcerer', range:'Near',  duration:'Focus',    damage:'',    desc:"You subjugate the will of one creature of LV 9 or less you can see. It cannot act except to follow your commands. On your turn you command it to take actions and move; it acts on its own turn following your instructions."},
+  // Tier 5
+  {name:'Feeblemind',            tier:'5', caster:'Sorcerer', range:'Near',  duration:'1d8 days', damage:'',    desc:"One creature of LV 10 or less has its INT and CHA reduced to 1 for the duration. It can't cast spells."},
+  {name:'Subjugate',             tier:'5', caster:'Sorcerer', range:'Close', duration:'1 year',   damage:'',    desc:"Sprinkle a powdered diamond on one creature in range currently under the effects of a dominate, feeblemind, or polymorph spell you cast. That spell's duration becomes 1 year."},
 ];
 
-// ── Druid spells: available to neutral wizards in addition to wizard spells ─
+// ── Druid spells: neutral wizards; Mage spells: lawful wizards (in addition
+//    to the standard wizard list) ─────────────────────────────────────────
 function sheetAlignment() {
   return (document.getElementById('f-alignment')?.value || '').trim().toLowerCase();
 }
@@ -598,6 +644,8 @@ function spellAllowed(s, cls, alignment) {
   const al = (alignment || '').trim().toLowerCase();
   if(s.caster === 'Both')  return cls==='Wizard' || cls==='Priest';
   if(s.caster === 'Druid') return cls==='Wizard' && al === 'neutral';
+  if(s.caster === 'Mage')  return cls==='Wizard' && al === 'lawful';
+  if(s.caster === 'Sorcerer') return cls==='Wizard' && al === 'chaotic';
   return s.caster === cls;
 }
 
@@ -2092,25 +2140,33 @@ const RC_PRIEST_SPELLS_T1 = ['Cure Wounds','Holy Weapon','Light','Protection Fro
 const RC_WIZARD_SPELLS_T1 = ['Alarm','Burning Hands','Charm Person','Detect Magic','Hold Portal','Light','Magic Missile','Protection From Evil','Sleep'];
 const RC_WITCH_SPELLS_T1  = ['Cauldron','Charm Person','Eyebite','Fog','Hypnotize','Oak, Ash, Thorn','Puppet','Shadowdance','Willowman','Witchlight'];
 const RC_DRUID_SPELLS_T1  = ['Breath','Instill','Oxidize','Whisperwind'];
+const RC_MAGE_SPELLS_T1   = ['Cleanse','Flare','Reveal','Ward'];
+const RC_SORC_SPELLS_T1   = ['Blight','Eyebite','Mischief','Protection From Good'];
 
 // ── Spell sources ─────────────────────────────────────────────────────────
 // A caster defaults to its own list, but may tick other lists open and pick
 // from them. 'Both' is an internal tag for spells shared by wizard + priest.
-const SPELL_SOURCES = ['Wizard','Priest','Witch','Druid'];
+const SPELL_SOURCES = ['Wizard','Priest','Witch','Druid','Mage','Sorcerer'];
 const RC_T1_BY_SOURCE = {
   Wizard: RC_WIZARD_SPELLS_T1,
   Priest: RC_PRIEST_SPELLS_T1,
   Witch:  RC_WITCH_SPELLS_T1,
   Druid:  RC_DRUID_SPELLS_T1,
+  Mage:   RC_MAGE_SPELLS_T1,
+  Sorcerer: RC_SORC_SPELLS_T1,
 };
 
 // Which lists are ticked by default for a class (the rules-legal ones).
 function defaultSpellSources(cls, alignment) {
-  const src = { Wizard:false, Priest:false, Witch:false, Druid:false };
+  const src = { Wizard:false, Priest:false, Witch:false, Druid:false, Mage:false, Sorcerer:false };
   if(cls==='Wizard') {
     src.Wizard = true;
     // Neutral wizards get the druid list for free (Cursed Scroll 4)
     if(String(alignment||'').toLowerCase()==='neutral') src.Druid = true;
+    // Lawful wizards get the mage list for free (Cursed Scroll 6)
+    if(String(alignment||'').toLowerCase()==='lawful')  src.Mage  = true;
+    // Chaotic wizards get the sorcerer list for free (Cursed Scroll 5)
+    if(String(alignment||'').toLowerCase()==='chaotic') src.Sorcerer = true;
   }
   else if(cls==='Priest') src.Priest = true;
   else if(cls==='Witch')  src.Witch  = true;
@@ -2125,6 +2181,8 @@ function spellInSources(s, src) {
   if(s.caster==='Priest') return !!src.Priest;
   if(s.caster==='Witch')  return !!src.Witch;
   if(s.caster==='Druid')  return !!src.Druid;
+  if(s.caster==='Mage')   return !!src.Mage;
+  if(s.caster==='Sorcerer') return !!src.Sorcerer;
   return false;
 }
 
@@ -2609,7 +2667,7 @@ function ccwTalentChoiceUI(p, stateRef, knownSpells, cls) {
     h += '<select style="'+selStyle+'" onchange="'+stateRef+'.picked=this.value;ccwResolve('+stateRef+');ccwRerender()">';
     h += '<option value="">— Choose any wizard spell —</option>';
     const _al = (typeof _ccw!=='undefined' && _ccw && _ccw.alignment) ? _ccw.alignment : sheetAlignment();
-    (typeof SD_SPELLS!=='undefined'?SD_SPELLS:[]).filter(s=>s.caster==='Wizard'||s.caster==='Both'||(s.caster==='Druid'&&String(_al).toLowerCase()==='neutral')).forEach(s=>{
+    (typeof SD_SPELLS!=='undefined'?SD_SPELLS:[]).filter(s=>s.caster==='Wizard'||s.caster==='Both'||(s.caster==='Druid'&&String(_al).toLowerCase()==='neutral')||(s.caster==='Mage'&&String(_al).toLowerCase()==='lawful')||(s.caster==='Sorcerer'&&String(_al).toLowerCase()==='chaotic')).forEach(s=>{
       h += '<option value="'+s.name+'"'+(p.picked===s.name?' selected':'')+'>'+s.name+' (T'+s.tier+')</option>';
     });
     h += '</select>';
@@ -3688,6 +3746,8 @@ function ccwApply() {
     const data = (picked ? findSpell(sp, picked)
                 : c.cls==='Witch' ? findSpell(sp,'Witch')
                 : RC_DRUID_SPELLS_T1.includes(sp) ? findSpell(sp,'Druid')
+                : RC_MAGE_SPELLS_T1.includes(sp) ? findSpell(sp,'Mage')
+                : (RC_SORC_SPELLS_T1.includes(sp) && sheetAlignment()==='chaotic') ? findSpell(sp,'Sorcerer')
                 : (RC_SPELL_DATA[sp] || findSpell(sp, c.cls))) || {};
     const q = (cl)=>row.querySelector(cl);
     const inp=q('.spell-input'); if(inp) inp.value=sp;
@@ -4828,6 +4888,8 @@ let _spellShopWiz = true;
 let _spellShopPri = true;
 let _spellShopWit = true;
 let _spellShopDru = true;
+let _spellShopMag = true;
+let _spellShopSor = true;
 
 function openSpellShop() {
   // Default the caster filters to the character's own class, if it's a caster
@@ -4837,6 +4899,8 @@ function openSpellShop() {
     _spellShopPri = (cls==='priest');
     _spellShopWit = (cls==='witch');
     _spellShopDru = (cls==='wizard' && sheetAlignment()==='neutral');
+    _spellShopMag = (cls==='wizard' && sheetAlignment()==='lawful');
+    _spellShopSor = (cls==='wizard' && sheetAlignment()==='chaotic');
   }
   document.getElementById('spellshop-overlay').style.display = 'flex';
   spellShopRender();
@@ -4856,7 +4920,9 @@ function spellShopRender() {
     '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopWiz?'checked':'')+' onchange="_spellShopWiz=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Wizard</label>'
     + '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopPri?'checked':'')+' onchange="_spellShopPri=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Priest</label>'
     + '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopWit?'checked':'')+' onchange="_spellShopWit=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Witch</label>'
-    + '<label title="Druid spells: neutral wizards only" style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopDru?'checked':'')+' onchange="_spellShopDru=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Druid</label>';
+    + '<label title="Druid spells: neutral wizards only" style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopDru?'checked':'')+' onchange="_spellShopDru=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Druid</label>'
+    + '<label title="Mage spells: lawful wizards only" style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopMag?'checked':'')+' onchange="_spellShopMag=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Mage</label>'
+    + '<label title="Sorcerer spells: chaotic wizards only" style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopSor?'checked':'')+' onchange="_spellShopSor=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Sorcerer</label>';
 
   const known = new Set([...document.querySelectorAll('#spells-list .spell-row .spell-input')].map(el=>el.value.trim()).filter(Boolean));
   const body = document.getElementById('spellshop-body');
@@ -4866,6 +4932,8 @@ function spellShopRender() {
     : s.caster==='Priest' ? _spellShopPri
     : s.caster==='Witch' ? _spellShopWit
     : s.caster==='Druid' ? _spellShopDru
+    : s.caster==='Mage' ? _spellShopMag
+    : s.caster==='Sorcerer' ? _spellShopSor
     : true;
   const spells = (typeof SD_SPELLS!=='undefined' ? SD_SPELLS : []).filter(s=>s.tier===_spellShopTier && casterOk(s)).sort((a,b)=>a.name.localeCompare(b.name));
 
