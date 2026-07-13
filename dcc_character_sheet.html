@@ -486,6 +486,7 @@ body.dark select.skill-stat-sel{background:var(--input-bg);}
     <table class="skills-table">
       <thead>
         <tr>
+          <th style="width:28px"></th>
           <th style="width:26%">Name</th>
           <th style="width:7%">Rank</th>
           <th style="width:17%">Stat</th>
@@ -493,7 +494,6 @@ body.dark select.skill-stat-sel{background:var(--input-bg);}
           <th>Notes &amp; Upgrades</th>
           <th style="width:28px">✔</th>
           <th style="width:40px"></th>
-          <th style="width:28px"></th>
         </tr>
       </thead>
       <tbody id="skills-body"></tbody>
@@ -521,7 +521,7 @@ body.dark select.skill-stat-sel{background:var(--input-bg);}
   <div class="tab-panel" id="tab-inventory">
     <table class="inv-table">
       <thead>
-        <tr><th style="width:40%">Item</th><th style="width:12%;text-align:center;">Qty</th><th>Notes</th><th style="width:36px"></th></tr>
+        <tr><th style="width:36px"></th><th style="width:40%">Item</th><th style="width:12%;text-align:center;">Qty</th><th>Notes</th></tr>
       </thead>
       <tbody id="inv-body"></tbody>
     </table>
@@ -817,6 +817,7 @@ function addSkillRow() {
   const tbody = document.getElementById('skills-body');
   const tr = document.createElement('tr');
   tr.innerHTML = `
+    <td><button class="skill-del-btn" onclick="this.closest('tr').remove()" title="Remove skill" aria-label="Remove skill">✕</button></td>
     <td><input type="text" placeholder="Skill name..."></td>
     <td><input type="text" style="text-align:center;width:100%;"></td>
     <td>
@@ -835,7 +836,6 @@ function addSkillRow() {
     <td><input type="text" placeholder="Notes..."></td>
     <td style="text-align:center;"><input type="checkbox" class="skill-check"></td>
     <td><button class="skill-roll-btn" onclick="rollSkill(this)" title="Roll skill" aria-label="Roll skill">&#127922;</button></td>
-    <td><button class="skill-del-btn" onclick="this.closest('tr').remove()" title="Remove">✕</button></td>
   `;
   tbody.appendChild(tr);
 }
@@ -849,10 +849,10 @@ function addInvRow() {
   const tbody = document.getElementById('inv-body');
   const tr = document.createElement('tr');
   tr.innerHTML = `
+    <td><button class="inv-del-btn" onclick="this.closest('tr').remove()" title="Remove item" aria-label="Remove item">✕</button></td>
     <td><input type="text" placeholder="Item name..."></td>
     <td><input type="text" style="text-align:center;"></td>
     <td><input type="text" placeholder="Notes..."></td>
-    <td><button class="inv-del-btn" onclick="this.closest('tr').remove()" title="Remove">✕</button></td>
   `;
   tbody.appendChild(tr);
 }
@@ -1592,6 +1592,48 @@ autoLoad();
   .stat-block:nth-child(odd) { border-right: none; }
   .dice-btns { grid-template-columns: repeat(4,1fr); }
   .hp-pips { gap: 2px; }
+}
+
+/* ══ ROUNDED BUTTONS ══════════════════════════════════════════════════════
+   Applied last so it wins over the per-button rules above. Deliberately
+   shaped controls are left alone: .dm-toggle-btn (pill switch) and
+   #log-collapse-btn (side tab). */
+.roll-btn, .evade-roll-btn, .add-btn, .dice-roll-btn, .dice-clear-btn,
+.log-action-btn, .dice-btn, .adv-btn, .mod-toggle {
+  border-radius: 6px;
+}
+.atk-roll-btn, .skill-roll-btn, .inv-del-btn, .skill-del-btn, .log-clear {
+  border-radius: 5px;
+}
+/* Tabs sit on a baseline — round the top corners only */
+.tab-btn { border-radius: 6px 6px 0 0; }
+
+/* ══ ROLL BUTTONS: unified black ══════════════════════════════════════════
+   .roll-btn / .evade-roll-btn already used --section-hdr; the attack, skill
+   and dice-pool buttons were transparent / red. All of them now share the
+   same black, keeping red as the hover accent. */
+.roll-btn, .evade-roll-btn, .atk-roll-btn, .skill-roll-btn, .dice-roll-btn {
+  background: var(--section-hdr);
+  border: 1px solid var(--section-hdr);
+  color: #fff;
+}
+.roll-btn:hover, .evade-roll-btn:hover, .atk-roll-btn:hover,
+.skill-roll-btn:hover, .dice-roll-btn:hover {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+/* Dark mode: the panel is already near-black, so lift the buttons off it */
+body.dark .roll-btn, body.dark .evade-roll-btn, body.dark .atk-roll-btn,
+body.dark .skill-roll-btn, body.dark .dice-roll-btn {
+  background: #000;
+  border-color: #3a3a3a;
+}
+body.dark .roll-btn:hover, body.dark .evade-roll-btn:hover,
+body.dark .atk-roll-btn:hover, body.dark .skill-roll-btn:hover,
+body.dark .dice-roll-btn:hover {
+  background: var(--red);
+  border-color: var(--red);
 }
 </style>
 
