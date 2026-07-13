@@ -562,7 +562,42 @@ const SD_SPELLS = [
   {name:'Scrying',         tier:'5', caster:'Witch', range:'Self',  duration:'Focus',     damage:'',    desc:"See and hear a creature or location on your plane. DC 18 if unfamiliar. Each round the target may make a WIS check vs. your last spellcasting check to notice you."},
   {name:'Shapechange',     tier:'5', caster:'Witch', range:'Self',  duration:'Focus',     damage:'',    desc:"Transform into a natural creature of LV 10 or less you've seen. Gain its physical stats/features; keep INT, WIS, CHA. At 0 HP you revert at 1 HP."},
   {name:'Soul Jar',        tier:'5', caster:'Witch', range:'Close', duration:'Permanent', damage:'',    desc:"Transfer the soul of a creature LV 9 or less into a vessel; its body goes comatose. You may possess the empty body. If the vessel opens or breaks, the soul returns."},
+
+  // ══ CURSED SCROLL 4: DRUID SPELLS (neutral wizards only) ══
+  // Tier 1
+  {name:'Breath',        tier:'1', caster:'Druid', range:'Self',        duration:'10 rounds', damage:'',    desc:"You can hold your breath for the spell's duration."},
+  {name:'Instill',       tier:'1', caster:'Druid', range:'Self',        duration:'5 rounds',  damage:'',    desc:"One weapon you wield is imbued with life force and becomes a +1 weapon. A staff deals d6 damage instead of d4."},
+  {name:'Oxidize',       tier:'1', caster:'Druid', range:'Close',       duration:'Instant',   damage:'',    desc:"One inanimate object you touch, the size of a door or less, ages d100 years."},
+  {name:'Whisperwind',   tier:'1', caster:'Druid', range:'Far',         duration:'Instant',   damage:'',    desc:"Send a brief, whispered message that reaches any creature in range."},
+  // Tier 2
+  {name:'Barkskin',      tier:'2', caster:'Druid', range:'Self',        duration:'1 day',     damage:'',    desc:"Your skin hardens to bark. Your AC becomes 15 (18 on a critical spellcasting check). You take double damage from fire while it lasts."},
+  {name:'Befriend',      tier:'2', caster:'Druid', range:'Close',       duration:'5 rounds',  damage:'',    desc:"A tiny natural creature you touch (mouse, moth) regards you as a friend. You may give it one command, which it attempts even after the spell ends — unless the command would directly harm it."},
+  {name:'Magnetize',     tier:'2', caster:'Druid', range:'Close',       duration:'5 rounds',  damage:'',    desc:"One object you touch up to horse-size becomes powerfully magnetized, attracting smaller magnetic objects within near and being pulled toward larger ones. A metal creature resists with a STR check vs. your spellcasting check."},
+  {name:'Truespeech',    tier:'2', caster:'Druid', range:'Close',       duration:'Instant',   damage:'',    desc:"A natural creature you touch can communicate with you. Ask it one yes/no question; the GM answers truthfully. Cast twice on the same creature in 24 hours and a failed check becomes a critical failure."},
+  // Tier 3
+  {name:'Alchemy',       tier:'3', caster:'Druid', range:'Close',       duration:'Instant',   damage:'',    desc:"One inanimate object of human size or less you touch turns into another material of equal or lesser value."},
+  {name:'Anima',         tier:'3', caster:'Druid', range:'Close',       duration:'Focus',     damage:'',    desc:"Animate one natural object you touch (horse-sized or less) as a loyal creature of your level. It acts on your turn only when you use your action to command it. AC 10+LV, HP 4.5xLV, ATK 2 bash +7 (1d12), MV near."},
+  {name:'Locusts',       tier:'3', caster:'Druid', range:'Near',        duration:'Focus',     damage:'1d10',desc:"A cloud of biting locusts fills an area out to near and moves with you; you are unaffected. Creatures inside take 1d10 damage at the start of their turn and must pass a CON check vs. your last spellcasting check or be unable to move."},
+  {name:'Treeshape',     tier:'3', caster:'Druid', range:'Self',        duration:'10 rounds', damage:'',    desc:"You and your gear become a treant (AC 14, HP 38, 2 slam +8 1d12 or rock (far) +8 2d6). You keep INT/WIS/CHA, lack Animate Tree, and cannot cast spells while transformed."},
+  // Tier 4
+  {name:'Mycelium',      tier:'4', caster:'Druid', range:'Self',        duration:'Instant',   damage:'',    desc:"Connect your mind to the earth's fungi network. Ask the GM one question of up to 15 words; the GM answers truthfully in up to 15 words. Cast twice in 24 hours and a failed check becomes a critical failure."},
+  {name:'Summon Storm',  tier:'4', caster:'Druid', range:'1 mile',      duration:'10 rounds', damage:'',    desc:"Summon a violent storm out to one mile — darkened skies, severe wind, driving rain. For the duration you can cast control water and lightning bolt even if you don't know them."},
+  // Tier 5
+  {name:'Earthquake',    tier:'5', caster:'Druid', range:'Double near', duration:'Instant',   damage:'4d6', desc:"The earth splits open. All creatures on the ground within double near take 4d6 damage. Each affected creature of LV 9 or less must pass a DEX check equal to the damage taken or be swallowed by the earth forever."},
+  {name:'Naming',        tier:'5', caster:'Druid', range:'Close',       duration:'Instant',   damage:'',    desc:"Learn the True Name of one creature you touch. If willing, you may give it a new True Name (once in its lifetime) — doing so changes its alignment to match yours."},
 ];
+
+// ── Druid spells: available to neutral wizards in addition to wizard spells ─
+function sheetAlignment() {
+  return (document.getElementById('f-alignment')?.value || '').trim().toLowerCase();
+}
+// Can a character of this class + alignment learn spell s?
+function spellAllowed(s, cls, alignment) {
+  const al = (alignment || '').trim().toLowerCase();
+  if(s.caster === 'Both')  return cls==='Wizard' || cls==='Priest';
+  if(s.caster === 'Druid') return cls==='Wizard' && al === 'neutral';
+  return s.caster === cls;
+}
 
 // ── Caster-aware spell lookup (witch shares 5 names with wizard/priest) ────
 function findSpell(name, prefCaster) {
@@ -1987,10 +2022,22 @@ const RC_CLASS_INFO = {
     talent:['You deal d12 damage with one weapon type you choose','+1 to melee or ranged attacks and damage','+1 to melee or ranged attacks and damage','+1 to melee or ranged attacks and damage','+1 to melee or ranged attacks and damage','+2 to Strength, Dexterity, or Intelligence stat','+2 to Strength, Dexterity, or Intelligence stat','+2 to Strength, Dexterity, or Intelligence stat','+2 to Strength, Dexterity, or Intelligence stat','ADV on Herbalism checks for a remedy you choose','ADV on Herbalism checks for a remedy you choose','Choose a talent or +2 stat points'],
     features:['Wayfinder: Advantage on Navigation, Tracking, Bushcraft, Stealth, Wild animal checks.','Herbalism (INT check): Prepare a herbal remedy. Remedies expire in 3 rounds. Salve (DC11), Stimulant (DC12), Foebane (DC13), Restorative (DC14), Curative (DC15).'] },
   Witch: { hd:'1d4', weapons:'Dagger, staff', armor:'Leather armor',
-    talent:["1/day, teleport to your familiar's location as a move",'+2 to Charisma stat or +1 to witch spellcasting checks','+2 to Charisma stat or +1 to witch spellcasting checks','+2 to Charisma stat or +1 to witch spellcasting checks','+2 to Charisma stat or +1 to witch spellcasting checks','+2 to Charisma stat or +1 to witch spellcasting checks','Gain advantage on casting one spell you know','Gain advantage on casting one spell you know','Learn an additional witch spell of any tier you can cast','Learn an additional witch spell of any tier you can cast','Choose a talent or +2 points to distribute to stats'],
+    // 12 slots; text is read from indices 0,1,6,9,11 (one per band).
+    // Witch bands are 2 / 3-7 / 8-9 / 10-11 / 12 — see talentBands below.
+    talent:["1/day, teleport to your familiar's location as a move",
+            '+2 to Charisma stat or +1 to witch spellcasting checks','+2 to Charisma stat or +1 to witch spellcasting checks','+2 to Charisma stat or +1 to witch spellcasting checks','+2 to Charisma stat or +1 to witch spellcasting checks','+2 to Charisma stat or +1 to witch spellcasting checks',
+            'Gain advantage on casting one spell you know','Gain advantage on casting one spell you know','Gain advantage on casting one spell you know',
+            'Learn an additional witch spell of any tier you can cast','Learn an additional witch spell of any tier you can cast',
+            'Choose a talent or +2 points to distribute to stats'],
+    talentBands:[[2,2],[3,7],[8,9],[10,11],[12,12]],
     features:["Familiar: A small animal (raven, rat, frog) serves you loyally and speaks Common. It can be the source of your spells — treat it as you for spell ranges. If it dies, restore it by permanently sacrificing 1d4 HP.",'Spellcasting (CHA). Know 3 tier 1 witch spells. DC is 10 + spell tier. Add spells per level.','Diabolical Mishap: On a natural 1 on a spellcasting check, roll on the Diabolical Mishap table for that spell tier.','Languages: Diabolic, Primordial, Sylvan.'] },
   Barbarian: { hd:'1d8', weapons:'All weapons', armor:'Leather armor, shields',
-    talent:['1/day, ignore all damage and effects from one attack','You gain +1 to melee weapon damage','You gain +1 to melee weapon damage','You gain +1 to melee weapon damage','You gain +1 to melee weapon damage','+2 to Strength or Constitution stat, or +1 to melee attacks','+2 to Strength or Constitution stat, or +1 to melee attacks','+2 to Strength or Constitution stat, or +1 to melee attacks','Increase the HP you gain from Flourish by 1d6','Increase the HP you gain from Flourish by 1d6','Choose a talent or +2 points to distribute to stats'],
+    // 12 slots; text is read from indices 0,1,6,9,11 (one per band).
+    talent:['1/day, ignore all damage and effects from one attack',
+            'You gain +1 to melee weapon damage','You gain +1 to melee weapon damage','You gain +1 to melee weapon damage','You gain +1 to melee weapon damage','You gain +1 to melee weapon damage',
+            '+2 to Strength or Constitution stat, or +1 to melee attacks','+2 to Strength or Constitution stat, or +1 to melee attacks','+2 to Strength or Constitution stat, or +1 to melee attacks',
+            'Increase the HP you gain from Flourish by 1d6','Increase the HP you gain from Flourish by 1d6',
+            'Choose a talent or +2 points to distribute to stats'],
     features:['Flourish: 3/day, regain 1d6 HP when you hit an enemy with a melee attack.','Implacable: Advantage on Constitution checks to resist injury, poison, or endure extreme environments.','Last Stand: You get up from dying with 1 HP on a natural d20 roll of 18-20.','Relentless: 3/day, when reduced to 0 HP, make a DC 18 Constitution check (Implacable applies). On a success, you go to 1 HP instead.'] }
 };
 
@@ -2042,6 +2089,7 @@ const RC_SPELL_DATA = {
 const RC_PRIEST_SPELLS_T1 = ['Cure Wounds','Holy Weapon','Light','Protection From Evil','Shield of Faith'];
 const RC_WIZARD_SPELLS_T1 = ['Alarm','Burning Hands','Charm Person','Detect Magic','Hold Portal','Light','Magic Missile','Protection From Evil','Sleep'];
 const RC_WITCH_SPELLS_T1  = ['Cauldron','Charm Person','Eyebite','Fog','Hypnotize','Oak, Ash, Thorn','Puppet','Shadowdance','Willowman','Witchlight'];
+const RC_DRUID_SPELLS_T1  = ['Breath','Instill','Oxidize','Whisperwind'];
 
 const RC_ALIGNMENTS = ['Lawful','Lawful','Lawful','Neutral','Neutral','Chaotic'];
 const RC_DEITIES = {
@@ -2334,6 +2382,19 @@ function applyRandomCharacter(skipConfirm) {
 .ccw-result{background:#141414;border-left:3px solid #6ac8df;padding:8px 12px;font-family:'Montserrat',sans-serif;font-size:12px;color:#eee;margin-top:8px;line-height:1.5;}
 .ccw-summary{background:#0f0f0f;border:1px solid #2a2a2a;padding:10px 12px;margin-top:12px;font-family:'Montserrat',sans-serif;font-size:11px;color:#ccc;line-height:1.7;}
 .ccw-summary-title{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.15em;color:#c8a020;margin-bottom:4px;}
+
+/* ══ ROUNDED BUTTONS ══════════════════════════════════════════════════════
+   Applied last so it wins over the per-button rules above. Deliberately
+   shaped controls are left alone: .dm-toggle-btn (pill switch) and
+   #log-collapse-btn (side tab). */
+.stat-roll-btn, .ccw-roll-btn, .dice-roll-btn, .dice-clear-btn,
+.log-action-btn, .dice-btn, .adv-btn, .spell-cast-btn {
+  border-radius: 6px;
+}
+.atk-roll-btn, .atk-adv-btn, .spell-adv-btn, .spell-lost-btn,
+.gear-disable-btn, .lk-btn {
+  border-radius: 5px;
+}
 </style>
 
 <script>
@@ -2487,7 +2548,8 @@ function ccwTalentChoiceUI(p, stateRef, knownSpells, cls) {
   else if(p.kind==='wizspell') {
     h += '<select style="'+selStyle+'" onchange="'+stateRef+'.picked=this.value;ccwResolve('+stateRef+');ccwRerender()">';
     h += '<option value="">— Choose any wizard spell —</option>';
-    (typeof SD_SPELLS!=='undefined'?SD_SPELLS:[]).filter(s=>s.caster==='Wizard'||s.caster==='Both').forEach(s=>{
+    const _al = (typeof _ccw!=='undefined' && _ccw && _ccw.alignment) ? _ccw.alignment : sheetAlignment();
+    (typeof SD_SPELLS!=='undefined'?SD_SPELLS:[]).filter(s=>s.caster==='Wizard'||s.caster==='Both'||(s.caster==='Druid'&&String(_al).toLowerCase()==='neutral')).forEach(s=>{
       h += '<option value="'+s.name+'"'+(p.picked===s.name?' selected':'')+'>'+s.name+' (T'+s.tier+')</option>';
     });
     h += '</select>';
@@ -2865,7 +2927,8 @@ function ccwRandomize() {
 
   // Spells first (so talent "spell you know" has options)
   _ccw.spells = [];
-  const spellPool = _ccw.cls==='Priest' ? RC_PRIEST_SPELLS_T1 : _ccw.cls==='Wizard' ? RC_WIZARD_SPELLS_T1 : _ccw.cls==='Witch' ? RC_WITCH_SPELLS_T1 : null;
+  let spellPool = _ccw.cls==='Priest' ? RC_PRIEST_SPELLS_T1 : _ccw.cls==='Wizard' ? RC_WIZARD_SPELLS_T1 : _ccw.cls==='Witch' ? RC_WITCH_SPELLS_T1 : null;
+  if(_ccw.cls==='Wizard' && _ccw.alignment==='Neutral') spellPool = [...spellPool, ...RC_DRUID_SPELLS_T1];
   if(spellPool) {
     const needed = _ccw.cls==='Priest' ? 2 : 3;
     const pool = [...spellPool];
@@ -3185,15 +3248,28 @@ function ccwAlign() {
 }
 
 // ── Step: Talent ──
+// Talent tables: most classes roll 2 / 3-6 / 7-9 / 10-11 / 12, but some (the
+// Witch) use different bands. A class can override via RC_CLASS_INFO.talentBands.
+// Row text always comes from these fixed slots in the 12-entry talent array.
+const CCW_DEFAULT_BANDS = [[2,2],[3,6],[7,9],[10,11],[12,12]];
+const CCW_TALENT_TEXT_IDX = [0, 1, 6, 9, 11];
+function ccwBuildTalentRows(cls) {
+  const info = RC_CLASS_INFO[cls] || {};
+  const t = info.talent || [];
+  const bands = info.talentBands || CCW_DEFAULT_BANDS;
+  return bands.map((b, i) => {
+    const lo = b[0], hi = b[1];
+    return {
+      range: (lo === hi) ? String(lo) : (lo + '\u2013' + hi),
+      lo: lo,
+      hi: hi,
+      text: t[CCW_TALENT_TEXT_IDX[i]] || '',   // '' guard: never let .slice() throw
+    };
+  });
+}
+
 function ccwTalentRows() {
-  const t = RC_CLASS_INFO[_ccw.cls]?.talent || [];
-  return [
-    { range:'2',     lo:2,  hi:2,  text:t[0]  },
-    { range:'3–6',   lo:3,  hi:6,  text:t[1]  },
-    { range:'7–9',   lo:7,  hi:9,  text:t[6]  },
-    { range:'10–11', lo:10, hi:11, text:t[9]  },
-    { range:'12',    lo:12, hi:12, text:t[11] },
-  ];
+  return ccwBuildTalentRows(_ccw.cls);
 }
 function ccwTalent() {
   if(_ccw.tres) ccwResolve(_ccw.tres);
@@ -3350,12 +3426,16 @@ function ccwToggleLang(pool, lang, max) {
 function ccwSpells() {
   const cls = _ccw.cls;
   const needed = cls==='Priest' ? 2 : 3;
-  const pool = cls==='Priest' ? RC_PRIEST_SPELLS_T1 : cls==='Witch' ? RC_WITCH_SPELLS_T1 : RC_WIZARD_SPELLS_T1;
+  let pool = cls==='Priest' ? RC_PRIEST_SPELLS_T1 : cls==='Witch' ? RC_WITCH_SPELLS_T1 : RC_WIZARD_SPELLS_T1;
+  // Neutral wizards may also choose druid spells (Cursed Scroll 4)
+  if(cls==='Wizard' && _ccw.alignment==='Neutral') pool = [...pool, ...RC_DRUID_SPELLS_T1];
   let h = '<p class="ccw-hint">Choose '+needed+' tier 1 '+cls.toLowerCase()+' spells.'+(cls==='Priest'?' Turn Undead is free.':'')+' ('+_ccw.spells.length+'/'+needed+' selected)</p>';
   h += '<div class="ccw-choice-grid">';
   pool.forEach(sp=>{
     const sel = _ccw.spells.includes(sp) ? ' selected' : '';
-    const data = (cls==='Witch' ? (findSpell(sp,'Witch')||{}) : (RC_SPELL_DATA[sp] || findSpell(sp,cls) || {}));
+    const data = (cls==='Witch' ? (findSpell(sp,'Witch')||{})
+                : RC_DRUID_SPELLS_T1.includes(sp) ? (findSpell(sp,'Druid')||{})
+                : (RC_SPELL_DATA[sp] || findSpell(sp,cls) || {}));
     const meta = [data.range?'Range: '+data.range:'', data.duration?'Dur: '+data.duration:'', data.damage?'Dmg: '+data.damage:''].filter(Boolean).join(' · ');
     h += '<button class="ccw-choice'+sel+'" onclick="ccwToggleSpell(\''+sp.replace(/'/g,"\\'")+'\')"><div class="ccw-choice-name" style="font-size:11px;">'+sp+'</div>'+(meta?'<div class="ccw-choice-desc" style="color:#c8a020;font-size:8px;">'+meta+'</div>':'')+'<div class="ccw-choice-desc">'+(data.desc||'')+'</div></button>';
   });
@@ -3512,7 +3592,9 @@ function ccwApply() {
     _spellCount++;
     const row = addSpellRow(_spellCount);
     if(!row) return;
-    const data = (c.cls==='Witch' ? findSpell(sp,'Witch') : (RC_SPELL_DATA[sp] || findSpell(sp, c.cls))) || {};
+    const data = (c.cls==='Witch' ? findSpell(sp,'Witch')
+                : RC_DRUID_SPELLS_T1.includes(sp) ? findSpell(sp,'Druid')
+                : (RC_SPELL_DATA[sp] || findSpell(sp, c.cls))) || {};
     const q = (cl)=>row.querySelector(cl);
     const inp=q('.spell-input'); if(inp) inp.value=sp;
     const lvl=q('.spell-level'); if(lvl&&(data.level||data.tier)) lvl.value=data.level||data.tier;
@@ -3779,14 +3861,7 @@ function lvlRollHP() {
 
 
 function lvlTalentRows() {
-  const t = RC_CLASS_INFO[_lvl.cls]?.talent || [];
-  return [
-    { range:'2',     lo:2,  hi:2,  text:t[0]  },
-    { range:'3–6',   lo:3,  hi:6,  text:t[1]  },
-    { range:'7–9',   lo:7,  hi:9,  text:t[6]  },
-    { range:'10–11', lo:10, hi:11, text:t[9]  },
-    { range:'12',    lo:12, hi:12, text:t[11] },
-  ];
+  return ccwBuildTalentRows(_lvl.cls);
 }
 function lvlTalent() {
   if(_lvl.tres) ccwResolve(_lvl.tres);
@@ -3847,7 +3922,7 @@ function lvlSpells() {
   _lvl.spellTiers.forEach(t=>{ tierCounts[t]=(tierCounts[t]||0)+1; });
   let h = '<p class="ccw-hint">You gain '+_lvl.spellsNeeded+' new spell'+(_lvl.spellsNeeded>1?'s':'')+': '+Object.entries(tierCounts).map(([t,c])=>c+' × Tier '+t).join(', ')+'. ('+_lvl.newSpells.length+'/'+_lvl.spellsNeeded+' selected)</p>';
   // Group available SD_SPELLS by needed tier, filtering caster + already known
-  const casterMatch = (s) => s.caster===cls || s.caster==='Both';
+  const casterMatch = (s) => spellAllowed(s, cls, sheetAlignment());
   Object.keys(tierCounts).forEach(tier=>{
     h += '<p class="ccw-hint" style="margin-top:8px;color:#c8a020;font-weight:700;">Tier '+tier+'</p>';
     h += '<div class="ccw-choice-grid">';
@@ -4632,6 +4707,7 @@ let _spellShopTier = '1';
 let _spellShopWiz = true;
 let _spellShopPri = true;
 let _spellShopWit = true;
+let _spellShopDru = true;
 
 function openSpellShop() {
   // Default the caster filters to the character's own class, if it's a caster
@@ -4640,6 +4716,7 @@ function openSpellShop() {
     _spellShopWiz = (cls==='wizard');
     _spellShopPri = (cls==='priest');
     _spellShopWit = (cls==='witch');
+    _spellShopDru = (cls==='wizard' && sheetAlignment()==='neutral');
   }
   document.getElementById('spellshop-overlay').style.display = 'flex';
   spellShopRender();
@@ -4658,7 +4735,8 @@ function spellShopRender() {
   filterBar.innerHTML =
     '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopWiz?'checked':'')+' onchange="_spellShopWiz=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Wizard</label>'
     + '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopPri?'checked':'')+' onchange="_spellShopPri=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Priest</label>'
-    + '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopWit?'checked':'')+' onchange="_spellShopWit=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Witch</label>';
+    + '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopWit?'checked':'')+' onchange="_spellShopWit=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Witch</label>'
+    + '<label title="Druid spells: neutral wizards only" style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopDru?'checked':'')+' onchange="_spellShopDru=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Druid</label>';
 
   const known = new Set([...document.querySelectorAll('#spells-list .spell-row .spell-input')].map(el=>el.value.trim()).filter(Boolean));
   const body = document.getElementById('spellshop-body');
@@ -4667,6 +4745,7 @@ function spellShopRender() {
     : s.caster==='Wizard' ? _spellShopWiz
     : s.caster==='Priest' ? _spellShopPri
     : s.caster==='Witch' ? _spellShopWit
+    : s.caster==='Druid' ? _spellShopDru
     : true;
   const spells = (typeof SD_SPELLS!=='undefined' ? SD_SPELLS : []).filter(s=>s.tier===_spellShopTier && casterOk(s)).sort((a,b)=>a.name.localeCompare(b.name));
 
