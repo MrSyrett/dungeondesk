@@ -1403,7 +1403,15 @@ function saveSheet(quiet) {
   try { localStorage.setItem('dcc_sheet', json); } catch(e) {}
   // Save directly to server (primary path — doesn't rely on localStorage patch)
   if(window.__ddSave) window.__ddSave({ dcc_sheet: json });
+  syncDocTitle();
   if(quiet !== true) addLog('Sheet Saved', '💾', 'Saved', 'normal');
+}
+
+// Rename the document on the desk to match the character's name, so the card
+// on the main page is titled correctly when you head back there.
+function syncDocTitle() {
+  const name = (document.getElementById('f-name')?.value || '').trim();
+  if(name && window.__ddSaveTitle) window.__ddSaveTitle(name);
 }
 
 function exportSheet() {
@@ -1756,12 +1764,21 @@ setTimeout(function() { _pageReady = true; }, 3000);
 
 function autoSaveOnExit() {
   if(!_pageReady) return;
-  try { saveSheet(); } catch(e) {}
+  try { saveSheet(true); } catch(e) {}
+  try { syncDocTitle(); } catch(e) {}
 }
 window.addEventListener('beforeunload', autoSaveOnExit);
+window.addEventListener('pagehide', autoSaveOnExit);
 document.addEventListener('visibilitychange', function() {
   if(document.visibilityState === 'hidden') autoSaveOnExit();
 });
+// Leaving via the "← Desk" link (or any link out) saves first
+document.addEventListener('click', function(e) {
+  const a = e.target.closest && e.target.closest('a[href]');
+  if(a && !a.target && !a.href.startsWith('javascript:')) autoSaveOnExit();
+}, true);
+// Keep the title in step as soon as the name is typed
+document.getElementById('f-name')?.addEventListener('change', syncDocTitle);
 
 // Auto-save 1.5s after any input — primary save strategy on mobile
 (function() {
