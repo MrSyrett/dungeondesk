@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- BUILD: GM Screen — 2026-07-13 01:25 UTC -->
-<script>window.__BUILD__="GM Screen — 2026-07-13 01:25 UTC";</script>
+<!-- BUILD: GM Screen — 2026-07-13 03:11 UTC -->
+<script>window.__BUILD__="GM Screen — 2026-07-13 03:11 UTC";</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Dungeon Desk — GM Screen</title>
@@ -5673,6 +5673,83 @@ window.init_gen = function(root) {
 }
 .btn.small { border-radius: 5px; }
 .npc-hp-btn, .tracker-adjust-btn { border-radius: 6px; }
+
+/* ══ MOBILE SIZING PASS ═══════════════════════════════════════════════════
+   Appended last so it wins over the earlier mobile rules above. Covers:
+   combat + tracker controls, notes tabs, generator options, dice tray. */
+@media (max-width: 760px) {
+
+  /* ── (1) Combat & Trackers: real thumb-sized controls ── */
+  .cbt-round-display { font-size: 15px; }
+  .cbt-round-num, .trk-round-num { font-size: 20px; }
+  .cbt-col-header { padding: 10px 12px; }
+  .cbt-col-title { font-size: 13px; }
+  .cbt-tracker-list, .cbt-npc-list { padding: 12px; gap: 10px; }
+
+  .tracker-card, .npc-card { padding: 12px 14px; }
+  .tracker-top, .npc-top { gap: 10px; margin-bottom: 10px; }
+  .tracker-bottom, .npc-hp-row { gap: 10px; }
+
+  /* +/- steppers — the ones you hit constantly mid-fight */
+  .npc-hp-btn, .tracker-adjust-btn {
+    width: 48px !important; height: 48px !important;
+    font-size: 22px !important; border-radius: 6px;
+  }
+  .npc-hp-adjust { gap: 6px; }
+
+  /* Rounds / Timer and Std / DCC toggles */
+  .tracker-type-btn, .npc-mode-btn {
+    font-size: 12px !important; padding: 11px 14px !important; min-height: 44px;
+  }
+
+  /* Delete "x" buttons stay smaller than the rest — they're destructive */
+  .tracker-del, .npc-del {
+    font-size: 18px !important; padding: 6px 9px !important;
+    min-height: 34px; min-width: 34px;
+  }
+
+  .npc-hp-input   { width: 66px !important; font-size: 18px !important; padding: 11px 4px !important; min-height: 46px; }
+  .timer-set-input{ width: 66px !important; font-size: 16px !important; padding: 11px 4px !important; min-height: 46px; }
+  .npc-hp-slash   { font-size: 16px; }
+  .tracker-name-input, .npc-name-input { font-size: 16px !important; padding: 6px 0 !important; }
+  .npc-tag-input  { width: 92px; font-size: 13px; padding: 6px 0; }
+  .tracker-rounds { font-size: 28px; }
+  .tracker-label, .timer-set-label, .tracker-expired-tag { font-size: 11px; }
+  .tracker-rounds-display { min-width: 44px; }
+  .timer-controls { gap: 6px; }
+  .timer-set-row  { gap: 8px; margin-top: 8px; }
+
+  /* ── (2) Notes tabs ── */
+  .nts-tabs { left: 6px; right: 6px; gap: 5px; }
+  .nts-tab {
+    font-size: 13px; padding: 9px 15px 10px; gap: 7px;
+    border-radius: 0 0 7px 7px; min-height: 38px;
+  }
+  .nts-tab-x { font-size: 14px; padding: 0 3px; }
+  .nts-tab-add { font-size: 15px; padding: 9px 14px 10px; min-height: 38px; border-radius: 0 0 7px 7px; }
+  /* tabs are absolutely positioned over the editor — clear them */
+  .nts-editor { padding: 50px 16px 16px !important; font-size: 16px; }
+
+  /* ── (3) Generator options ── */
+  .gen-tab-select { font-size: 15px !important; min-height: 46px; padding: 10px 12px !important; }
+  .gen-controls { gap: 12px; padding: 14px 14px; }
+  .gen-label  { font-size: 12px; gap: 6px; }
+  .gen-select { font-size: 15px; padding: 11px 10px; min-height: 46px; border-radius: 5px; }
+  .gen-results { padding: 14px; gap: 12px; }
+  .gen-card { padding: 14px; }
+  .gen-card-name { font-size: 17px; }
+  .gen-card-tag  { font-size: 12px; }
+  .gen-empty { font-size: 14px; }
+
+  /* ── (4) Dice tray: keep all 7 dice on ONE row ── */
+  .dice-btn-row { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 3px; }
+  .dice-die { padding: 14px 0; font-size: 14px; min-height: 48px; letter-spacing: 0; }
+  .dice-mod { width: 52px; font-size: 15px; padding: 10px 4px; min-height: 44px; }
+  .dice-advbtn { font-size: 12px; padding: 11px 10px; min-height: 44px; }
+  .dice-roll-go { font-size: 13px; padding: 12px 16px; min-height: 44px; }
+  .dice-pool-clear { font-size: 13px; padding: 11px 12px; min-height: 44px; }
+  .dice-camp-btn, .dice-hide-btn { font-size: 15px; padding: 11px 12px; min-height: 44px; }
+}
 </style>
 </head><body>${bodyHtml}</body></html>`;
 
