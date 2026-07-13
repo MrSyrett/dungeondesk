@@ -4460,6 +4460,7 @@ document.getElementById('f-class')?.addEventListener('input', updateHeaderButton
     </div>
     <div id="shop-tabs" style="display:flex;flex-shrink:0;"></div>
     <div id="shop-subtabs" style="display:none;flex-shrink:0;flex-wrap:wrap;background:#0f0f0f;"></div>
+    <div id="shop-classfilter" style="display:none;flex-shrink:0;align-items:center;gap:8px;padding:8px 14px;background:#0f0f0f;border-bottom:1px solid #1e1e1e;"></div>
     <div id="shop-body" style="padding:6px 14px;overflow-y:auto;flex:1;"></div>
   </div>
 </div>
@@ -4515,6 +4516,32 @@ const SHOP_TABS = [
   {id:'magic',   label:'Magic Items'},
 ];
 let _shopTab = 'weapons';
+let _shopClassOnly = true;   // hide gear the character's class can't use
+
+// The class typed on the sheet, matched loosely against RC_CLASS_INFO
+// ("fighter", "Fighter (Champion)", etc). Returns null for homebrew classes.
+function shopSheetClass() {
+  const raw = (document.getElementById('f-class')?.value || '').trim().toLowerCase();
+  if(!raw) return null;
+  return Object.keys(RC_CLASS_INFO).find(c => raw.includes(c.toLowerCase())) || null;
+}
+
+// Names the class may wield/wear. Null means "no restriction known".
+function shopAllowedNames(tab) {
+  const cls = shopSheetClass();
+  if(!cls) return null;
+  if(tab === 'weapons') return ccwClassWeapons(cls);
+  if(tab === 'armor')   return ccwClassArmor(cls);
+  return null;
+}
+
+function shopItemAllowed(tab, it) {
+  const allowed = shopAllowedNames(tab);
+  if(!allowed) return true;
+  return allowed.includes(it.name);
+}
+
+function shopToggleClassOnly(on) { _shopClassOnly = !!on; shopRender(); }
 
 function shopFmtCost(it) {
   if(it.gp) return it.gp+' gp';
@@ -4743,8 +4770,36 @@ function shopRender() {
               : _shopTab==='armor'   ? SHOP_ARMOR
               : _shopTab==='basic'   ? SHOP_BASIC
               : shopMagicItems();
+
+  // Class filter — only meaningful on the Weapons and Armor tabs
+  const filterBar = document.getElementById('shop-classfilter');
+  const cls = shopSheetClass();
+  const filterable = (_shopTab==='weapons' || _shopTab==='armor') && !!cls;
+  if(filterable) {
+    const hidden = items.filter(it => !shopItemAllowed(_shopTab, it)).length;
+    filterBar.style.display = 'flex';
+    filterBar.innerHTML =
+        '<label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#888;">'
+      +   '<input type="checkbox" '+(_shopClassOnly?'checked':'')+' onchange="shopToggleClassOnly(this.checked)" style="accent-color:#c8a020;width:15px;height:15px;cursor:pointer;">'
+      +   'Only show what a '+cls+' can use'
+      + '</label>'
+      + (_shopClassOnly && hidden ? '<span style="margin-left:auto;font-family:Montserrat,sans-serif;font-size:9px;color:#5a5a5a;">'+hidden+' hidden</span>' : '');
+  } else {
+    filterBar.style.display = 'none';
+    filterBar.innerHTML = '';
+  }
+
+  // Keep each item's ORIGINAL index — Buy/Add look items up by position
+  const shown = items
+    .map((it, i) => ({ it, i }))
+    .filter(({it}) => !(_shopClassOnly && filterable) || shopItemAllowed(_shopTab, it));
+
   const body = document.getElementById('shop-body');
-  body.innerHTML = items.map((it,i)=>{
+  if(!shown.length) {
+    body.innerHTML = '<div style="padding:20px 4px;text-align:center;font-family:Montserrat,sans-serif;font-size:10px;color:#666;line-height:1.6;">Nothing here a '+(cls||'character')+' can use.<br>Untick the box above to see everything.</div>';
+    return;
+  }
+  body.innerHTML = shown.map(({it, i})=>{
     const cost = shopFmtCost(it);
     const canBuy = shopCostCp(it) > 0;
     const hasFull = !!it.full;
