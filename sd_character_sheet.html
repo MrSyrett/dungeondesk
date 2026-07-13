@@ -436,6 +436,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
 const SD_WEAPONS = [
   {name:'Bastard Sword', type:'M',   range:'Close',      damage:'1d8/1d10', props:'Versatile, 2 slots'},
   {name:'Club',          type:'M',   range:'Close',      damage:'1d4',      props:''},
+  {name:'Unarmed',       type:'M',   range:'Close',      damage:'1d4',      props:'Finesse'},
   {name:'Crossbow',      type:'R',   range:'Far',        damage:'1d6',      props:'Two-handed, Loading'},
   {name:'Dagger',        type:'M/R', range:'Close/Near', damage:'1d4',      props:'Finesse, Thrown'},
   {name:'Greataxe',      type:'M',   range:'Close',      damage:'1d8/1d10', props:'Versatile, 2 slots'},
@@ -2807,8 +2808,9 @@ function ccwFmtCost(c) { return c.gp ? c.gp+' gp' : c.sp ? c.sp+' sp' : c.cp+' c
 // Which weapons a class may use
 function ccwClassWeapons(cls) {
   const w = (RC_CLASS_INFO[cls]?.weapons||'').toLowerCase();
-  if(w.includes('all weapons')) return SD_WEAPONS.map(x=>x.name);
-  return SD_WEAPONS.map(x=>x.name).filter(n=>w.includes(n.toLowerCase()));
+  const names = SD_WEAPONS.map(x=>x.name).filter(n=>n!=='Unarmed');   // Unarmed isn't gear you buy
+  if(w.includes('all weapons')) return names;
+  return names.filter(n=>w.includes(n.toLowerCase()));
 }
 // Which armor a class may wear
 function ccwClassArmor(cls) {
@@ -3912,21 +3914,26 @@ function ccwApply() {
     if(selects[0]) selects[0].value = useDex ? 'dex' : 'str';
     if(selects[1]) { const parts=w.range.split('/'); selects[1].value = parts[parts.length-1].trim(); }
   };
-  // Beastfolk: Natural Selection — claws/fangs/horns as a 1d6 unarmed melee attack
-  if(c.beastNatural==='attack')
-    _fillAtkRow('Unarmed (natural)', {name:'Unarmed', type:'M', range:'Close', damage:'1d6', props:'Finesse'});
+  // Unarmed attack row: Beastfolk's Natural Selection upgrades the die to 1d6.
+  const _unarmed = SD_WEAPONS.find(x=>x.name==='Unarmed');
+  const hasUnarmed = (c.beastNatural==='attack' || masterySet.has('Unarmed'));
+  const unarmedDie = c.beastNatural==='attack' ? '1d6' : (_unarmed ? _unarmed.damage : '1d4');
+  if(hasUnarmed) _fillAtkRow('Unarmed', _unarmed, unarmedDie);
   const uniqueWeapons = [...new Set(c.buyWeapons)];
   uniqueWeapons.forEach(wname=>{
     const w = SD_WEAPONS.find(x=>x.name===wname);
     if(w) _fillAtkRow(w.name, w);
   });
-  // Thief: Backstab attack for every chosen weapon (extra weapon die vs unaware targets, +talent dice)
+  // Thief: Backstab attack for every chosen weapon (extra weapon die vs unaware
+  // targets, +talent dice) — including natural/mastered unarmed strikes.
   if(c.cls==='Thief') {
     const bsDice = 1 + 1 + Math.floor(1/2) + backstabExtraDice;   // weapon die + extra die + half level
-    uniqueWeapons.forEach(wname=>{
+    const bsList = [...(hasUnarmed ? ['Unarmed'] : []), ...uniqueWeapons];
+    bsList.forEach(wname=>{
       const bw = SD_WEAPONS.find(x=>x.name===wname);
       if(!bw) return;
-      let bsDmg = d12Set.has(bw.name) ? bw.damage.replace(/d\d+/g,'d12') : bw.damage;
+      const baseDmg = (wname==='Unarmed') ? unarmedDie : bw.damage;
+      let bsDmg = d12Set.has(bw.name) ? baseDmg.replace(/d\d+/g,'d12') : baseDmg;
       bsDmg = bsDmg.replace(/1d/g, bsDice+'d');
       _fillAtkRow('Backstab ('+bw.name+')', bw, bsDmg);
     });
