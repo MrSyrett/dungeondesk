@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<!-- BUILD: GM Screen — 2026-07-13 01:25 UTC -->
+<script>window.__BUILD__="GM Screen — 2026-07-13 01:25 UTC";</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Dungeon Desk — GM Screen</title>
@@ -5660,6 +5662,17 @@ window.init_gen = function(root) {
   .gen-item-name { font-weight:700; color:#c8a020; font-size:12px; margin-bottom:2px; }
   .gen-item-desc { font-size:11px; color:#ccc; line-height:1.5; }
   svg { max-width:100%; height:auto; }
+
+/* ══ ROUNDED BUTTONS ══════════════════════════════════════════════════════
+   Applied last so it wins over the per-button rules above. Deliberately
+   shaped controls are left alone: .nts-tab / .nts-tab-add (notes tabs). */
+.btn, .dice-camp-btn, .dice-hide-btn, .dice-advbtn, .dice-pool-clear,
+.dice-roll-go, .npc-mode-btn, .tracker-type-btn, .pdf-close-btn,
+.pdf-mobile-open-btn, .dice-die {
+  border-radius: 6px;
+}
+.btn.small { border-radius: 5px; }
+.npc-hp-btn, .tracker-adjust-btn { border-radius: 6px; }
 </style>
 </head><body>${bodyHtml}</body></html>`;
 
