@@ -2216,7 +2216,7 @@ function spellSourceBar(src, cls, onToggle) {
        + 'font-family:Montserrat,sans-serif;font-size:10px;font-weight:700;color:'+col+';">'
        + '<input type="checkbox"'+(on?' checked':'')+dis
        + ' onchange="'+onToggle+'(\''+name+'\', this.checked)" style="accent-color:#c8a020;cursor:'+(isOwn?'default':'pointer')+';">'
-       + name + (isOwn?' <span style="color:#666;font-weight:400;">(yours)</span>':'')
+       + name
        + '</label>';
   });
   h += '<span style="font-family:Montserrat,sans-serif;font-size:9px;color:#666;flex-basis:100%;">Ticking another list lets you pick from it — that\'s a house-rule / GM call.</span>';
@@ -2860,7 +2860,7 @@ function ccwGear() {
   h += '<button class="ccw-choice'+(_ccw.buyKit?' selected':'')+'" style="width:100%;margin-bottom:8px;" onclick="_ccw.buyKit=!_ccw.buyKit;ccwRender()"><div class="ccw-choice-name" style="font-size:11px;">Crawling Kit — 7 gp '+(_ccw.buyKit?'✓':'')+'</div><div class="ccw-choice-desc">Backpack, flint & steel, 2 torches, 3 rations, 10 iron spikes, grappling hook, 60\' rope</div></button>';
 
   // Weapons
-  h += '<p class="ccw-hint" style="color:#c8a020;font-weight:700;margin-top:6px;">Weapons ('+_ccw.cls+' can use):</p>';
+  h += '<p class="ccw-hint" style="color:#c8a020;font-weight:700;margin-top:6px;">Weapons</p>';
   h += '<div class="ccw-choice-grid">';
   ccwClassWeapons(_ccw.cls).forEach(n=>{
     const w = SD_WEAPONS.find(x=>x.name===n);
@@ -2873,7 +2873,7 @@ function ccwGear() {
   // Armor
   const allowedArmor = ccwClassArmor(_ccw.cls);
   if(allowedArmor.length) {
-    h += '<p class="ccw-hint" style="color:#c8a020;font-weight:700;margin-top:10px;">Armor ('+_ccw.cls+' can wear):</p>';
+    h += '<p class="ccw-hint" style="color:#c8a020;font-weight:700;margin-top:10px;">Armor</p>';
     h += '<div class="ccw-choice-grid">';
     allowedArmor.forEach(n=>{
       const a = CCW_ARMOR_SHOP.find(x=>x.name===n);
@@ -3750,16 +3750,19 @@ function ccwApply() {
 
   set('hp-current', c.hp); set('hp-max', c.hp);
 
-  // AC: base 10 + DEX; armor/shield contribution goes into the bonus box, toggled on
+  // AC: base 10 + DEX; armor/shield contribution goes into the bonus box, toggled on.
+  // Beastfolk Natural Selection is hide, not gear — it can't be taken off, so it
+  // folds into the base AC rather than the removable bonus.
   const dexMod = _rc_mod(eff.DEX);
-  const baseAC = 10 + dexMod;
-  let armoredAC = baseAC;
+  const natAC  = (c.beastNatural==='ac') ? 1 : 0;
+  const baseAC = 10 + dexMod + natAC;
+  let armoredAC = 10 + dexMod;
   if(c.buyArmor.includes('Plate mail')) armoredAC = 15;
   else if(c.buyArmor.includes('Chainmail')) armoredAC = 13 + dexMod;
   else if(c.buyArmor.includes('Leather armor')) armoredAC = 11 + dexMod;
   if(c.buyArmor.includes('Shield')) armoredAC += 2;
+  armoredAC += natAC;
   let _armorTalent = 0;
-  if(c.beastNatural==='ac') _armorTalent += 1;   // Beastfolk: Natural Selection
   [c.tres, c.tres2].forEach(p=>{
     const f = (p && p.final) || '';
     const m = f.match(/Choose one armor type, get \+1 AC from it — (.+)$/i);
@@ -3881,7 +3884,6 @@ function ccwApply() {
   if(c.ancestry==='Half-Orc') { atkBonus.melee += 1; atkBonus.meleeDmg += 1; } // Mighty
   if(c.elfFarsight==='ranged') atkBonus.ranged += 1;      // Farsight
   if(c.elfFarsight==='spell')  spellChkBonus += 1;        // Farsight
-  if(c.beastNatural==='ac')    armorTalentAC += 1;        // Beastfolk: Natural Selection
   if(c.koboldKnack==='spell')  spellChkBonus += 1;        // Kobold: Knack
   [c.tres, c.tres2].forEach(p=>{
     const f = (p && p.final) || '';
@@ -4493,29 +4495,41 @@ const SHOP_ARMOR = [
 const SHOP_BASIC = [
   {name:'Arrows',         qty:'20', gp:1,  note:'Ammo for bows'},
   {name:'Backpack',       gp:2,  note:'First one free to carry'},
+  {name:'Ball bearing',   gp:1,  note:'DC 12 DEX to roll it a near distance in a straight line. Triggers traps as if an adult human stepped there; lost once it does.'},
   {name:'Caltrops',       sp:5,  note:'One bag'},
+  {name:'Candle',         qty:'3', cp:5,  note:'Close light for 20 real minutes. Can be hidden behind a cloak or hand.'},
+  {name:'Charcoal, jar',  gp:1,  note:'One use. Leeches the poison out of an edible item, making it safe.'},
   {name:'Crossbow bolts', qty:'20', gp:1,  note:'Ammo for crossbows'},
   {name:'Crawling Kit',   gp:7,  note:'Backpack, flint & steel, 2 torches, 3 rations, 10 iron spikes, grappling hook, rope', kit:true},
   {name:'Crowbar',        sp:5,  note:''},
+  {name:'Flash seed',     gp:1,  note:'Sulfurous seed that bursts in a flash of light on impact. Dark-adapted creatures in near who see it: DC 12 CON or blinded 1 round.'},
   {name:'Flask or bottle',sp:3,  note:'Holds one draught'},
   {name:'Flint & Steel',  sp:5,  note:'Routine fire-lighting succeeds'},
+  {name:'Glow paste, jar',gp:2,  note:'Five uses. Sticky paste glows faintly green when exposed to air, leaving a subtle mark for one day.'},
   {name:'Grappling Hook', gp:1,  note:''},
+  {name:'Holy water, flask', sp:5, note:'Deals 2d4 damage to an undead creature.'},
   {name:'Iron Spikes',    qty:'10', gp:1,  note:''},
   {name:'Lantern',        gp:5,  note:'Casts light like torch, shutter, 1 hr/oil'},
+  {name:'Lantern hook',   sp:5,  note:'Connects to a belt, allowing hands-free use of a lantern.'},
+  {name:"Miner's putty, jar", sp:5, note:'Three uses of tacky putty. One glob bonds 500 lbs. of weight; dries and flakes off in a day.'},
   {name:'Mirror',         gp:10, note:''},
+  {name:'Net',            sp:5,  note:'Close range, one target. DC 15 DEX to entrap a human-sized or smaller creature. It escapes on a DC 12 DEX check on its turn.'},
   {name:'Oil, flask',     sp:5,  note:'Fuel or thrown weapon, 1d4/round'},
   {name:'Pole',           sp:5,  note:"Wooden, 10' long"},
   {name:'Rations',        qty:'3', sp:5,  note:'Food + water, one day each'},
   {name:'Rope (60 ft)',   gp:1,  note:'Hemp'},
+  {name:'Rope, morzo silk', gp:50, note:"Pencil-thin 60' rope of morzo worm silk. Immune to all damage except from a silvered or magical source."},
+  {name:'Tallow, jar',    sp:5,  note:'One application. Greases a door-sized object, a person, or a close area, making it absurdly slippery for a day.'},
   {name:'Torch',          sp:5,  note:'Near light, 1 hour'},
+  {name:"Traveler's lamp", gp:10, note:'Burns one flask of oil a day. Enough light to see during hex travel in darkness, but not in combat or crawling rounds.'},
 ];
 const SHOP_TABS = [
+  {id:'basic',   label:'Basic Gear'},
   {id:'weapons', label:'Weapons'},
   {id:'armor',   label:'Armor'},
-  {id:'basic',   label:'Basic Gear'},
   {id:'magic',   label:'Magic Items'},
 ];
-let _shopTab = 'weapons';
+let _shopTab = 'basic';
 let _shopClassOnly = true;   // hide gear the character's class can't use
 
 // The class typed on the sheet, matched loosely against RC_CLASS_INFO
@@ -4552,6 +4566,7 @@ function shopFmtCost(it) {
 function shopCostCp(it) { return (it.gp||0)*100 + (it.sp||0)*10 + (it.cp||0); }
 
 function openShop() {
+  _shopTab = 'basic';   // always open on Basic Gear
   document.getElementById('shop-overlay').style.display = 'flex';
   shopRender();
 }
