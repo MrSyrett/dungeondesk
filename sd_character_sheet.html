@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- BUILD: SD Character Sheet — 2026-07-13 01:25 UTC -->
-<script>window.__BUILD__="SD Character Sheet — 2026-07-13 01:25 UTC";</script>
+<!-- BUILD: SD Character Sheet — 2026-07-13 02:50 UTC -->
+<script>window.__BUILD__="SD Character Sheet — 2026-07-13 02:50 UTC";</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Shadowdark Character Sheet</title>
@@ -414,13 +414,13 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
       <button class="adv-btn" id="dis-btn" onclick="toggleAdv('disadvantage')">▼ Disadvantage</button>
     </div>
     <div class="dice-btns">
-      <button class="dice-btn" onclick="addDie(20)">D20</button>
-      <button class="dice-btn" onclick="addDie(12)">D12</button>
-      <button class="dice-btn" onclick="addDie(10)">D10</button>
-      <button class="dice-btn" onclick="addDie(8)">D8</button>
-      <button class="dice-btn" onclick="addDie(6)">D6</button>
-      <button class="dice-btn" onclick="addDie(4)">D4</button>
       <button class="dice-btn" onclick="addDie(2)">D2</button>
+      <button class="dice-btn" onclick="addDie(4)">D4</button>
+      <button class="dice-btn" onclick="addDie(6)">D6</button>
+      <button class="dice-btn" onclick="addDie(8)">D8</button>
+      <button class="dice-btn" onclick="addDie(10)">D10</button>
+      <button class="dice-btn" onclick="addDie(12)">D12</button>
+      <button class="dice-btn" onclick="addDie(20)">D20</button>
     </div>
     <div class="dice-tray-actions">
       <button class="dice-roll-btn" onclick="rollDicePool()" title="Roll dice pool"><span class="btn-die">&#127922;</span> Roll</button>
@@ -2093,6 +2093,64 @@ const RC_WIZARD_SPELLS_T1 = ['Alarm','Burning Hands','Charm Person','Detect Magi
 const RC_WITCH_SPELLS_T1  = ['Cauldron','Charm Person','Eyebite','Fog','Hypnotize','Oak, Ash, Thorn','Puppet','Shadowdance','Willowman','Witchlight'];
 const RC_DRUID_SPELLS_T1  = ['Breath','Instill','Oxidize','Whisperwind'];
 
+// ── Spell sources ─────────────────────────────────────────────────────────
+// A caster defaults to its own list, but may tick other lists open and pick
+// from them. 'Both' is an internal tag for spells shared by wizard + priest.
+const SPELL_SOURCES = ['Wizard','Priest','Witch','Druid'];
+const RC_T1_BY_SOURCE = {
+  Wizard: RC_WIZARD_SPELLS_T1,
+  Priest: RC_PRIEST_SPELLS_T1,
+  Witch:  RC_WITCH_SPELLS_T1,
+  Druid:  RC_DRUID_SPELLS_T1,
+};
+
+// Which lists are ticked by default for a class (the rules-legal ones).
+function defaultSpellSources(cls, alignment) {
+  const src = { Wizard:false, Priest:false, Witch:false, Druid:false };
+  if(cls==='Wizard') {
+    src.Wizard = true;
+    // Neutral wizards get the druid list for free (Cursed Scroll 4)
+    if(String(alignment||'').toLowerCase()==='neutral') src.Druid = true;
+  }
+  else if(cls==='Priest') src.Priest = true;
+  else if(cls==='Witch')  src.Witch  = true;
+  return src;
+}
+
+// Does a spell belong to any ticked source?
+function spellInSources(s, src) {
+  if(!src) return false;
+  if(s.caster==='Both')   return !!(src.Wizard || src.Priest);
+  if(s.caster==='Wizard') return !!src.Wizard;
+  if(s.caster==='Priest') return !!src.Priest;
+  if(s.caster==='Witch')  return !!src.Witch;
+  if(s.caster==='Druid')  return !!src.Druid;
+  return false;
+}
+
+// Checkbox bar. `cls` drives which box is the "own" list (shown but locked on,
+// so a caster can't accidentally cut themselves off from their own spells).
+function spellSourceBar(src, cls, onToggle) {
+  const own = { Wizard:'Wizard', Priest:'Priest', Witch:'Witch' }[cls] || '';
+  let h = '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px;padding:8px 10px;background:#141414;border:1px solid #2a2a2a;border-radius:5px;">';
+  h += '<span style="font-family:Montserrat,sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#c8a020;">Spell lists</span>';
+  SPELL_SOURCES.forEach(name=>{
+    const isOwn = (name===own);
+    const on = !!src[name];
+    const dis = isOwn ? ' disabled' : '';
+    const col = isOwn ? '#c8a020' : (on ? '#eee' : '#777');
+    h += '<label style="display:flex;align-items:center;gap:4px;cursor:'+(isOwn?'default':'pointer')+';'
+       + 'font-family:Montserrat,sans-serif;font-size:10px;font-weight:700;color:'+col+';">'
+       + '<input type="checkbox"'+(on?' checked':'')+dis
+       + ' onchange="'+onToggle+'(\''+name+'\', this.checked)" style="accent-color:#c8a020;cursor:'+(isOwn?'default':'pointer')+';">'
+       + name + (isOwn?' <span style="color:#666;font-weight:400;">(yours)</span>':'')
+       + '</label>';
+  });
+  h += '<span style="font-family:Montserrat,sans-serif;font-size:9px;color:#666;flex-basis:100%;">Ticking another list lets you pick from it — that\'s a house-rule / GM call.</span>';
+  h += '</div>';
+  return h;
+}
+
 const RC_ALIGNMENTS = ['Lawful','Lawful','Lawful','Neutral','Neutral','Chaotic'];
 const RC_DEITIES = {
   Lawful:  ['Saint Terragnis','Gede','Madeera the Covenant','Ord'],
@@ -2792,7 +2850,7 @@ function startCharWizard() {
            alignment: null, deity: '', talent: null, talent2: null,
            talentRoll: null, talent2Roll: null, tres: null, tres2: null,
            langCommon: [], langRare: [], langPriest: '', elfFarsight: null,
-           spells: [], gold: null, buyKit: true, buyWeapons: [], buyArmor: [],
+           spells: [], spellSrc: null, spellSrcOf: {}, gold: null, buyKit: true, buyWeapons: [], buyArmor: [],
            name: '', hp: null };
   document.getElementById('ccw-overlay').style.display = 'flex';
   ccwRender();
@@ -3428,27 +3486,59 @@ function ccwToggleLang(pool, lang, max) {
 function ccwSpells() {
   const cls = _ccw.cls;
   const needed = cls==='Priest' ? 2 : 3;
-  let pool = cls==='Priest' ? RC_PRIEST_SPELLS_T1 : cls==='Witch' ? RC_WITCH_SPELLS_T1 : RC_WIZARD_SPELLS_T1;
-  // Neutral wizards may also choose druid spells (Cursed Scroll 4)
-  if(cls==='Wizard' && _ccw.alignment==='Neutral') pool = [...pool, ...RC_DRUID_SPELLS_T1];
-  let h = '<p class="ccw-hint">Choose '+needed+' tier 1 '+cls.toLowerCase()+' spells.'+(cls==='Priest'?' Turn Undead is free.':'')+' ('+_ccw.spells.length+'/'+needed+' selected)</p>';
+  if(!_ccw.spellSrc) _ccw.spellSrc = defaultSpellSources(cls, _ccw.alignment);
+
+  // Build the tier-1 pool from every ticked list. If a name appears on two
+  // lists (e.g. Charm Person is both wizard and witch), the character's own
+  // list wins so a selection is never ambiguous.
+  const pool = [];
+  const seen = new Set();
+  const own = { Wizard:'Wizard', Priest:'Priest', Witch:'Witch' }[cls] || '';
+  const order = [own, ...SPELL_SOURCES.filter(s=>s!==own)].filter(Boolean);
+  order.forEach(srcName=>{
+    if(!_ccw.spellSrc[srcName]) return;
+    (RC_T1_BY_SOURCE[srcName]||[]).forEach(sp=>{
+      if(seen.has(sp)) return;
+      seen.add(sp);
+      pool.push({ name: sp, src: srcName });
+    });
+  });
+
+  let h = '<p class="ccw-hint">Choose '+needed+' tier 1 spells.'+(cls==='Priest'?' Turn Undead is free.':'')+' ('+_ccw.spells.length+'/'+needed+' selected)</p>';
+  h += spellSourceBar(_ccw.spellSrc, cls, 'ccwToggleSpellSrc');
+  if(!pool.length) return h + '<p class="ccw-hint">No spell lists selected.</p>';
   h += '<div class="ccw-choice-grid">';
-  pool.forEach(sp=>{
+  pool.forEach(item=>{
+    const sp = item.name;
     const sel = _ccw.spells.includes(sp) ? ' selected' : '';
-    const data = (cls==='Witch' ? (findSpell(sp,'Witch')||{})
-                : RC_DRUID_SPELLS_T1.includes(sp) ? (findSpell(sp,'Druid')||{})
-                : (RC_SPELL_DATA[sp] || findSpell(sp,cls) || {}));
+    const data = findSpell(sp, item.src) || RC_SPELL_DATA[sp] || {};
     const meta = [data.range?'Range: '+data.range:'', data.duration?'Dur: '+data.duration:'', data.damage?'Dmg: '+data.damage:''].filter(Boolean).join(' · ');
-    h += '<button class="ccw-choice'+sel+'" onclick="ccwToggleSpell(\''+sp.replace(/'/g,"\\'")+'\')"><div class="ccw-choice-name" style="font-size:11px;">'+sp+'</div>'+(meta?'<div class="ccw-choice-desc" style="color:#c8a020;font-size:8px;">'+meta+'</div>':'')+'<div class="ccw-choice-desc">'+(data.desc||'')+'</div></button>';
+    const tag = (item.src !== own)
+      ? '<span style="color:#8a7ac8;font-size:8px;font-weight:700;"> · '+item.src+'</span>' : '';
+    h += '<button class="ccw-choice'+sel+'" onclick="ccwToggleSpell(\''+sp.replace(/'/g,"\\'")+'\',\''+item.src+'\')"><div class="ccw-choice-name" style="font-size:11px;">'+sp+tag+'</div>'+(meta?'<div class="ccw-choice-desc" style="color:#c8a020;font-size:8px;">'+meta+'</div>':'')+'<div class="ccw-choice-desc">'+(data.desc||'')+'</div></button>';
   });
   h += '</div>';
   return h;
 }
-function ccwToggleSpell(sp) {
+function ccwToggleSpellSrc(name, on) {
+  if(!_ccw.spellSrc) _ccw.spellSrc = defaultSpellSources(_ccw.cls, _ccw.alignment);
+  _ccw.spellSrc[name] = !!on;
+  // Drop any picked spell that no longer belongs to a ticked list
+  _ccw.spells = _ccw.spells.filter(sp=>{
+    const src = _ccw.spellSrcOf[sp];
+    if(src && !_ccw.spellSrc[src]) { delete _ccw.spellSrcOf[sp]; return false; }
+    return true;
+  });
+  ccwRender();
+}
+function ccwToggleSpell(sp, src) {
   const needed = _ccw.cls==='Priest' ? 2 : 3;
   const i = _ccw.spells.indexOf(sp);
-  if(i >= 0) _ccw.spells.splice(i,1);
-  else if(_ccw.spells.length < needed) _ccw.spells.push(sp);
+  if(i >= 0) { _ccw.spells.splice(i,1); delete _ccw.spellSrcOf[sp]; }
+  else if(_ccw.spells.length < needed) {
+    _ccw.spells.push(sp);
+    if(src) _ccw.spellSrcOf[sp] = src;
+  }
   ccwRender();
 }
 
@@ -3594,7 +3684,9 @@ function ccwApply() {
     _spellCount++;
     const row = addSpellRow(_spellCount);
     if(!row) return;
-    const data = (c.cls==='Witch' ? findSpell(sp,'Witch')
+    const picked = (c.spellSrcOf && c.spellSrcOf[sp]) || null;
+    const data = (picked ? findSpell(sp, picked)
+                : c.cls==='Witch' ? findSpell(sp,'Witch')
                 : RC_DRUID_SPELLS_T1.includes(sp) ? findSpell(sp,'Druid')
                 : (RC_SPELL_DATA[sp] || findSpell(sp, c.cls))) || {};
     const q = (cl)=>row.querySelector(cl);
@@ -3776,7 +3868,7 @@ function startLevelUp() {
     hpRoll: null,
     gainsTalent: newLevel % 2 === 1, // talents at odd levels (3,5,7,9)
     talent: null, talentRoll: null, tres: null,
-    newSpells: [], spellsNeeded: 0, spellTiers: [],
+    newSpells: [], spellSrc: null, spellSrcOf: {}, spellsNeeded: 0, spellTiers: [],
   };
   // Spell gains for casters
   const table = clsKey==='Priest' ? CCW_PRIEST_SPELLS_KNOWN : clsKey==='Wizard' ? CCW_WIZARD_SPELLS_KNOWN : clsKey==='Witch' ? CCW_WITCH_SPELLS_KNOWN : null;
@@ -3918,37 +4010,63 @@ function lvlRollTalent() {
 
 function lvlSpells() {
   const cls = _lvl.cls;
+  if(!_lvl.spellSrc) _lvl.spellSrc = defaultSpellSources(cls, sheetAlignment());
+  const own = { Wizard:'Wizard', Priest:'Priest', Witch:'Witch' }[cls] || '';
   // Already-known spells (from the sheet)
   const known = [...document.querySelectorAll('#spells-list .spell-row .spell-input')].map(el=>el.value.trim()).filter(Boolean);
   const tierCounts = {};
   _lvl.spellTiers.forEach(t=>{ tierCounts[t]=(tierCounts[t]||0)+1; });
   let h = '<p class="ccw-hint">You gain '+_lvl.spellsNeeded+' new spell'+(_lvl.spellsNeeded>1?'s':'')+': '+Object.entries(tierCounts).map(([t,c])=>c+' × Tier '+t).join(', ')+'. ('+_lvl.newSpells.length+'/'+_lvl.spellsNeeded+' selected)</p>';
-  // Group available SD_SPELLS by needed tier, filtering caster + already known
-  const casterMatch = (s) => spellAllowed(s, cls, sheetAlignment());
+  h += spellSourceBar(_lvl.spellSrc, cls, 'lvlToggleSpellSrc');
   Object.keys(tierCounts).forEach(tier=>{
     h += '<p class="ccw-hint" style="margin-top:8px;color:#c8a020;font-weight:700;">Tier '+tier+'</p>';
     h += '<div class="ccw-choice-grid">';
-    SD_SPELLS.filter(s=>s.tier===String(tier) && casterMatch(s) && !known.includes(s.name)).forEach(s=>{
+    // Own list first, so a duplicate name resolves to the character's own version
+    const seen = new Set();
+    const rows = SD_SPELLS
+      .filter(s=>s.tier===String(tier) && spellInSources(s, _lvl.spellSrc) && !known.includes(s.name))
+      .sort((a,b)=>{
+        const ao = (a.caster===own || a.caster==='Both') ? 0 : 1;
+        const bo = (b.caster===own || b.caster==='Both') ? 0 : 1;
+        return ao - bo;
+      })
+      .filter(s=>{ if(seen.has(s.name)) return false; seen.add(s.name); return true; });
+    if(!rows.length) h += '<p class="ccw-hint" style="color:#666;">Nothing available at this tier from the selected lists.</p>';
+    rows.forEach(s=>{
       const sel = _lvl.newSpells.includes(s.name) ? ' selected' : '';
       const meta = [s.range?'Range: '+s.range:'', s.duration?'Dur: '+s.duration:'', s.damage?'Dmg: '+s.damage:''].filter(Boolean).join(' · ');
-      h += '<button class="ccw-choice'+sel+'" onclick="lvlToggleSpell(\''+s.name.replace(/'/g,"\\'")+'\',\''+tier+'\')"><div class="ccw-choice-name" style="font-size:11px;">'+s.name+'</div>'+(meta?'<div class="ccw-choice-desc" style="color:#6ac8df;font-size:8px;">'+meta+'</div>':'')+'<div class="ccw-choice-desc">'+(s.desc||'')+'</div></button>';
+      const foreign = (s.caster!==own && s.caster!=='Both');
+      const tag = foreign ? '<span style="color:#8a7ac8;font-size:8px;font-weight:700;"> · '+s.caster+'</span>' : '';
+      h += '<button class="ccw-choice'+sel+'" onclick="lvlToggleSpell(\''+s.name.replace(/'/g,"\\'")+'\',\''+tier+'\',\''+s.caster+'\')"><div class="ccw-choice-name" style="font-size:11px;">'+s.name+tag+'</div>'+(meta?'<div class="ccw-choice-desc" style="color:#6ac8df;font-size:8px;">'+meta+'</div>':'')+'<div class="ccw-choice-desc">'+(s.desc||'')+'</div></button>';
     });
     h += '</div>';
   });
   return h;
 }
-function lvlToggleSpell(name, tier) {
+function lvlToggleSpellSrc(name, on) {
+  if(!_lvl.spellSrc) _lvl.spellSrc = defaultSpellSources(_lvl.cls, sheetAlignment());
+  _lvl.spellSrc[name] = !!on;
+  _lvl.newSpells = _lvl.newSpells.filter(sp=>{
+    const src = _lvl.spellSrcOf[sp];
+    if(src && !spellInSources({caster:src}, _lvl.spellSrc)) { delete _lvl.spellSrcOf[sp]; return false; }
+    return true;
+  });
+  lvlRender();
+}
+function lvlToggleSpell(name, tier, caster) {
   const i = _lvl.newSpells.indexOf(name);
-  if(i >= 0) { _lvl.newSpells.splice(i,1); lvlRender(); return; }
-  // Count how many of this tier already selected
+  if(i >= 0) { _lvl.newSpells.splice(i,1); delete _lvl.spellSrcOf[name]; lvlRender(); return; }
+  // Count how many of this tier already selected (resolve each pick against
+  // the list it actually came from — names can repeat across spell lists)
   const tierNeeded = _lvl.spellTiers.filter(t=>String(t)===String(tier)).length;
   const tierSelected = _lvl.newSpells.filter(n=>{
-    const sp = SD_SPELLS.find(x=>x.name===n);
+    const sp = findSpell(n, _lvl.spellSrcOf[n] || null);
     return sp && sp.tier===String(tier);
   }).length;
   if(tierSelected >= tierNeeded) return;
   if(_lvl.newSpells.length >= _lvl.spellsNeeded) return;
   _lvl.newSpells.push(name);
+  if(caster) _lvl.spellSrcOf[name] = caster;
   lvlRender();
 }
 
@@ -4003,7 +4121,7 @@ function lvlApply() {
   });
   // New spells added as rows
   _lvl.newSpells.forEach(name=>{
-    const s = SD_SPELLS.find(x=>x.name===name);
+    const s = findSpell(name, _lvl.spellSrcOf[name] || _lvl.cls);
     _spellCount++;
     const row = addSpellRow(_spellCount);
     if(!row || !s) return;
