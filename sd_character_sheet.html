@@ -1891,8 +1891,16 @@ autoLoad();
   .hdr-field:nth-child(3){border-right:1px solid var(--rule);}
   /* ── Larger touch targets and readable type on phones ── */
   .stat-roll-btn{min-height:44px;font-size:18px!important;padding:8px 0!important;}
-  .spell-cast-btn{min-height:40px;font-size:13px!important;padding:8px 10px!important;}
-  .spell-adv-btn,.spell-lost-btn{min-height:40px;font-size:12px!important;padding:6px 8px!important;}
+  /* The ▲ ✗ ✦ buttons sit in 20-24px grid columns; horizontal padding was
+     squeezing the content box to nothing and pushing the glyph off to the
+     right. Widen those columns and center the glyph with flex instead. */
+  .spell-row{grid-template-columns:16px 1fr 26px 30px 48px 60px 60px 38px 38px 44px;gap:4px;}
+  .spell-cast-btn,.spell-adv-btn,.spell-lost-btn{
+    min-height:40px;padding:0!important;width:100%;
+    display:flex;align-items:center;justify-content:center;text-align:center;
+  }
+  .spell-cast-btn{font-size:15px!important;}
+  .spell-adv-btn,.spell-lost-btn{font-size:14px!important;}
   .atk-roll-btn{min-height:42px;font-size:16px!important;padding:8px 10px!important;}
   .atk-adv-btn{min-height:42px;font-size:12px!important;padding:6px 8px!important;}
   .add-btn{min-height:46px;font-size:14px!important;padding:12px 18px!important;}

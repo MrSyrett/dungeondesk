@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", function() {
   .sidebar.collapsed .save-indicator,
   .sidebar.collapsed .sidebar-sub,
   .sidebar.collapsed .sidebar-title,
-  .sidebar.collapsed .toggle-row { display: none; }
+  .sidebar.collapsed .toggle-row { display: none !important; }   /* !important: the footer sets display:flex inline */
   .collapse-btn { background: none; border: none; color: var(--ui-muted); cursor: pointer; font-size: 18px; line-height: 1; padding: 4px 6px; border-radius: 3px; transition: color 0.15s; flex-shrink: 0; }
   .collapse-btn:hover { color: var(--ui-accent); }
   .sidebar-header-row { display: flex; justify-content: space-between; align-items: flex-start; }

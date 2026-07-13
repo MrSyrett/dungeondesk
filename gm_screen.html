@@ -847,6 +847,410 @@ input[type="number"] { -moz-appearance: textfield; }
 .dice-camp-panel { padding: 6px 0 2px; }
 .dice-camp-row { display: flex; gap: 6px; align-items: center; margin-bottom: 5px; }
 .dice-log-entry.remote { border-left: 3px solid #8a7ac8; background: #201d2a; }
+/* ══ ROUNDED BUTTONS ══════════════════════════════════════════════════════
+   Applied last so it wins over the per-button rules above. Deliberately
+   shaped controls are left alone: .nts-tab / .nts-tab-add (notes tabs). */
+.btn, .dice-camp-btn, .dice-hide-btn, .dice-advbtn, .dice-pool-clear,
+.dice-roll-go, .npc-mode-btn, .tracker-type-btn, .pdf-close-btn,
+.pdf-mobile-open-btn, .dice-die {
+  border-radius: 6px;
+}
+.btn.small { border-radius: 5px; }
+.npc-hp-btn, .tracker-adjust-btn { border-radius: 6px; }
+
+/* ══ MOBILE SIZING PASS ═══════════════════════════════════════════════════
+   Appended last so it wins over the earlier mobile rules above. Covers:
+   combat + tracker controls, notes tabs, generator options, dice tray. */
+@media (max-width: 760px) {
+
+  /* ── (1) Combat & Trackers: real thumb-sized controls ── */
+  .cbt-round-display { font-size: 15px; }
+  .cbt-round-num, .trk-round-num { font-size: 20px; }
+  .cbt-col-header { padding: 10px 12px; }
+  .cbt-col-title { font-size: 13px; }
+  .cbt-tracker-list, .cbt-npc-list { padding: 12px; gap: 10px; }
+
+  .tracker-card, .npc-card { padding: 12px 14px; }
+  .tracker-top, .npc-top { gap: 10px; margin-bottom: 10px; }
+  .tracker-bottom, .npc-hp-row { gap: 10px; }
+
+  /* +/- steppers — the ones you hit constantly mid-fight */
+  .npc-hp-btn, .tracker-adjust-btn {
+    width: 48px !important; height: 48px !important;
+    font-size: 22px !important; border-radius: 6px;
+  }
+  .npc-hp-adjust { gap: 6px; }
+
+  /* Rounds / Timer and Std / DCC toggles */
+  .tracker-type-btn, .npc-mode-btn {
+    font-size: 12px !important; padding: 11px 14px !important; min-height: 44px;
+  }
+
+  /* Delete "x" buttons stay smaller than the rest — they're destructive */
+  .tracker-del, .npc-del {
+    font-size: 18px !important; padding: 6px 9px !important;
+    min-height: 34px; min-width: 34px;
+  }
+
+  .npc-hp-input   { width: 66px !important; font-size: 18px !important; padding: 11px 4px !important; min-height: 46px; }
+  .timer-set-input{ width: 66px !important; font-size: 16px !important; padding: 11px 4px !important; min-height: 46px; }
+  .npc-hp-slash   { font-size: 16px; }
+  .tracker-name-input, .npc-name-input { font-size: 16px !important; padding: 6px 0 !important; }
+  .npc-tag-input  { width: 92px; font-size: 13px; padding: 6px 0; }
+  .tracker-rounds { font-size: 28px; }
+  .tracker-label, .timer-set-label, .tracker-expired-tag { font-size: 11px; }
+  .tracker-rounds-display { min-width: 44px; }
+  .timer-controls { gap: 6px; }
+  .timer-set-row  { gap: 8px; margin-top: 8px; }
+
+  /* ── (2) Notes tabs ── */
+  .nts-tabs { left: 6px; right: 6px; gap: 5px; }
+  .nts-tab {
+    font-size: 13px; padding: 9px 15px 10px; gap: 7px;
+    border-radius: 0 0 7px 7px; min-height: 38px;
+  }
+  .nts-tab-x { font-size: 14px; padding: 0 3px; }
+  .nts-tab-add { font-size: 15px; padding: 9px 14px 10px; min-height: 38px; border-radius: 0 0 7px 7px; }
+  /* tabs are absolutely positioned over the editor — clear them */
+  .nts-editor { padding: 50px 16px 16px !important; font-size: 16px; }
+
+  /* ── (3) Generator options ── */
+  .gen-tab-select { font-size: 15px !important; min-height: 46px; padding: 10px 12px !important; }
+  .gen-controls { gap: 12px; padding: 14px 14px; }
+  .gen-label  { font-size: 12px; gap: 6px; }
+  .gen-select { font-size: 15px; padding: 11px 10px; min-height: 46px; border-radius: 5px; }
+  .gen-results { padding: 14px; gap: 12px; }
+  .gen-card { padding: 14px; }
+  .gen-card-name { font-size: 17px; }
+  .gen-card-tag  { font-size: 12px; }
+  .gen-empty { font-size: 14px; }
+
+  /* ── (4) Dice tray: keep all 7 dice on ONE row ── */
+  .dice-btn-row { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 3px; }
+  .dice-die { padding: 14px 0; font-size: 14px; min-height: 48px; letter-spacing: 0; }
+  .dice-mod { width: 52px; font-size: 15px; padding: 10px 4px; min-height: 44px; }
+  .dice-advbtn { font-size: 12px; padding: 11px 10px; min-height: 44px; }
+  .dice-roll-go { font-size: 13px; padding: 12px 16px; min-height: 44px; }
+  .dice-pool-clear { font-size: 13px; padding: 11px 12px; min-height: 44px; }
+  .dice-camp-btn, .dice-hide-btn { font-size: 15px; padding: 11px 12px; min-height: 44px; }
+}
+/* ══ MOBILE TOUCH-TARGET PASS ═════════════════════════════════════════════
+   Appended last so it beats both the earlier @media rules AND the
+   .pane.narrow rules (which fire on phone-width panes and were shrinking
+   buttons/dropdowns back down). Everything below is ~50-100% larger. */
+@media (max-width: 760px) {
+
+  /* ── Buttons ── */
+  .btn,
+  .pane.narrow .btn {
+    font-size: 15px !important; padding: 13px 18px !important;
+    min-height: 50px !important; letter-spacing: .04em;
+  }
+  .btn.small,
+  .pane.narrow .btn.small {
+    font-size: 14px !important; padding: 11px 15px !important;
+    min-height: 46px !important;
+  }
+  .pane-toolbar-slot .btn,
+  .pane-toolbar-slot button,
+  .pane.narrow .pane-toolbar-slot .btn,
+  .pane.narrow .pane-toolbar-slot button {
+    font-size: 14px !important; padding: 11px 14px !important;
+    min-height: 46px !important;
+  }
+  .pane-toolbar-slot label,
+  .pane.narrow .pane-toolbar-slot label { font-size: 12px !important; gap: 6px; }
+  .pane-header, .pane.narrow .pane-header { padding: 8px 10px !important; gap: 8px; }
+  .pane-toolbar-slot, .pane.narrow .pane-toolbar-slot { gap: 8px !important; }
+  .toolrow, .pane.narrow .toolrow { padding: 12px 12px !important; gap: 10px; }
+
+  /* ── Dropdowns / text + number inputs ── */
+  select,
+  .pane-select, .pane.narrow .pane-select,
+  .split-select, .gen-tab-select, .gen-select,
+  .pane-toolbar-slot select, .pane.narrow .pane-toolbar-slot select {
+    font-size: 16px !important;          /* 16px also stops iOS zoom-on-focus */
+    padding: 13px 12px !important;
+    min-height: 50px !important;
+    max-width: none !important;
+  }
+  .pane-select, .pane.narrow .pane-select { flex: 1 1 auto !important; }
+  .pane-toolbar-slot input,
+  .pane.narrow .pane-toolbar-slot input {
+    font-size: 16px !important; padding: 12px 10px !important;
+    min-height: 48px !important; max-width: none !important;
+  }
+  .gen-controls, .pane.narrow .gen-controls { padding: 14px 14px !important; gap: 12px !important; }
+  .gen-label { font-size: 13px !important; }
+
+  /* ── Combat / tracker steppers ── */
+  .npc-hp-btn, .tracker-adjust-btn,
+  .pane.narrow .npc-hp-btn, .pane.narrow .tracker-adjust-btn {
+    width: 54px !important; height: 54px !important;
+    font-size: 24px !important; border-radius: 6px;
+  }
+  .tracker-type-btn, .npc-mode-btn {
+    font-size: 13px !important; padding: 13px 16px !important; min-height: 50px !important;
+  }
+  .tracker-del, .npc-del {
+    font-size: 20px !important; padding: 8px 11px !important;
+    min-height: 40px !important; min-width: 40px !important;
+  }
+  .npc-hp-input, .pane.narrow .npc-hp-input {
+    width: 72px !important; font-size: 19px !important;
+    padding: 12px 4px !important; min-height: 52px !important;
+  }
+  .timer-set-input { width: 72px !important; font-size: 17px !important; min-height: 52px !important; }
+  .tracker-name-input, .npc-name-input,
+  .pane.narrow .tracker-name-input, .pane.narrow .npc-name-input { font-size: 17px !important; }
+  .npc-seg, .pane.narrow .npc-seg { height: 36px !important; }
+  .npc-seg-num, .pane.narrow .npc-seg-num { font-size: 13px !important; }
+
+  /* ── Dice tray (still one row of 7) ── */
+  .dice-btn-row, .pane.narrow .dice-btn-row {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 4px !important;
+  }
+  .dice-die, .pane.narrow .dice-die {
+    padding: 17px 0 !important; font-size: 15px !important;
+    min-height: 56px !important; letter-spacing: 0;
+  }
+  .dice-count, .pane.narrow .dice-count {
+    min-width: 18px; height: 18px; line-height: 18px; font-size: 11px;
+  }
+  .dice-mod, .pane.narrow .dice-mod {
+    width: 58px !important; font-size: 16px !important;
+    padding: 13px 4px !important; min-height: 50px !important;
+  }
+  .dice-advbtn, .pane.narrow .dice-advbtn {
+    font-size: 13px !important; padding: 14px 12px !important; min-height: 50px !important;
+  }
+  .dice-roll-go, .pane.narrow .dice-roll-go {
+    font-size: 14px !important; padding: 15px 18px !important; min-height: 50px !important;
+  }
+  .dice-pool-clear, .pane.narrow .dice-pool-clear {
+    font-size: 14px !important; padding: 14px 14px !important; min-height: 50px !important;
+  }
+  .dice-camp-btn, .dice-hide-btn,
+  .pane.narrow .dice-camp-btn, .pane.narrow .dice-hide-btn {
+    font-size: 16px !important; padding: 13px 14px !important; min-height: 50px !important;
+  }
+  .dice-pool, .pane.narrow .dice-pool { padding: 6px 10px 10px !important; }
+  .dice-pool-row, .pane.narrow .dice-pool-row { gap: 6px !important; }
+
+  /* ── Notes tabs ── */
+  .nts-tab { font-size: 14px !important; padding: 11px 17px 12px !important; min-height: 44px !important; }
+  .nts-tab-add { font-size: 17px !important; padding: 11px 16px 12px !important; min-height: 44px !important; }
+  .nts-tab-x { font-size: 16px !important; padding: 0 4px !important; }
+  .nts-editor { padding: 58px 16px 16px !important; }
+}
+/* ══ TRACKER / NPC CARD SIZE PASS (2x) ═══════════════════════════════════
+   Everything inside a tracker or NPC card is doubled, at every width. These
+   selectors also beat the .pane.narrow rules that used to shrink them. */
+.cbt-tracker-list, .cbt-npc-list,
+.pane.narrow .cbt-tracker-list, .pane.narrow .cbt-npc-list { padding: 14px !important; gap: 14px !important; }
+
+.tracker-card, .npc-card,
+.pane.narrow .tracker-card, .pane.narrow .npc-card { padding: 18px 20px !important; border-left-width: 5px !important; }
+.tracker-top, .npc-top { gap: 14px !important; margin-bottom: 14px !important; }
+.tracker-bottom, .npc-hp-row { gap: 14px !important; }
+
+/* Names + tags */
+.tracker-name-input, .npc-name-input,
+.pane.narrow .tracker-name-input, .pane.narrow .npc-name-input {
+  font-size: 24px !important; padding: 4px 0 !important;
+}
+.npc-tag-input, .pane.narrow .npc-tag-input { width: 130px !important; font-size: 18px !important; padding: 4px 0 !important; }
+
+/* Rounds / Timer + Std / DCC toggles */
+.tracker-type-btn, .npc-mode-btn {
+  font-size: 15px !important; padding: 9px 15px !important; letter-spacing: .06em;
+}
+
+/* Delete "x" */
+.tracker-del, .npc-del { font-size: 26px !important; padding: 4px 9px !important; }
+
+/* +/- steppers */
+.tracker-adjust-btn, .npc-hp-btn,
+.pane.narrow .tracker-adjust-btn, .pane.narrow .npc-hp-btn {
+  width: 52px !important; height: 52px !important; font-size: 24px !important;
+}
+.npc-hp-adjust { gap: 7px !important; }
+
+/* Numbers */
+.tracker-rounds { font-size: 44px !important; }
+.tracker-rounds-display { min-width: 64px !important; }
+.tracker-label, .timer-set-label, .tracker-expired-tag, .npc-seg-setup-label { font-size: 16px !important; }
+.timer-display { font-size: 40px !important; min-width: 128px !important; }
+.timer-set-input, .pane.narrow .timer-set-input {
+  width: 96px !important; font-size: 22px !important; padding: 9px 4px !important;
+}
+.timer-set-row { gap: 12px !important; margin-top: 12px !important; }
+.timer-controls { gap: 8px !important; }
+.npc-hp-input, .pane.narrow .npc-hp-input {
+  width: 92px !important; font-size: 26px !important; padding: 10px 4px !important;
+}
+.npc-hp-slash { font-size: 24px !important; }
+
+/* DCC segments */
+.npc-seg-setup { gap: 10px !important; margin-bottom: 14px !important; }
+.npc-seg-count-input, .npc-seg-hp-input { width: 80px !important; font-size: 20px !important; padding: 8px 4px !important; }
+.npc-seg-row, .pane.narrow .npc-seg-row { gap: 5px !important; }
+.npc-seg, .pane.narrow .npc-seg { height: 56px !important; min-width: 0 !important; flex: 1 1 0 !important; }
+.npc-seg-num, .pane.narrow .npc-seg-num { font-size: 20px !important; }
+
+/* ══ DICE: always one row of 7, at every width ═══════════════════════════ */
+.dice-btn-row, .pane.narrow .dice-btn-row {
+  display: grid !important;
+  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  gap: 4px !important;
+}
+.dice-die, .pane.narrow .dice-die {
+  min-width: 0 !important; white-space: nowrap; letter-spacing: 0 !important;
+  padding-left: 0 !important; padding-right: 0 !important;
+}
+/* ══ REORDER HANDLES (tracker + combat cards) ════════════════════════════ */
+.card-reorder { display: flex; flex-wrap: nowrap; align-items: center; gap: 4px; flex-shrink: 0; }
+.card-move { flex: 0 0 auto; }
+.card-drag {
+  cursor: grab; color: var(--muted); font-size: 20px; line-height: 1;
+  padding: 2px 4px; user-select: none; touch-action: none;
+}
+.card-drag:active { cursor: grabbing; color: var(--gold); }
+.card-move {
+  background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
+  cursor: pointer; width: 34px; height: 28px; font-size: 12px; line-height: 1;
+  border-radius: 5px; display: flex; align-items: center; justify-content: center;
+}
+.card-move:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
+.card-move:disabled { opacity: 0.3; cursor: default; }
+.tracker-card.dragging, .npc-card.dragging { opacity: 0.45; }
+.tracker-card.drop-target, .npc-card.drop-target { outline: 2px dashed var(--gold); outline-offset: 2px; }
+
+/* ══ DICE: hard-lock the tray to ONE row, whatever the width ══════════════ */
+.dice-btn-row, .pane.narrow .dice-btn-row {
+  display: grid !important;
+  grid-template-columns: none !important;
+  grid-auto-flow: column !important;
+  grid-auto-columns: minmax(0, 1fr) !important;
+  gap: 3px !important;
+}
+.dice-die, .pane.narrow .dice-die {
+  min-width: 0 !important; overflow: hidden;
+  white-space: nowrap; letter-spacing: 0 !important;
+  padding-left: 0 !important; padding-right: 0 !important;
+}
+@media (max-width: 760px) {
+  .dice-die, .pane.narrow .dice-die { font-size: 13px !important; padding: 15px 0 !important; }
+}
+
+/* ══ MOBILE: tracker + combat cards, doubled again ═══════════════════════ */
+@media (max-width: 760px) {
+  .tracker-card, .npc-card,
+  .pane.narrow .tracker-card, .pane.narrow .npc-card { padding: 22px !important; }
+
+  /* Name gets its own full-width line so the big controls have room */
+  .tracker-top, .npc-top { flex-wrap: wrap !important; gap: 12px !important; margin-bottom: 16px !important; }
+  .card-reorder { order: 1; }
+  .tracker-del, .npc-del { order: 2; margin-left: auto !important; font-size: 34px !important; padding: 4px 10px !important; }
+  .tracker-type-toggle, .npc-mode-toggle { order: 3; }
+  .npc-tag-input { order: 4; }
+  .tracker-name-input, .npc-name-input {
+    order: 5; flex: 1 1 100% !important; font-size: 32px !important; padding: 6px 0 !important;
+  }
+  .npc-tag-input, .pane.narrow .npc-tag-input {
+    width: 120px !important; font-size: 22px !important; text-align: left !important;
+  }
+  .tracker-type-btn, .npc-mode-btn {
+    font-size: 19px !important; padding: 15px 20px !important; min-height: 60px !important;
+  }
+
+  /* Steppers + numbers */
+  .tracker-adjust-btn, .npc-hp-btn,
+  .pane.narrow .tracker-adjust-btn, .pane.narrow .npc-hp-btn {
+    width: 72px !important; height: 72px !important; font-size: 30px !important;
+  }
+  .npc-hp-row { flex-wrap: wrap !important; gap: 12px !important; }
+  .npc-hp-adjust {
+    width: 100% !important; margin-left: 0 !important;
+    justify-content: space-between !important; gap: 10px !important;
+  }
+  .npc-hp-adjust .npc-hp-btn { flex: 1 1 0 !important; }
+  .npc-hp-input, .pane.narrow .npc-hp-input {
+    width: 118px !important; font-size: 34px !important; padding: 12px 6px !important;
+  }
+  .npc-hp-slash { font-size: 30px !important; }
+  .tracker-bottom { gap: 16px !important; }
+  .tracker-rounds { font-size: 64px !important; }
+  .tracker-rounds-display { min-width: 92px !important; }
+  .tracker-label, .timer-set-label, .tracker-expired-tag,
+  .npc-seg-setup-label, .npc-defeated-tag { font-size: 20px !important; }
+  .timer-display { font-size: 52px !important; min-width: 150px !important; }
+  .timer-set-input, .pane.narrow .timer-set-input {
+    width: 110px !important; font-size: 28px !important; min-height: 64px !important; padding: 12px 4px !important;
+  }
+  .timer-set-row { flex-wrap: wrap !important; gap: 12px !important; }
+
+  /* DCC segments */
+  .npc-seg, .pane.narrow .npc-seg { height: 76px !important; }
+  .npc-seg-num, .pane.narrow .npc-seg-num { font-size: 26px !important; }
+  .npc-seg-count-input, .npc-seg-hp-input {
+    width: 100px !important; font-size: 26px !important; padding: 12px 4px !important;
+  }
+
+  /* Statuses + in-card buttons */
+  .status-text { font-size: 20px !important; padding: 8px 6px !important; }
+  .status-check { width: 28px !important; height: 28px !important; }
+  .status-del { font-size: 26px !important; }
+  .status-add, .npc-seg-apply, .timer-apply {
+    font-size: 18px !important; min-height: 58px !important; padding: 15px 20px !important;
+  }
+
+  /* Reorder controls sized for thumbs */
+  .card-drag { font-size: 34px !important; padding: 4px 8px !important; }
+  .card-move { width: 56px !important; height: 46px !important; font-size: 18px !important; }
+}
+/* ══ CARD CONTROLS — final size pass ═════════════════════════════════════
+   Buttons and toggles living inside tracker / combat cards. Appended last so
+   it beats every earlier rule (including the .pane.narrow shrink rules). */
+
+/* Desktop */
+.tracker-type-btn, .npc-mode-btn {
+  font-size: 16px !important; padding: 12px 20px !important; min-height: 46px !important;
+}
+.tracker-adjust-btn, .npc-hp-btn { width: 56px !important; height: 56px !important; font-size: 26px !important; }
+.tracker-del, .npc-del { font-size: 28px !important; padding: 4px 10px !important; }
+.status-add, .npc-seg-apply, .timer-apply {
+  font-size: 15px !important; padding: 11px 16px !important; min-height: 44px !important;
+}
+.status-del { font-size: 22px !important; padding: 2px 6px !important; }
+.status-check { width: 22px !important; height: 22px !important; }
+.status-text { font-size: 16px !important; padding: 7px 8px !important; }
+
+/* Mobile — everything in a card is thumb-sized */
+@media (max-width: 760px) {
+  .tracker-type-toggle, .npc-mode-toggle { flex-shrink: 0; }
+  .tracker-type-btn, .npc-mode-btn {
+    font-size: 24px !important; padding: 18px 26px !important; min-height: 74px !important;
+    letter-spacing: .04em !important;
+  }
+  .tracker-adjust-btn, .npc-hp-btn,
+  .pane.narrow .tracker-adjust-btn, .pane.narrow .npc-hp-btn {
+    width: 84px !important; height: 84px !important; font-size: 34px !important;
+  }
+  .timer-controls .tracker-adjust-btn { font-size: 30px !important; }
+  .tracker-del, .npc-del { font-size: 42px !important; padding: 4px 12px !important; }
+  .status-add, .npc-seg-apply, .timer-apply {
+    font-size: 22px !important; padding: 18px 26px !important; min-height: 70px !important;
+  }
+  .status-del { font-size: 30px !important; padding: 4px 8px !important; }
+  .status-check { width: 32px !important; height: 32px !important; }
+  .status-text { font-size: 22px !important; padding: 12px 10px !important; }
+  .status-row { gap: 12px !important; margin-bottom: 10px !important; }
+  .card-drag { font-size: 40px !important; padding: 4px 10px !important; }
+  .card-move { width: 64px !important; height: 54px !important; font-size: 20px !important; }
+  .npc-seg, .pane.narrow .npc-seg { height: 84px !important; }
+  .npc-seg-num, .pane.narrow .npc-seg-num { font-size: 28px !important; }
+}
 </style>
 </head>
 <body>
@@ -5657,409 +6061,6 @@ window.init_gen = function(root) {
   .gen-item-desc { font-size:11px; color:#ccc; line-height:1.5; }
   svg { max-width:100%; height:auto; }
 
-/* ══ ROUNDED BUTTONS ══════════════════════════════════════════════════════
-   Applied last so it wins over the per-button rules above. Deliberately
-   shaped controls are left alone: .nts-tab / .nts-tab-add (notes tabs). */
-.btn, .dice-camp-btn, .dice-hide-btn, .dice-advbtn, .dice-pool-clear,
-.dice-roll-go, .npc-mode-btn, .tracker-type-btn, .pdf-close-btn,
-.pdf-mobile-open-btn, .dice-die {
-  border-radius: 6px;
-}
-.btn.small { border-radius: 5px; }
-.npc-hp-btn, .tracker-adjust-btn { border-radius: 6px; }
-
-/* ══ MOBILE SIZING PASS ═══════════════════════════════════════════════════
-   Appended last so it wins over the earlier mobile rules above. Covers:
-   combat + tracker controls, notes tabs, generator options, dice tray. */
-@media (max-width: 760px) {
-
-  /* ── (1) Combat & Trackers: real thumb-sized controls ── */
-  .cbt-round-display { font-size: 15px; }
-  .cbt-round-num, .trk-round-num { font-size: 20px; }
-  .cbt-col-header { padding: 10px 12px; }
-  .cbt-col-title { font-size: 13px; }
-  .cbt-tracker-list, .cbt-npc-list { padding: 12px; gap: 10px; }
-
-  .tracker-card, .npc-card { padding: 12px 14px; }
-  .tracker-top, .npc-top { gap: 10px; margin-bottom: 10px; }
-  .tracker-bottom, .npc-hp-row { gap: 10px; }
-
-  /* +/- steppers — the ones you hit constantly mid-fight */
-  .npc-hp-btn, .tracker-adjust-btn {
-    width: 48px !important; height: 48px !important;
-    font-size: 22px !important; border-radius: 6px;
-  }
-  .npc-hp-adjust { gap: 6px; }
-
-  /* Rounds / Timer and Std / DCC toggles */
-  .tracker-type-btn, .npc-mode-btn {
-    font-size: 12px !important; padding: 11px 14px !important; min-height: 44px;
-  }
-
-  /* Delete "x" buttons stay smaller than the rest — they're destructive */
-  .tracker-del, .npc-del {
-    font-size: 18px !important; padding: 6px 9px !important;
-    min-height: 34px; min-width: 34px;
-  }
-
-  .npc-hp-input   { width: 66px !important; font-size: 18px !important; padding: 11px 4px !important; min-height: 46px; }
-  .timer-set-input{ width: 66px !important; font-size: 16px !important; padding: 11px 4px !important; min-height: 46px; }
-  .npc-hp-slash   { font-size: 16px; }
-  .tracker-name-input, .npc-name-input { font-size: 16px !important; padding: 6px 0 !important; }
-  .npc-tag-input  { width: 92px; font-size: 13px; padding: 6px 0; }
-  .tracker-rounds { font-size: 28px; }
-  .tracker-label, .timer-set-label, .tracker-expired-tag { font-size: 11px; }
-  .tracker-rounds-display { min-width: 44px; }
-  .timer-controls { gap: 6px; }
-  .timer-set-row  { gap: 8px; margin-top: 8px; }
-
-  /* ── (2) Notes tabs ── */
-  .nts-tabs { left: 6px; right: 6px; gap: 5px; }
-  .nts-tab {
-    font-size: 13px; padding: 9px 15px 10px; gap: 7px;
-    border-radius: 0 0 7px 7px; min-height: 38px;
-  }
-  .nts-tab-x { font-size: 14px; padding: 0 3px; }
-  .nts-tab-add { font-size: 15px; padding: 9px 14px 10px; min-height: 38px; border-radius: 0 0 7px 7px; }
-  /* tabs are absolutely positioned over the editor — clear them */
-  .nts-editor { padding: 50px 16px 16px !important; font-size: 16px; }
-
-  /* ── (3) Generator options ── */
-  .gen-tab-select { font-size: 15px !important; min-height: 46px; padding: 10px 12px !important; }
-  .gen-controls { gap: 12px; padding: 14px 14px; }
-  .gen-label  { font-size: 12px; gap: 6px; }
-  .gen-select { font-size: 15px; padding: 11px 10px; min-height: 46px; border-radius: 5px; }
-  .gen-results { padding: 14px; gap: 12px; }
-  .gen-card { padding: 14px; }
-  .gen-card-name { font-size: 17px; }
-  .gen-card-tag  { font-size: 12px; }
-  .gen-empty { font-size: 14px; }
-
-  /* ── (4) Dice tray: keep all 7 dice on ONE row ── */
-  .dice-btn-row { grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 3px; }
-  .dice-die { padding: 14px 0; font-size: 14px; min-height: 48px; letter-spacing: 0; }
-  .dice-mod { width: 52px; font-size: 15px; padding: 10px 4px; min-height: 44px; }
-  .dice-advbtn { font-size: 12px; padding: 11px 10px; min-height: 44px; }
-  .dice-roll-go { font-size: 13px; padding: 12px 16px; min-height: 44px; }
-  .dice-pool-clear { font-size: 13px; padding: 11px 12px; min-height: 44px; }
-  .dice-camp-btn, .dice-hide-btn { font-size: 15px; padding: 11px 12px; min-height: 44px; }
-}
-/* ══ MOBILE TOUCH-TARGET PASS ═════════════════════════════════════════════
-   Appended last so it beats both the earlier @media rules AND the
-   .pane.narrow rules (which fire on phone-width panes and were shrinking
-   buttons/dropdowns back down). Everything below is ~50-100% larger. */
-@media (max-width: 760px) {
-
-  /* ── Buttons ── */
-  .btn,
-  .pane.narrow .btn {
-    font-size: 15px !important; padding: 13px 18px !important;
-    min-height: 50px !important; letter-spacing: .04em;
-  }
-  .btn.small,
-  .pane.narrow .btn.small {
-    font-size: 14px !important; padding: 11px 15px !important;
-    min-height: 46px !important;
-  }
-  .pane-toolbar-slot .btn,
-  .pane-toolbar-slot button,
-  .pane.narrow .pane-toolbar-slot .btn,
-  .pane.narrow .pane-toolbar-slot button {
-    font-size: 14px !important; padding: 11px 14px !important;
-    min-height: 46px !important;
-  }
-  .pane-toolbar-slot label,
-  .pane.narrow .pane-toolbar-slot label { font-size: 12px !important; gap: 6px; }
-  .pane-header, .pane.narrow .pane-header { padding: 8px 10px !important; gap: 8px; }
-  .pane-toolbar-slot, .pane.narrow .pane-toolbar-slot { gap: 8px !important; }
-  .toolrow, .pane.narrow .toolrow { padding: 12px 12px !important; gap: 10px; }
-
-  /* ── Dropdowns / text + number inputs ── */
-  select,
-  .pane-select, .pane.narrow .pane-select,
-  .split-select, .gen-tab-select, .gen-select,
-  .pane-toolbar-slot select, .pane.narrow .pane-toolbar-slot select {
-    font-size: 16px !important;          /* 16px also stops iOS zoom-on-focus */
-    padding: 13px 12px !important;
-    min-height: 50px !important;
-    max-width: none !important;
-  }
-  .pane-select, .pane.narrow .pane-select { flex: 1 1 auto !important; }
-  .pane-toolbar-slot input,
-  .pane.narrow .pane-toolbar-slot input {
-    font-size: 16px !important; padding: 12px 10px !important;
-    min-height: 48px !important; max-width: none !important;
-  }
-  .gen-controls, .pane.narrow .gen-controls { padding: 14px 14px !important; gap: 12px !important; }
-  .gen-label { font-size: 13px !important; }
-
-  /* ── Combat / tracker steppers ── */
-  .npc-hp-btn, .tracker-adjust-btn,
-  .pane.narrow .npc-hp-btn, .pane.narrow .tracker-adjust-btn {
-    width: 54px !important; height: 54px !important;
-    font-size: 24px !important; border-radius: 6px;
-  }
-  .tracker-type-btn, .npc-mode-btn {
-    font-size: 13px !important; padding: 13px 16px !important; min-height: 50px !important;
-  }
-  .tracker-del, .npc-del {
-    font-size: 20px !important; padding: 8px 11px !important;
-    min-height: 40px !important; min-width: 40px !important;
-  }
-  .npc-hp-input, .pane.narrow .npc-hp-input {
-    width: 72px !important; font-size: 19px !important;
-    padding: 12px 4px !important; min-height: 52px !important;
-  }
-  .timer-set-input { width: 72px !important; font-size: 17px !important; min-height: 52px !important; }
-  .tracker-name-input, .npc-name-input,
-  .pane.narrow .tracker-name-input, .pane.narrow .npc-name-input { font-size: 17px !important; }
-  .npc-seg, .pane.narrow .npc-seg { height: 36px !important; }
-  .npc-seg-num, .pane.narrow .npc-seg-num { font-size: 13px !important; }
-
-  /* ── Dice tray (still one row of 7) ── */
-  .dice-btn-row, .pane.narrow .dice-btn-row {
-    grid-template-columns: repeat(7, minmax(0, 1fr)) !important; gap: 4px !important;
-  }
-  .dice-die, .pane.narrow .dice-die {
-    padding: 17px 0 !important; font-size: 15px !important;
-    min-height: 56px !important; letter-spacing: 0;
-  }
-  .dice-count, .pane.narrow .dice-count {
-    min-width: 18px; height: 18px; line-height: 18px; font-size: 11px;
-  }
-  .dice-mod, .pane.narrow .dice-mod {
-    width: 58px !important; font-size: 16px !important;
-    padding: 13px 4px !important; min-height: 50px !important;
-  }
-  .dice-advbtn, .pane.narrow .dice-advbtn {
-    font-size: 13px !important; padding: 14px 12px !important; min-height: 50px !important;
-  }
-  .dice-roll-go, .pane.narrow .dice-roll-go {
-    font-size: 14px !important; padding: 15px 18px !important; min-height: 50px !important;
-  }
-  .dice-pool-clear, .pane.narrow .dice-pool-clear {
-    font-size: 14px !important; padding: 14px 14px !important; min-height: 50px !important;
-  }
-  .dice-camp-btn, .dice-hide-btn,
-  .pane.narrow .dice-camp-btn, .pane.narrow .dice-hide-btn {
-    font-size: 16px !important; padding: 13px 14px !important; min-height: 50px !important;
-  }
-  .dice-pool, .pane.narrow .dice-pool { padding: 6px 10px 10px !important; }
-  .dice-pool-row, .pane.narrow .dice-pool-row { gap: 6px !important; }
-
-  /* ── Notes tabs ── */
-  .nts-tab { font-size: 14px !important; padding: 11px 17px 12px !important; min-height: 44px !important; }
-  .nts-tab-add { font-size: 17px !important; padding: 11px 16px 12px !important; min-height: 44px !important; }
-  .nts-tab-x { font-size: 16px !important; padding: 0 4px !important; }
-  .nts-editor { padding: 58px 16px 16px !important; }
-}
-/* ══ TRACKER / NPC CARD SIZE PASS (2x) ═══════════════════════════════════
-   Everything inside a tracker or NPC card is doubled, at every width. These
-   selectors also beat the .pane.narrow rules that used to shrink them. */
-.cbt-tracker-list, .cbt-npc-list,
-.pane.narrow .cbt-tracker-list, .pane.narrow .cbt-npc-list { padding: 14px !important; gap: 14px !important; }
-
-.tracker-card, .npc-card,
-.pane.narrow .tracker-card, .pane.narrow .npc-card { padding: 18px 20px !important; border-left-width: 5px !important; }
-.tracker-top, .npc-top { gap: 14px !important; margin-bottom: 14px !important; }
-.tracker-bottom, .npc-hp-row { gap: 14px !important; }
-
-/* Names + tags */
-.tracker-name-input, .npc-name-input,
-.pane.narrow .tracker-name-input, .pane.narrow .npc-name-input {
-  font-size: 24px !important; padding: 4px 0 !important;
-}
-.npc-tag-input, .pane.narrow .npc-tag-input { width: 130px !important; font-size: 18px !important; padding: 4px 0 !important; }
-
-/* Rounds / Timer + Std / DCC toggles */
-.tracker-type-btn, .npc-mode-btn {
-  font-size: 15px !important; padding: 9px 15px !important; letter-spacing: .06em;
-}
-
-/* Delete "x" */
-.tracker-del, .npc-del { font-size: 26px !important; padding: 4px 9px !important; }
-
-/* +/- steppers */
-.tracker-adjust-btn, .npc-hp-btn,
-.pane.narrow .tracker-adjust-btn, .pane.narrow .npc-hp-btn {
-  width: 52px !important; height: 52px !important; font-size: 24px !important;
-}
-.npc-hp-adjust { gap: 7px !important; }
-
-/* Numbers */
-.tracker-rounds { font-size: 44px !important; }
-.tracker-rounds-display { min-width: 64px !important; }
-.tracker-label, .timer-set-label, .tracker-expired-tag, .npc-seg-setup-label { font-size: 16px !important; }
-.timer-display { font-size: 40px !important; min-width: 128px !important; }
-.timer-set-input, .pane.narrow .timer-set-input {
-  width: 96px !important; font-size: 22px !important; padding: 9px 4px !important;
-}
-.timer-set-row { gap: 12px !important; margin-top: 12px !important; }
-.timer-controls { gap: 8px !important; }
-.npc-hp-input, .pane.narrow .npc-hp-input {
-  width: 92px !important; font-size: 26px !important; padding: 10px 4px !important;
-}
-.npc-hp-slash { font-size: 24px !important; }
-
-/* DCC segments */
-.npc-seg-setup { gap: 10px !important; margin-bottom: 14px !important; }
-.npc-seg-count-input, .npc-seg-hp-input { width: 80px !important; font-size: 20px !important; padding: 8px 4px !important; }
-.npc-seg-row, .pane.narrow .npc-seg-row { gap: 5px !important; }
-.npc-seg, .pane.narrow .npc-seg { height: 56px !important; min-width: 0 !important; flex: 1 1 0 !important; }
-.npc-seg-num, .pane.narrow .npc-seg-num { font-size: 20px !important; }
-
-/* ══ DICE: always one row of 7, at every width ═══════════════════════════ */
-.dice-btn-row, .pane.narrow .dice-btn-row {
-  display: grid !important;
-  grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
-  gap: 4px !important;
-}
-.dice-die, .pane.narrow .dice-die {
-  min-width: 0 !important; white-space: nowrap; letter-spacing: 0 !important;
-  padding-left: 0 !important; padding-right: 0 !important;
-}
-/* ══ REORDER HANDLES (tracker + combat cards) ════════════════════════════ */
-.card-reorder { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.card-drag {
-  cursor: grab; color: var(--muted); font-size: 20px; line-height: 1;
-  padding: 2px 4px; user-select: none; touch-action: none;
-}
-.card-drag:active { cursor: grabbing; color: var(--gold); }
-.card-move {
-  background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
-  cursor: pointer; width: 34px; height: 28px; font-size: 12px; line-height: 1;
-  border-radius: 5px; display: flex; align-items: center; justify-content: center;
-}
-.card-move:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); }
-.card-move:disabled { opacity: 0.3; cursor: default; }
-.tracker-card.dragging, .npc-card.dragging { opacity: 0.45; }
-.tracker-card.drop-target, .npc-card.drop-target { outline: 2px dashed var(--gold); outline-offset: 2px; }
-
-/* ══ DICE: hard-lock the tray to ONE row, whatever the width ══════════════ */
-.dice-btn-row, .pane.narrow .dice-btn-row {
-  display: grid !important;
-  grid-template-columns: none !important;
-  grid-auto-flow: column !important;
-  grid-auto-columns: minmax(0, 1fr) !important;
-  gap: 3px !important;
-}
-.dice-die, .pane.narrow .dice-die {
-  min-width: 0 !important; overflow: hidden;
-  white-space: nowrap; letter-spacing: 0 !important;
-  padding-left: 0 !important; padding-right: 0 !important;
-}
-@media (max-width: 760px) {
-  .dice-die, .pane.narrow .dice-die { font-size: 13px !important; padding: 15px 0 !important; }
-}
-
-/* ══ MOBILE: tracker + combat cards, doubled again ═══════════════════════ */
-@media (max-width: 760px) {
-  .tracker-card, .npc-card,
-  .pane.narrow .tracker-card, .pane.narrow .npc-card { padding: 22px !important; }
-
-  /* Name gets its own full-width line so the big controls have room */
-  .tracker-top, .npc-top { flex-wrap: wrap !important; gap: 12px !important; margin-bottom: 16px !important; }
-  .card-reorder { order: 1; }
-  .tracker-del, .npc-del { order: 2; margin-left: auto !important; font-size: 34px !important; padding: 4px 10px !important; }
-  .tracker-type-toggle, .npc-mode-toggle { order: 3; }
-  .npc-tag-input { order: 4; }
-  .tracker-name-input, .npc-name-input {
-    order: 5; flex: 1 1 100% !important; font-size: 32px !important; padding: 6px 0 !important;
-  }
-  .npc-tag-input, .pane.narrow .npc-tag-input {
-    width: 120px !important; font-size: 22px !important; text-align: left !important;
-  }
-  .tracker-type-btn, .npc-mode-btn {
-    font-size: 19px !important; padding: 15px 20px !important; min-height: 60px !important;
-  }
-
-  /* Steppers + numbers */
-  .tracker-adjust-btn, .npc-hp-btn,
-  .pane.narrow .tracker-adjust-btn, .pane.narrow .npc-hp-btn {
-    width: 72px !important; height: 72px !important; font-size: 30px !important;
-  }
-  .npc-hp-row { flex-wrap: wrap !important; gap: 12px !important; }
-  .npc-hp-adjust {
-    width: 100% !important; margin-left: 0 !important;
-    justify-content: space-between !important; gap: 10px !important;
-  }
-  .npc-hp-adjust .npc-hp-btn { flex: 1 1 0 !important; }
-  .npc-hp-input, .pane.narrow .npc-hp-input {
-    width: 118px !important; font-size: 34px !important; padding: 12px 6px !important;
-  }
-  .npc-hp-slash { font-size: 30px !important; }
-  .tracker-bottom { gap: 16px !important; }
-  .tracker-rounds { font-size: 64px !important; }
-  .tracker-rounds-display { min-width: 92px !important; }
-  .tracker-label, .timer-set-label, .tracker-expired-tag,
-  .npc-seg-setup-label, .npc-defeated-tag { font-size: 20px !important; }
-  .timer-display { font-size: 52px !important; min-width: 150px !important; }
-  .timer-set-input, .pane.narrow .timer-set-input {
-    width: 110px !important; font-size: 28px !important; min-height: 64px !important; padding: 12px 4px !important;
-  }
-  .timer-set-row { flex-wrap: wrap !important; gap: 12px !important; }
-
-  /* DCC segments */
-  .npc-seg, .pane.narrow .npc-seg { height: 76px !important; }
-  .npc-seg-num, .pane.narrow .npc-seg-num { font-size: 26px !important; }
-  .npc-seg-count-input, .npc-seg-hp-input {
-    width: 100px !important; font-size: 26px !important; padding: 12px 4px !important;
-  }
-
-  /* Statuses + in-card buttons */
-  .status-text { font-size: 20px !important; padding: 8px 6px !important; }
-  .status-check { width: 28px !important; height: 28px !important; }
-  .status-del { font-size: 26px !important; }
-  .status-add, .npc-seg-apply, .timer-apply {
-    font-size: 18px !important; min-height: 58px !important; padding: 15px 20px !important;
-  }
-
-  /* Reorder controls sized for thumbs */
-  .card-drag { font-size: 34px !important; padding: 4px 8px !important; }
-  .card-move { width: 56px !important; height: 46px !important; font-size: 18px !important; }
-}
-/* ══ CARD CONTROLS — final size pass ═════════════════════════════════════
-   Buttons and toggles living inside tracker / combat cards. Appended last so
-   it beats every earlier rule (including the .pane.narrow shrink rules). */
-
-/* Desktop */
-.tracker-type-btn, .npc-mode-btn {
-  font-size: 16px !important; padding: 12px 20px !important; min-height: 46px !important;
-}
-.tracker-adjust-btn, .npc-hp-btn { width: 56px !important; height: 56px !important; font-size: 26px !important; }
-.tracker-del, .npc-del { font-size: 28px !important; padding: 4px 10px !important; }
-.status-add, .npc-seg-apply, .timer-apply {
-  font-size: 15px !important; padding: 11px 16px !important; min-height: 44px !important;
-}
-.status-del { font-size: 22px !important; padding: 2px 6px !important; }
-.status-check { width: 22px !important; height: 22px !important; }
-.status-text { font-size: 16px !important; padding: 7px 8px !important; }
-
-/* Mobile — everything in a card is thumb-sized */
-@media (max-width: 760px) {
-  .tracker-type-toggle, .npc-mode-toggle { flex-shrink: 0; }
-  .tracker-type-btn, .npc-mode-btn {
-    font-size: 24px !important; padding: 18px 26px !important; min-height: 74px !important;
-    letter-spacing: .04em !important;
-  }
-  .tracker-adjust-btn, .npc-hp-btn,
-  .pane.narrow .tracker-adjust-btn, .pane.narrow .npc-hp-btn {
-    width: 84px !important; height: 84px !important; font-size: 34px !important;
-  }
-  .timer-controls .tracker-adjust-btn { font-size: 30px !important; }
-  .tracker-del, .npc-del { font-size: 42px !important; padding: 4px 12px !important; }
-  .status-add, .npc-seg-apply, .timer-apply {
-    font-size: 22px !important; padding: 18px 26px !important; min-height: 70px !important;
-  }
-  .status-del { font-size: 30px !important; padding: 4px 8px !important; }
-  .status-check { width: 32px !important; height: 32px !important; }
-  .status-text { font-size: 22px !important; padding: 12px 10px !important; }
-  .status-row { gap: 12px !important; margin-bottom: 10px !important; }
-  .card-drag { font-size: 40px !important; padding: 4px 10px !important; }
-  .card-move { width: 64px !important; height: 54px !important; font-size: 20px !important; }
-  .npc-seg, .pane.narrow .npc-seg { height: 84px !important; }
-  .npc-seg-num, .pane.narrow .npc-seg-num { font-size: 28px !important; }
-}
 </style>
 </head><body>${bodyHtml}</body></html>`;
 
