@@ -35,8 +35,8 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .log-title{font-family:'Montserrat',sans-serif;font-weight:900;font-size:12px;text-transform:uppercase;letter-spacing:.18em;color:white;}
 .log-clear{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:white;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:3px 7px;cursor:pointer;}
 .log-clear:hover{background:var(--red);}
-.log-actions{display:flex;gap:3px;padding:6px 8px;border-bottom:1px solid #222;}
-.log-action-btn{flex:1;padding:5px 3px;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase;}
+.log-actions{display:flex;flex-wrap:wrap;gap:3px;padding:6px 8px;border-bottom:1px solid #222;}
+.log-action-btn{flex:1 1 0;min-width:0;padding:6px 3px;border:none;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:13px;line-height:1.1;letter-spacing:0;white-space:nowrap;overflow:hidden;text-align:center;}
 .log-action-btn.save{background:#1e3a1e;color:#6dbf6d;border:1px solid #2d5a2d;}
 .log-action-btn.save:hover{background:#2d5a2d;color:white;}
 .log-action-btn.export{background:#1a2a3a;color:#6aabdf;border:1px solid #1a4a8a;}
@@ -187,6 +187,12 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .gear-slot-disabled .gear-name{text-decoration:line-through;opacity:0.35;color:var(--muted);pointer-events:none;}
 .gear-slot-disabled .gear-qty{opacity:0.35;pointer-events:none;}
 .gear-slot-disabled{background:repeating-linear-gradient(135deg,transparent,transparent 4px,rgba(128,128,128,0.07) 4px,rgba(128,128,128,0.07) 5px);}
+/* Auto-consume ammo toggle switch (next to + Add Item) */
+.sw-toggle{position:relative;display:inline-block;width:26px;height:14px;background:#4a4a4a;border:1px solid #2a2a2a;border-radius:8px;cursor:pointer;transition:background .12s;flex:0 0 auto;vertical-align:middle;}
+.sw-toggle.on{background:#7a5a00;border-color:#c8a020;}
+.sw-knob{position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#ddd;transition:left .12s;}
+.sw-toggle.on .sw-knob{left:13px;background:#f0d070;}
+.ammo-toggle-lbl{display:flex;align-items:center;gap:5px;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);user-select:none;}
 .gear-disable-btn{padding:1px 3px;background:transparent;border:1px solid var(--rule);cursor:pointer;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;color:var(--muted);border-radius:2px;flex-shrink:0;}
 .gear-disable-btn.on{background:#3a1a1a;border-color:#7a2d2d;color:#df6a6a;}
 /* FREE TO CARRY */
@@ -372,7 +378,11 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
         <div class="coin-cell"><span class="coin-label">SP</span><input type="text" class="coin-input" id="coin-sp" placeholder="0"></div>
         <div class="coin-cell"><span class="coin-label">CP</span><input type="text" class="coin-input" id="coin-cp" placeholder="0"></div>
       </div>
-      <div class="sl" style="display:flex;align-items:center;justify-content:space-between;"><span>Gear</span><button onclick="openShop()" style="padding:2px 10px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.08em;text-transform:uppercase;" onmouseover="this.style.background='#7a5a00';this.style.color='white'" onmouseout="this.style.background='#241f10';this.style.color='#c8a020'">+ Add Item</button></div>
+      <div class="sl" style="display:flex;align-items:center;justify-content:space-between;gap:6px;"><span>Gear</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="ammo-toggle-lbl" onclick="toggleAutoConsume()" title="Auto-consume ammo: rolling an attack with a bow spends 1 arrow; a crossbow spends 1 bolt."><span style="text-align:right;">Auto</span><span class="sw-toggle on" id="ammo-switch"><span class="sw-knob"></span></span></span>
+          <button onclick="openShop()" style="padding:2px 10px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.08em;text-transform:uppercase;" onmouseover="this.style.background='#7a5a00';this.style.color='white'" onmouseout="this.style.background='#241f10';this.style.color='#c8a020'">+ Item</button>
+        </div></div>
       <div id="gear-list"></div>
 
       <div class="free-carry">
@@ -401,11 +411,11 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
     <button class="log-clear" onclick="clearLog()">Clear</button>
   </div>
   <div class="log-actions">
-    <button id="campaign-btn" class="log-action-btn" onclick="openCampaign()" style="border:1px solid var(--rule);">🔗 Campaign</button>
-    <button class="log-action-btn save" onclick="saveSheet(true)">💾 Save</button>
-    <button class="log-action-btn export" onclick="exportSheet()">↓ Export</button>
-    <label class="log-action-btn import" style="display:flex;align-items:center;justify-content:center;cursor:pointer;">↑ Import<input type="file" accept=".json" style="display:none" onchange="importSheet(this)"></label>
-    <button class="log-action-btn pdf" onclick="exportPDF()" title="Official fillable sheet PDF">🖨 PDF</button>
+    <button id="campaign-btn" class="log-action-btn" onclick="openCampaign()" style="border:1px solid var(--rule);" title="Link this sheet to a campaign" aria-label="Campaign">🔗</button>
+    <button class="log-action-btn save" onclick="saveSheet(true)" title="Save sheet" aria-label="Save">💾</button>
+    <button class="log-action-btn export" onclick="exportSheet()" title="Export sheet as JSON" aria-label="Export">↓</button>
+    <label class="log-action-btn import" style="display:flex;align-items:center;justify-content:center;cursor:pointer;" title="Import a sheet JSON" aria-label="Import">↑<input type="file" accept=".json" style="display:none" onchange="importSheet(this)"></label>
+    <button class="log-action-btn pdf" onclick="exportPDF()" title="Official fillable sheet PDF" aria-label="PDF">🖨</button>
   </div>
   <div class="log-entries" id="log-entries">
     <div class="log-hint">Click a stat or roll button</div>
@@ -440,7 +450,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
 const SD_WEAPONS = [
   {name:'Bastard Sword', type:'M',   range:'Close',      damage:'1d8/1d10', props:'Versatile, 2 slots'},
   {name:'Club',          type:'M',   range:'Close',      damage:'1d4',      props:''},
-  {name:'Unarmed',       type:'M',   range:'Close',      damage:'1d4',      props:'Finesse'},
+  {name:'Strikes',       type:'M',   range:'Close',      damage:'1d4',      props:'Finesse, Unarmed'},
   {name:'Crossbow',      type:'R',   range:'Far',        damage:'1d6',      props:'Two-handed, Loading'},
   {name:'Dagger',        type:'M/R', range:'Close/Near', damage:'1d4',      props:'Finesse, Thrown'},
   {name:'Greataxe',      type:'M',   range:'Close',      damage:'1d8/1d10', props:'Versatile, 2 slots'},
@@ -454,6 +464,16 @@ const SD_WEAPONS = [
   {name:'Spear',         type:'M/R', range:'Close/Near', damage:'1d6',      props:'Thrown'},
   {name:'Staff',         type:'M',   range:'Close',      damage:'1d4',      props:'Two-handed'},
   {name:'Warhammer',     type:'M',   range:'Close',      damage:'1d10',     props:'Two-handed'},
+  // ── Cursed Scroll Compilation: New Weapons ──
+  {name:'Blowgun',       type:'R',   range:'Near',       damage:'1',        props:'Firing from hiding does not reveal your position'},
+  {name:'Bolas',         type:'R',   range:'Near',       damage:'—',        props:'On a hit vs. a legged creature horse-sized or smaller, its speed drops to close until it frees itself (DC 15 STR or DEX)'},
+  {name:'Morningstar',   type:'M',   range:'Close',      damage:'1d6/1d8',  props:'Versatile'},
+  {name:'Pike',          type:'M',   range:'Close',      damage:'1d10',     props:'Reach (double close), Two-handed, 2 slots'},
+  {name:'Razor Chain',   type:'M/R', range:'Close/Near', damage:'1d6',      props:'Finesse, Lash'},
+  {name:'Scimitar',      type:'M',   range:'Close',      damage:'1d6',      props:'Finesse'},
+  {name:'Shuriken',      type:'R',   range:'Near',       damage:'1d4',      props:'Can be strewn on the ground: living creatures who step on it take 1 damage and move at half speed for 10 rounds'},
+  {name:'Sling',         type:'R',   range:'Far',        damage:'1d4',      props:''},
+  {name:'Whip',          type:'M/R', range:'Close/Near', damage:'1d4',      props:'Finesse, Lash'},
 ];
 
 // ── Shadowdark Spells ──────────────────────────────────────────────────────
@@ -570,7 +590,7 @@ const SD_SPELLS = [
   {name:'Shapechange',     tier:'5', caster:'Witch', range:'Self',  duration:'Focus',     damage:'',    desc:"Transform into a natural creature of LV 10 or less you've seen. Gain its physical stats/features; keep INT, WIS, CHA. At 0 HP you revert at 1 HP."},
   {name:'Soul Jar',        tier:'5', caster:'Witch', range:'Close', duration:'Permanent', damage:'',    desc:"Transfer the soul of a creature LV 9 or less into a vessel; its body goes comatose. You may possess the empty body. If the vessel opens or breaks, the soul returns."},
 
-  // ══ CURSED SCROLL 4: DRUID SPELLS (neutral wizards only) ══
+  // ══ CURSED SCROLL 4: DRUID SPELLS ══
   // Tier 1
   {name:'Breath',        tier:'1', caster:'Druid', range:'Self',        duration:'10 rounds', damage:'',    desc:"You can hold your breath for the spell's duration."},
   {name:'Instill',       tier:'1', caster:'Druid', range:'Self',        duration:'5 rounds',  damage:'',    desc:"One weapon you wield is imbued with life force and becomes a +1 weapon. A staff deals d6 damage instead of d4."},
@@ -592,7 +612,7 @@ const SD_SPELLS = [
   // Tier 5
   {name:'Earthquake',    tier:'5', caster:'Druid', range:'Double near', duration:'Instant',   damage:'4d6', desc:"The earth splits open. All creatures on the ground within double near take 4d6 damage. Each affected creature of LV 9 or less must pass a DEX check equal to the damage taken or be swallowed by the earth forever."},
   {name:'Naming',        tier:'5', caster:'Druid', range:'Close',       duration:'Instant',   damage:'',    desc:"Learn the True Name of one creature you touch. If willing, you may give it a new True Name (once in its lifetime) — doing so changes its alignment to match yours."},
-  // ══ CURSED SCROLL 6: MAGE SPELLS (lawful wizards only) ══
+  // ══ CURSED SCROLL 6: MAGE SPELLS ══
   // Tier 1
   {name:'Cleanse',           tier:'1', caster:'Mage', range:'Close', duration:'Instant',    damage:'',    desc:"You expunge natural toxins from one creature you touch, ending the effects of one poison currently affecting the target."},
   {name:'Flare',             tier:'1', caster:'Mage', range:'Near',  duration:'1 round',    damage:'',    desc:"A flash of blinding, white light bursts from you. All enemies in range who see it are blinded for the spell's duration."},
@@ -615,7 +635,7 @@ const SD_SPELLS = [
   {name:'Abjure',            tier:'5', caster:'Mage', range:'Close', duration:'Instant',    damage:'',    desc:"You and one creature you touch both die."},
   {name:'Permanence',        tier:'5', caster:'Mage', range:'Close', duration:'1 year',     damage:'',    desc:"Sprinkle a powdered diamond on one object in range that is under the effects of a spell you cast; that spell's duration becomes 1 year. You cannot alter the original spell's effects afterward."},
 
-  // ══ CURSED SCROLL 5: SORCERER SPELLS (chaotic wizards only) ══
+  // ══ CURSED SCROLL 5: SORCERER SPELLS ══
   // Tier 1
   {name:'Blight',                tier:'1', caster:'Sorcerer', range:'Self',  duration:'5 rounds', damage:'',    desc:"A close-sized patch of earth around you crumbles into lifeless ash. You gain +1 to your spellcasting checks for the spell's duration."},
   {name:'Eyebite',               tier:'1', caster:'Sorcerer', range:'Near',  duration:'Instant',  damage:'1d4', desc:"One creature you target takes 1d4 damage, and it can't see you until the end of its next turn."},
@@ -637,20 +657,71 @@ const SD_SPELLS = [
   // Tier 5
   {name:'Feeblemind',            tier:'5', caster:'Sorcerer', range:'Near',  duration:'1d8 days', damage:'',    desc:"One creature of LV 10 or less has its INT and CHA reduced to 1 for the duration. It can't cast spells."},
   {name:'Subjugate',             tier:'5', caster:'Sorcerer', range:'Close', duration:'1 year',   damage:'',    desc:"Sprinkle a powdered diamond on one creature in range currently under the effects of a dominate, feeblemind, or polymorph spell you cast. That spell's duration becomes 1 year."},
+
+  // ══ NECROMANCER PLAYTEST: NECROMANCER SPELLS ══
+  {name:'First Gate',          tier:'1', caster:'Necromancer', range:'Close', duration:'Instant',   damage:'',    desc:'Target a living creature of LV 2 or less, or an undead creature of LV 4 or less. It falls into a deep sleep. Being injured wakes it.'},
+  {name:'Protection From Evil',tier:'1', caster:'Necromancer', range:'Close', duration:'Focus',     damage:'',    desc:"Chaotic beings have DISADV on attacks and hostile spellcasting checks vs. the target, and can't possess, compel, or beguile it. Cast on a possessed target, the entity makes a CHA check vs. your last spellcasting check or is expelled."},
+  {name:'Seal Soul',           tier:'1', caster:'Necromancer', range:'Close', duration:'Permanent', damage:'',    desc:'One dead body you touch is sealed against necromantic energy. It cannot be made into undead or possessed by a dead spirit.'},
+  {name:'Turn Undead',         tier:'1', caster:'Necromancer', range:'Near',  duration:'Instant',   damage:'',    desc:'Undead in near make a CHA check vs. your spellcasting check. Fail by 10+ and ≤ your level = destroyed. Otherwise they flee from you for 5 rounds.'},
+  {name:'Undeath',             tier:'1', caster:'Necromancer', range:'Close', duration:'5 rounds',  damage:'',    desc:"Touch a humanoid's remains (3+ limbs and head intact); it rises as a zombie or skeleton under your control and acts on your turn. Only one at a time. When the spell ends, the corpse collapses into grave dust."},
+  {name:'Withermark',          tier:'1', caster:'Necromancer', range:'Far',   duration:'Instant',   damage:'1d4', desc:'Fling a dark rune of necrotic energy at a target: 1d4 damage (2d4 at 5th level). Undead are unharmed by this spell.'},
+  {name:'Bane',                tier:'2', caster:'Necromancer', range:'Close', duration:'5 rounds',  damage:'1d6', desc:'One weapon you touch is empowered with necrotic energy, dealing +1d6 damage against living creatures for the duration.'},
+  {name:'Command Undead',      tier:'2', caster:'Necromancer', range:'Far',   duration:'Focus',     damage:'',    desc:'Issue a one-word verbal command to one undead creature of LV 5 or less in range. It obeys for as long as you focus.'},
+  {name:'Final Toll',          tier:'2', caster:'Necromancer', range:'Close', duration:'Instant',   damage:'',    desc:'One undead you touch of LV 2 or less instantly crumbles to dust.'},
+  {name:'Ghoul Touch',         tier:'2', caster:'Necromancer', range:'Close', duration:'Instant',   damage:'1d6', desc:'Strike at a living creature\'s life force for 1d6 damage. If the target is LV 4 or less, it is paralyzed for 1d4 rounds.'},
+  {name:'Lamentation',         tier:'2', caster:'Necromancer', range:'Near',  duration:'Focus',     damage:'',    desc:'Sing a death dirge about one creature of level ≤ your own. It cannot act on its turn unless it passes a CHA check equal to your last spellcasting check.'},
+  {name:'Second Gate',         tier:'2', caster:'Necromancer', range:'Near',  duration:'Focus',     damage:'',    desc:'Render one creature in range mute: it cannot speak and has DISADV on spellcasting checks. Instead, you may restore lost speech and/or thought to one creature in range.'},
+  {name:'Animate Dead',        tier:'3', caster:'Necromancer', range:'Close', duration:'1 day',     damage:'',    desc:"Touch a humanoid's remains (3+ limbs and head intact); it rises as a zombie or skeleton under your control and acts on your turn. After 1 day, it collapses into grave dust."},
+  {name:'Drain Life',          tier:'3', caster:'Necromancer', range:'Close', duration:'Instant',   damage:'2d6', desc:'One living creature you touch takes 2d6 damage; you regain HP equal to half the damage dealt (round down). Against undead, you take the damage and it regains HP instead.'},
+  {name:'Lay To Rest',         tier:'3', caster:'Necromancer', range:'Close', duration:'Instant',   damage:'',    desc:'Instantly destroy one undead creature you touch of LV 9 or less, sending it to its final afterlife.'},
+  {name:'Reap The Soul',       tier:'3', caster:'Necromancer', range:'Near',  duration:'Instant',   damage:'',    desc:'Draw life force from one creature in range killed within the last round. Gain HP and a bonus to your next attack roll or spellcasting check equal to the target\'s level.'},
+  {name:'Speak With Dead',     tier:'3', caster:'Necromancer', range:'Close', duration:'Instant',   damage:'',    desc:'A dead body you touch answers up to three yes/no questions (one at a time), truthfully. Cast more than once in 24 hours: a failed check is a critical failure instead.'},
+  {name:'Third Gate',          tier:'3', caster:'Necromancer', range:'Near',  duration:'Instant',   damage:'',    desc:'Read the mind of a creature in range, learning one memory of your choosing. Instead, you may permanently erase one of its memories.'},
+  {name:'Ashes To Ashes',      tier:'4', caster:'Necromancer', range:'Near',  duration:'Focus',     damage:'',    desc:'Target a living creature you can see of LV 5 or less. If you focus successfully for 3 rounds in a row, it dies and crumbles into a pile of ash.'},
+  {name:'Excoriate',           tier:'4', caster:'Necromancer', range:'Near',  duration:'Focus',     damage:'1d10',desc:'Burn the life force from one living creature in range, dealing 1d10 damage per round. Undead are healed by this spell instead.'},
+  {name:'Fourth Gate',         tier:'4', caster:'Necromancer', range:'Close', duration:'10 rounds', damage:'',    desc:'Transform a willing creature you touch of LV 10 or less into an undead creature of equal or lesser level; its gear melds into the new form. Instead, you may restore a shape-changed creature to its original form.'},
+  {name:'Necronomicon',        tier:'4', caster:'Necromancer', range:'Self',  duration:'3 rounds',  damage:'',    desc:'Ask the GM up to three yes or no questions (one each round); the GM answers truthfully. Cast more than once a week: a failed check is a critical failure instead.'},
+  {name:'Revenant',            tier:'4', caster:'Necromancer', range:'Close', duration:'Instant',   damage:'',    desc:'Transform an undead creature you touch into another undead creature up to three levels higher. You can\'t bring an undead creature above 10th level with this spell.'},
+  {name:'Vision',              tier:'4', caster:'Necromancer', range:'Self',  duration:'5 rounds',  damage:'',    desc:'Cast only while standing in a river. For the duration you can see and hear one creature or location you choose. A failed spellcasting check for this spell is a critical failure.'},
+  {name:'Anchor In Death',     tier:'5', caster:'Necromancer', range:'Close', duration:'Permanent', damage:'',    desc:'One creature you touch of LV 10 or less is fixed in place by a black thread (cut only by a silver or magic blade, ending the spell). It becomes comatose and immune to all harm.'},
+  {name:'Create Undead',       tier:'5', caster:'Necromancer', range:'Close', duration:'1 day',     damage:'',    desc:'Summon a wight or wraith (your choice) next to you, under your control. It acts on your turn. After 1 day, it melts away into smoke.'},
+  {name:'Dust To Dust',        tier:'5', caster:'Necromancer', range:'Near',  duration:'Instant',   damage:'',    desc:'Present your holy symbol. All undead of LV 10 or less in range make a DC 15 CHA check. On a failure, they are destroyed.'},
+  {name:'Fifth Gate',          tier:'5', caster:'Necromancer', range:'Near',  duration:'Instant',   damage:'',    desc:'One dying creature in range gains 5 rounds on its death timer and may act normally while dying. Damage taken instead costs it a round on the timer. If it dies, DC 18 CON to return to life at 1 HP.'},
+  {name:'Riverwalk',           tier:'5', caster:'Necromancer', range:'Far',   duration:'Instant',   damage:'',    desc:"Cast only while standing in a river. You and any willing creatures within close range teleport to another river you've stood in on your same plane."},
+  {name:'Summon Soul',         tier:'5', caster:'Necromancer', range:'Near',  duration:'10 rounds', damage:'',    desc:"An undead being whose name you know appears within near and aids you of its own free will, acting on your turn. Harming it ends the spell. You can't summon the same being again for a year."},
+  // ══ CURSED SCROLL 3: SEER SPELLS ══
+  {name:'Chant',               tier:'1', caster:'Seer', range:'Self',      duration:'Focus',      damage:'',    desc:'You see all invisible and hidden things as though plainly visible. This does not let you see in ways you normally could not (in darkness, through walls).'},
+  {name:'Evoke Rage',          tier:'1', caster:'Seer', range:'Close',     duration:'1d4 rounds', damage:'1d4', desc:'One willing humanoid you touch goes berserk: immune to morale checks, ADV on STR checks and melee attacks, +1d4 damage. Ends if the target does not attack a creature on its turn.'},
+  {name:'Potion',              tier:'1', caster:'Seer', range:'Close',     duration:'Instant',    damage:'',    desc:'Bless a single drink of any liquid; for 1 day it gains healing properties. A creature who imbibes it may end one poison or immediately stop dying (remaining at 0 HP).'},
+  {name:'Trance',              tier:'1', caster:'Seer', range:'Close',     duration:'Instant',    damage:'',    desc:"One humanoid you touch (not yourself) gains a luck token. It can't have more than one luck token at once."},
+  {name:'Fate',                tier:'2', caster:'Seer', range:'Near',      duration:'Instant',    damage:'1d10',desc:"Twist the golden threads of one creature's fate: it takes 1d10 damage and loses any luck tokens it has."},
+  {name:'Read The Runes',      tier:'2', caster:'Seer', range:'Self',      duration:'Instant',    damage:'',    desc:'Cast the runestones and ask the GM one yes or no question. The GM answers truthfully, "yes" or "no."'},
+  {name:'Sacrifice',           tier:'2', caster:'Seer', range:'Close',     duration:'Instant',    damage:'',    desc:"Ritually sacrifice a living creature of LV 2 or higher. The target you touch gains a bonus to their next check or attack roll equal to the sacrificed creature's level."},
+  {name:'Soulbind',            tier:'2', caster:'Seer', range:'Close',     duration:'Focus',      damage:'',    desc:'One creature you touch becomes nearly impervious to magic: all other spells targeting it (harmful or helpful) are DC 18 to cast. Ends as soon as the target is affected by another spell.'},
+  {name:'Cast Out',            tier:'3', caster:'Seer', range:'Far',       duration:'Focus',      damage:'',    desc:"Choose a creature you can see. For the duration it can't come within near range of you, though it can still attack you from outside near range."},
+  {name:'Hallucinate',         tier:'3', caster:'Seer', range:'Near',      duration:'Focus',      damage:'',    desc:'One creature in near whose level is ≤ your own is overcome by visions. It cannot act on its turn unless it passes a Wisdom check equal to your last spellcasting check.'},
+  {name:'Raven',               tier:'3', caster:'Seer', range:'Unlimited', duration:'Instant',    damage:'',    desc:"Speak a short sentence and the name of its recipient, dead or alive. Odin's ravens carry it across all worlds — that creature hears it whispered in its mind."},
+  {name:'Wolfshape',           tier:'3', caster:'Seer', range:'Self',      duration:'Focus',      damage:'',    desc:"You and your gear become a wolf: assume its STR, DEX, CON, HP, AC, speed, attacks and physical traits, but keep INT, WIS, CHA. You can still cast spells. At 0 HP you revert at 0 HP. At level 5+, you may become a dire wolf or winter wolf."},
+  {name:"Freya's Omen",        tier:'4', caster:'Seer', range:'Self',      duration:'1d6 rounds', damage:'',    desc:'For the duration you do not lose the ability to cast a spell if you fail its spellcasting check. On a critical failure you may reroll the check once and must use the new result.'},
+  {name:"Loki's Trickery",     tier:'4', caster:'Seer', range:'Near',      duration:'Instant',    damage:'',    desc:'Target one creature that can hear and understand you. Make one plausible statement, true or not. It makes a Wisdom check vs. your spellcasting check; on a failure it believes the statement as fact.'},
+  {name:"Odin's Wisdom",       tier:'4', caster:'Seer', range:'Self',      duration:'1d6 rounds', damage:'',    desc:'For the duration, add your level as an additional bonus to your Wisdom checks and spellcasting checks.'},
+  {name:"Thor's Thunder",      tier:'4', caster:'Seer', range:'Far',       duration:'Instant',    damage:'3d6', desc:'Thor casts down a bolt of lightning to strike one target for 3d6 damage.'},
+  {name:'Ragnarok',            tier:'5', caster:'Seer', range:'Far',       duration:'Instant',    damage:'',    desc:'Choose one creature in range (only once ever per creature). It must pass a CON check equal to your spellcasting check or die instantly.'},
+  {name:'Valkyrie',            tier:'5', caster:'Seer', range:'Near',      duration:'10 rounds',  damage:'',    desc:"Summon a valkyrie within near. She acts of her own free will to help you and returns to Valhalla when the spell ends. You can't cast this again until you complete penance."},
+  {name:'World Serpent',       tier:'5', caster:'Seer', range:'Close',     duration:'Focus',      damage:'',    desc:'The venom of the World Serpent drips from the weapons of a creature you touch: it deals x2 damage with each attack (x4 on a critical hit) for the duration.'},
+  {name:'World Tree',          tier:'5', caster:'Seer', range:'Close',     duration:'Focus',      damage:'',    desc:"The roots of the World Tree wrap around the soul of a creature you touch: for the duration, it can't be brought below 1 HP."},
 ];
 
-// ── Druid spells: neutral wizards; Mage spells: lawful wizards (in addition
-//    to the standard wizard list) ─────────────────────────────────────────
+// ── Spell lists are NOT tied to alignment. Any caster may take any list
+//    (GM's call) — see spellSourceBar. ─────────────────────────────────────
 function sheetAlignment() {
   return (document.getElementById('f-alignment')?.value || '').trim().toLowerCase();
 }
-// Can a character of this class + alignment learn spell s?
-function spellAllowed(s, cls, alignment) {
-  const al = (alignment || '').trim().toLowerCase();
+// Can a character of this class learn spell s? (Alignment no longer gates any
+// spell list — Druid/Mage/Sorcerer are open to any wizard.)
+function spellAllowed(s, cls) {
   if(s.caster === 'Both')  return cls==='Wizard' || cls==='Priest';
-  if(s.caster === 'Druid') return cls==='Wizard' && al === 'neutral';
-  if(s.caster === 'Mage')  return cls==='Wizard' && al === 'lawful';
-  if(s.caster === 'Sorcerer') return cls==='Wizard' && al === 'chaotic';
+  if(s.caster === 'Druid' || s.caster === 'Mage' || s.caster === 'Sorcerer') return cls==='Wizard';
   return s.caster === cls;
 }
 
@@ -1022,7 +1093,7 @@ function buildGear() {
   // Header
   const hdr = document.createElement('div');
   hdr.style.cssText = 'display:flex;align-items:center;gap:4px;padding:2px 8px;border-bottom:2px solid var(--border);background:var(--box);';
-  hdr.innerHTML = '<span style="width:16px;"></span><span style="flex:1;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Item</span><span style="width:30px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;">Qty</span>';
+  hdr.innerHTML = '<span style="width:16px;"></span><span style="flex:1;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);">Item</span><span style="width:30px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);text-align:center;">Qty</span><button class="gear-disable-btn" style="visibility:hidden;" tabindex="-1" aria-hidden="true">\u2715</button>';
   list.appendChild(hdr);
   for(let i=1;i<=20;i++) {
     const row = document.createElement('div');
@@ -1031,7 +1102,7 @@ function buildGear() {
     row.innerHTML = `
       <span style="font-size:8px;font-weight:700;color:var(--muted);width:16px;">${i}.</span>
       <input type="text" class="gear-name" style="flex:1;border:none;background:transparent;font-family:Montserrat,sans-serif;font-size:11px;color:var(--ink);outline:none;padding:3px 0;">
-      <input type="text" class="gear-qty" style="width:30px;border:none;border-bottom:1px solid var(--rule);background:transparent;font-family:Montserrat,sans-serif;font-size:11px;font-weight:700;text-align:center;color:var(--ink);outline:none;padding:2px 0;" placeholder="1">
+      <input type="text" class="gear-qty" style="width:30px;border:none;border-bottom:1px solid var(--rule);background:transparent;font-family:Montserrat,sans-serif;font-size:11px;font-weight:700;text-align:center;color:var(--ink);outline:none;padding:2px 0;" placeholder="">
       <button class="gear-disable-btn" onclick="toggleGearSlot(this)" title="Disable slot (exceeds STR limit)">✕</button>
     `;
     list.appendChild(row);
@@ -1109,6 +1180,48 @@ function rollStat(id, name) {
     `${base} + Mod(${fmtMod(mod)}) = ${total}`, type);
 }
 
+// ── AMMO: auto-consume arrows / crossbow bolts on ranged attacks ──────────
+let _autoConsume = true;
+function toggleAutoConsume() {
+  _autoConsume = !_autoConsume;
+  _autoConsumeVisual(_autoConsume);
+  if(typeof saveSheet === 'function') saveSheet(false);
+}
+function _autoConsumeVisual(on) {
+  const sw = document.getElementById('ammo-switch');
+  if(sw) sw.classList.toggle('on', !!on);
+}
+// Which ammo (if any) does this attack name spend? Crossbow is checked first
+// because the word "crossbow" also contains "bow".
+function ammoTypeFor(name) {
+  const n = (name || '').toLowerCase();
+  if(/crossbow/.test(n))                    return 'bolt';
+  if(/longbow|shortbow|(^|[^a-z])bow([^a-z]|$)/.test(n)) return 'arrow';
+  return null;
+}
+// Spend 1 unit from the first matching, enabled gear slot. Blank qty = 1.
+function consumeAmmo(type) {
+  const re   = (type === 'bolt') ? /bolt/i : /arrow/i;
+  const rows = [...document.querySelectorAll('#gear-list .gear-slot')];
+  for(const row of rows) {
+    if(row.classList.contains('gear-slot-disabled')) continue;
+    const nameEl = row.querySelector('.gear-name');
+    const qtyEl  = row.querySelector('.gear-qty');
+    if(!nameEl || !qtyEl) continue;
+    const itemName = (nameEl.value || '').trim();
+    if(!itemName || !re.test(itemName)) continue;
+    const raw = (qtyEl.value || '').trim();
+    const q   = raw === '' ? 1 : parseInt(raw, 10);
+    if(isNaN(q) || q <= 0) continue;
+    const left = q - 1;
+    qtyEl.value = String(left);
+    if(typeof saveSheet === 'function') saveSheet(false);
+    return { ok:true, left, item:itemName };
+  }
+  return { ok:false };
+}
+function ammoLabel(type) { return type === 'bolt' ? 'crossbow bolts' : 'arrows'; }
+
 function rollAttack(btn) {
   const row = btn.closest('tr');
   const inputs = row.querySelectorAll('input[type="text"]');
@@ -1144,9 +1257,22 @@ function rollAttack(btn) {
     ? `Hit: ${hitTotal}  |  Dmg: ${dmgTotal}`
     : `Hit: ${hitTotal}`;
 
+  // Ammo: bows spend an arrow, crossbows a bolt (unless Auto-Ammo is off)
+  let ammoNote = '';
+  if(_autoConsume) {
+    const at = ammoTypeFor(name);
+    if(at) {
+      const res = consumeAmmo(at);
+      ammoNote = res.ok
+        ? `  |  −1 ${res.item} (${res.left} left)`
+        : `  |  ⚠ Out of ${ammoLabel(at)}`;
+    }
+  }
+
   // Detail: full breakdown, not bold
   const detailStr = `${hitBase}+Bonus(${bonus})${statLabel}=${hitTotal}`
-    + (dmgBreakdown ? `  |  ${dmgBreakdown}` : '');
+    + (dmgBreakdown ? `  |  ${dmgBreakdown}` : '')
+    + ammoNote;
 
   addLog(`${name}`+(hitRoll===20?' ★ NAT 20':hitRoll===1?' ✗ NAT 1':''),
     resultStr, detailStr, type);
@@ -1434,6 +1560,7 @@ function collectSheet(){
       campaign: _campaign ? { id: _campaign.id, code: _campaign.code, name: _campaign.name } : null,
       mastery: Array.isArray(_charMastery) ? _charMastery : [],
       acBonusOn: _acBonusOn,
+      autoConsume: _autoConsume,
     }
   };
 }
@@ -1523,6 +1650,8 @@ function _applySDData(d){
     if(typeof refreshGearSlots === 'function') refreshGearSlots();
     _acBonusOn = !!(d._sheet?.acBonusOn);
     if(typeof _acToggleVisual==='function') _acToggleVisual(_acBonusOn);
+    _autoConsume = (d._sheet?.autoConsume === undefined) ? true : !!d._sheet.autoConsume;
+    if(typeof _autoConsumeVisual==='function') _autoConsumeVisual(_autoConsume);
 
   // Spells
   let spells = [];
@@ -2432,7 +2561,7 @@ const RC_ANCESTRY = {
     Halfling: 'Stealthy: Once per day, become invisible for 3 rounds.',
     'Half-Orc': 'Mighty: +1 to attack and damage with melee weapons.',
     Goblin:   'Keen Senses: You cannot be surprised.',
-    Beastfolk: 'Natural Selection: Unarmed melee attacks deal 1d6 damage OR +1 to AC.',
+    Beastfolk: 'Natural Selection: Strikes (unarmed melee attacks) deal 1d6 damage OR +1 to AC.',
     Kobold:   'Knack: +1 to spellcasting checks OR begin each session with a luck token.',
   },
   languages: {
@@ -2448,6 +2577,10 @@ const RC_ANCESTRY = {
 };
 
 const RC_CLASSES = ['Fighter','Priest','Thief','Wizard','Bard','Ranger','Witch','Barbarian'];
+// Display order for the 2-column Character Creation Wizard grid (row-major), so
+// the left column reads Fighter / Thief / Ranger / Barbarian and the right
+// column reads Priest / Wizard / Bard / Witch.
+const CCW_CLASS_ORDER = ['Fighter','Priest','Thief','Wizard','Ranger','Bard','Barbarian','Witch'];
 const RC_CLASS_INFO = {
   Fighter: { hd:'1d8', weapons:'All weapons', armor:'All armor and shields',
     talent:['Gain Weapon Mastery with one additional weapon type','+1 to melee and ranged attacks','+1 to melee and ranged attacks','+1 to melee and ranged attacks','+1 to melee and ranged attacks','+2 to Strength, Dexterity, or Constitution stat','+2 to Strength, Dexterity, or Constitution stat','+2 to Strength, Dexterity, or Constitution stat','+2 to Strength, Dexterity, or Constitution stat','Choose one armor type, get +1 AC from it','Choose one armor type, get +1 AC from it','Choose a talent or +2 stat points'],
@@ -2456,13 +2589,19 @@ const RC_CLASS_INFO = {
     talent:['Gain advantage on casting one spell you know','+1 to melee or ranged attacks','+1 to melee or ranged attacks','+1 to melee or ranged attacks','+1 to melee or ranged attacks','+1 to priest spellcasting checks','+1 to priest spellcasting checks','+1 to priest spellcasting checks','+1 to priest spellcasting checks','+2 to Strength or Wisdom stat','+2 to Strength or Wisdom stat','Choose a talent or +2 stat points'],
     features:['Turn Undead (bonus spell, does not count toward spell limit).','Spellcasting (WIS). Know 2 tier 1 spells. Add spells per level.','Languages: Celestial, Diabolic, or Primordial.','Choose a Deity matching your alignment.'] },
   Thief: { hd:'1d4', weapons:'Club, crossbow, dagger, shortbow, shortsword', armor:'Leather armor, mithral chainmail',
-    talent:['Advantage on initiative rolls','Backstab deals +1 dice of damage','Backstab deals +1 dice of damage','Backstab deals +1 dice of damage','+2 to Strength, Dexterity, or Charisma stat','+2 to Strength, Dexterity, or Charisma stat','+2 to Strength, Dexterity, or Charisma stat','+2 to Strength, Dexterity, or Charisma stat','+2 to Strength, Dexterity, or Charisma stat','+1 to melee and ranged attacks','+1 to melee and ranged attacks','Choose a talent or +2 stat points'],
+    talent:['1/day, all attacks that would hit you this round miss instead',
+            'Backstab deals +1 dice of damage','Backstab deals +1 dice of damage','Backstab deals +1 dice of damage','+2 to Strength, Dexterity, or Charisma stat','+2 to Strength, Dexterity, or Charisma stat','+2 to Strength, Dexterity, or Charisma stat','+2 to Strength, Dexterity, or Charisma stat','+2 to Strength, Dexterity, or Charisma stat','+1 to melee and ranged attacks','+1 to melee and ranged attacks','Choose a talent or +2 stat points'],
     features:['Backstab: Hit unaware target → extra weapon die damage + half level dice.','Thievery: Advantage on climbing, sneaking, disguises, traps, locks, pickpocketing.'] },
   Wizard: { hd:'1d4', weapons:'Dagger, staff', armor:'None',
     talent:['Make 1 random magic item (your choice of type)','+2 to Intelligence stat or +1 to spellcasting checks','+2 to Intelligence stat or +1 to spellcasting checks','+2 to Intelligence stat or +1 to spellcasting checks','+2 to Intelligence stat or +1 to spellcasting checks','+2 to Intelligence stat or +1 to spellcasting checks','Advantage on casting one spell you know','Advantage on casting one spell you know','Advantage on casting one spell you know','Learn one additional wizard spell of any tier you know','Learn one additional wizard spell of any tier you know','Choose a talent or +2 stat points'],
     features:['Spellcasting (INT). Know 3 tier 1 spells. Add spells per level.','Learning Spells: Study scroll 1 day, DC 15 INT check to learn permanently.','Languages: 2 additional common + 2 rare languages.'] },
   Bard: { hd:'1d6', weapons:'Crossbow, dagger, mace, shortbow, shortsword, spear, staff', armor:'Leather armor, chainmail, shields',
-    talent:['+1 to melee/ranged attacks or +1 to Magical Dabbler rolls','+1 to melee/ranged attacks or +1 to Magical Dabbler rolls','+1 to melee/ranged attacks or +1 to Magical Dabbler rolls','+1 to melee/ranged attacks or +1 to Magical Dabbler rolls','+2 points to any stats','+2 points to any stats','+2 points to any stats','+2 points to any stats','+2 points to any stats','Presence effects become DC 9 to enact','Presence effects become DC 9 to enact','Choose a talent','You find a random priest or wizard wand (your choice)'],
+    // 12 slots; text is read from indices 0,1,6,9,11 (one per band).
+    talent:['You find a random wand (you choose)',
+            '+1 to melee/ranged attacks or +1 to Magical Dabbler rolls','+1 to melee/ranged attacks or +1 to Magical Dabbler rolls','+1 to melee/ranged attacks or +1 to Magical Dabbler rolls','+1 to melee/ranged attacks or +1 to Magical Dabbler rolls','+1 to melee/ranged attacks or +1 to Magical Dabbler rolls',
+            '+2 points to any stats','+2 points to any stats','+2 points to any stats',
+            'Presence effects become DC 9 to enact','Presence effects become DC 9 to enact',
+            'Choose a talent'],
     features:['Bardic Arts: Advantage on oration, performing arts, lore, and diplomacy.','Magical Dabbler: Activate scrolls/wands using CHA. Critical fail = wizard mishap.','Presence (DC 12 CHA): Inspire (give luck token) or Fascinate (transfix targets ≤ lvl 4).','Prolific: +1d6 to learning rolls. Groups with bards +1d6 to carousing.','Languages: 4 additional common + 1 rare language.'] },
   Ranger: { hd:'1d8', weapons:'Dagger, longbow, longsword, shortbow, shortsword, spear, staff', armor:'Leather armor, chainmail',
     talent:['You deal d12 damage with one weapon type you choose','+1 to melee or ranged attacks and damage','+1 to melee or ranged attacks and damage','+1 to melee or ranged attacks and damage','+1 to melee or ranged attacks and damage','+2 to Strength, Dexterity, or Intelligence stat','+2 to Strength, Dexterity, or Intelligence stat','+2 to Strength, Dexterity, or Intelligence stat','+2 to Strength, Dexterity, or Intelligence stat','ADV on Herbalism checks for a remedy you choose','ADV on Herbalism checks for a remedy you choose','Choose a talent or +2 stat points'],
@@ -2538,11 +2677,13 @@ const RC_WITCH_SPELLS_T1  = ['Cauldron','Charm Person','Eyebite','Fog','Hypnotiz
 const RC_DRUID_SPELLS_T1  = ['Breath','Instill','Oxidize','Whisperwind'];
 const RC_MAGE_SPELLS_T1   = ['Cleanse','Flare','Reveal','Ward'];
 const RC_SORC_SPELLS_T1   = ['Blight','Eyebite','Mischief','Protection From Good'];
+const RC_NECRO_SPELLS_T1  = ['First Gate','Protection From Evil','Seal Soul','Turn Undead','Undeath','Withermark'];
+const RC_SEER_SPELLS_T1   = ['Chant','Evoke Rage','Potion','Trance'];
 
 // ── Spell sources ─────────────────────────────────────────────────────────
 // A caster defaults to its own list, but may tick other lists open and pick
 // from them. 'Both' is an internal tag for spells shared by wizard + priest.
-const SPELL_SOURCES = ['Wizard','Priest','Witch','Druid','Mage','Sorcerer'];
+const SPELL_SOURCES = ['Wizard','Priest','Witch','Druid','Mage','Sorcerer','Necromancer','Seer'];
 const RC_T1_BY_SOURCE = {
   Wizard: RC_WIZARD_SPELLS_T1,
   Priest: RC_PRIEST_SPELLS_T1,
@@ -2550,20 +2691,15 @@ const RC_T1_BY_SOURCE = {
   Druid:  RC_DRUID_SPELLS_T1,
   Mage:   RC_MAGE_SPELLS_T1,
   Sorcerer: RC_SORC_SPELLS_T1,
+  Necromancer: RC_NECRO_SPELLS_T1,
+  Seer:   RC_SEER_SPELLS_T1,
 };
 
-// Which lists are ticked by default for a class (the rules-legal ones).
-function defaultSpellSources(cls, alignment) {
-  const src = { Wizard:false, Priest:false, Witch:false, Druid:false, Mage:false, Sorcerer:false };
-  if(cls==='Wizard') {
-    src.Wizard = true;
-    // Neutral wizards get the druid list for free (Cursed Scroll 4)
-    if(String(alignment||'').toLowerCase()==='neutral') src.Druid = true;
-    // Lawful wizards get the mage list for free (Cursed Scroll 6)
-    if(String(alignment||'').toLowerCase()==='lawful')  src.Mage  = true;
-    // Chaotic wizards get the sorcerer list for free (Cursed Scroll 5)
-    if(String(alignment||'').toLowerCase()==='chaotic') src.Sorcerer = true;
-  }
+// Which lists are ticked by default for a class. Alignment plays no part in
+// this — every other list can simply be ticked on.
+function defaultSpellSources(cls) {
+  const src = { Wizard:false, Priest:false, Witch:false, Druid:false, Mage:false, Sorcerer:false, Necromancer:false, Seer:false };
+  if(cls==='Wizard')      src.Wizard = true;
   else if(cls==='Priest') src.Priest = true;
   else if(cls==='Witch')  src.Witch  = true;
   return src;
@@ -2579,6 +2715,8 @@ function spellInSources(s, src) {
   if(s.caster==='Druid')  return !!src.Druid;
   if(s.caster==='Mage')   return !!src.Mage;
   if(s.caster==='Sorcerer') return !!src.Sorcerer;
+  if(s.caster==='Necromancer') return !!src.Necromancer;
+  if(s.caster==='Seer')   return !!src.Seer;
   return false;
 }
 
@@ -2600,7 +2738,7 @@ function spellSourceBar(src, cls, onToggle) {
        + name
        + '</label>';
   });
-  h += '<span style="font-family:Montserrat,sans-serif;font-size:9px;color:#666;flex-basis:100%;">Ticking another list lets you pick from it — that\'s a house-rule / GM call.</span>';
+  h += '<span style="font-family:Montserrat,sans-serif;font-size:9px;color:#666;flex-basis:100%;">Any list can be ticked on — no list is restricted by alignment. Which ones are legal at your table is a GM call.</span>';
   h += '</div>';
   return h;
 }
@@ -2843,7 +2981,7 @@ function applyRandomCharacter(skipConfirm) {
   const gearQtyInputs  = document.querySelectorAll('#gear-list .gear-qty');
   gearItems.forEach(function(g, i) {
     if(gearNameInputs[i]) gearNameInputs[i].value = g.name;
-    if(gearQtyInputs[i])  gearQtyInputs[i].value  = g.qty !== '1' ? g.qty : '';
+    if(gearQtyInputs[i])  gearQtyInputs[i].value  = g.qty || '1';
   });
 
   // Backpack goes in Free to Carry
@@ -3062,8 +3200,7 @@ function ccwTalentChoiceUI(p, stateRef, knownSpells, cls) {
   else if(p.kind==='wizspell') {
     h += '<select style="'+selStyle+'" onchange="'+stateRef+'.picked=this.value;ccwResolve('+stateRef+');ccwRerender()">';
     h += '<option value="">— Choose any wizard spell —</option>';
-    const _al = (typeof _ccw!=='undefined' && _ccw && _ccw.alignment) ? _ccw.alignment : sheetAlignment();
-    (typeof SD_SPELLS!=='undefined'?SD_SPELLS:[]).filter(s=>s.caster==='Wizard'||s.caster==='Both'||(s.caster==='Druid'&&String(_al).toLowerCase()==='neutral')||(s.caster==='Mage'&&String(_al).toLowerCase()==='lawful')||(s.caster==='Sorcerer'&&String(_al).toLowerCase()==='chaotic')).forEach(s=>{
+    (typeof SD_SPELLS!=='undefined'?SD_SPELLS:[]).filter(s=>s.caster==='Wizard'||s.caster==='Both'||s.caster==='Druid'||s.caster==='Mage'||s.caster==='Sorcerer').forEach(s=>{
       h += '<option value="'+s.name+'"'+(p.picked===s.name?' selected':'')+'>'+s.name+' (T'+s.tier+')</option>';
     });
     h += '</select>';
@@ -3180,6 +3317,9 @@ const CCW_WEAPON_COSTS = {
   'Greataxe':{gp:10}, 'Greatsword':{gp:12}, 'Javelin':{sp:5}, 'Longbow':{gp:8},
   'Longsword':{gp:9}, 'Mace':{gp:5}, 'Shortbow':{gp:6}, 'Shortsword':{gp:7},
   'Spear':{sp:5}, 'Staff':{sp:5}, 'Warhammer':{gp:10},
+  // Cursed Scroll Compilation
+  'Blowgun':{gp:5}, 'Bolas':{gp:2}, 'Morningstar':{gp:5}, 'Pike':{gp:10},
+  'Razor Chain':{gp:12}, 'Scimitar':{gp:8}, 'Shuriken':{gp:1}, 'Sling':{sp:5}, 'Whip':{gp:10},
 };
 const CCW_ARMOR_SHOP = [
   {name:'Leather armor', gp:10, ac:'11 + DEX'},
@@ -3198,7 +3338,7 @@ function ccwFmtCost(c) { return c.gp ? c.gp+' gp' : c.sp ? c.sp+' sp' : c.cp+' c
 // Which weapons a class may use
 function ccwClassWeapons(cls) {
   const w = (RC_CLASS_INFO[cls]?.weapons||'').toLowerCase();
-  const names = SD_WEAPONS.map(x=>x.name).filter(n=>n!=='Unarmed');   // Unarmed isn't gear you buy
+  const names = SD_WEAPONS.map(x=>x.name).filter(n=>n!=='Strikes');   // Strikes (unarmed) isn't gear you buy
   if(w.includes('all weapons')) return names;
   return names.filter(n=>w.includes(n.toLowerCase()));
 }
@@ -3672,7 +3812,7 @@ function ccwAncestry() {
   if(_ccw.ancestry==='Elf')
     h += ancChoice('Farsight','elfFarsight',[['ranged','+1 to ranged attack rolls'],['spell','+1 to spellcasting checks']]);
   if(_ccw.ancestry==='Beastfolk')
-    h += ancChoice('Natural Selection','beastNatural',[['attack','Unarmed attacks deal 1d6'],['ac','+1 to armor class']]);
+    h += ancChoice('Natural Selection','beastNatural',[['attack','Strikes (unarmed) deal 1d6'],['ac','+1 to armor class']]);
   if(_ccw.ancestry==='Kobold')
     h += ancChoice('Knack','koboldKnack',[['spell','+1 to spellcasting checks'],['luck','Luck token each session']]);
   return h;
@@ -3686,7 +3826,7 @@ function ccwClass() {
   let h = '<p class="ccw-hint">Choose your class, or roll randomly.</p>';
   h += '<button class="ccw-roll-btn" onclick="_ccw.cls=_rc_roll(RC_CLASSES);_ccw.spells=[];_ccw.langCommon=[];_ccw.langRare=[];_ccw.langPriest=\'\';ccwRender()">🎲 Random</button>';
   h += '<div class="ccw-choice-grid">';
-  RC_CLASSES.forEach(c=>{
+  CCW_CLASS_ORDER.forEach(c=>{
     const ci = RC_CLASS_INFO[c];
     const sel = _ccw.cls===c ? ' selected' : '';
     h += '<button class="ccw-choice'+sel+'" onclick="_ccw.cls=\''+c+'\';_ccw.spells=[];_ccw.langCommon=[];_ccw.langRare=[];_ccw.langPriest=\'\';_ccw.tres=null;_ccw.tres2=null;_ccw.talent=null;_ccw.grit=null;_ccw.mastery=null;ccwRender()"><div class="ccw-choice-name">'+c+'</div><div class="ccw-choice-desc">HP: '+ci.hd+' / lvl · '+ci.weapons.split(',').slice(0,3).join(',')+'…</div></button>';
@@ -3752,23 +3892,11 @@ function ccwBackground() {
 }
 
 // Alignment drives which bonus spell list a wizard gets (Druid = neutral,
-// Mage = lawful, Sorcerer = chaotic). Changing it must re-derive the ticked
-// lists and drop any spells picked from a list that is no longer available.
+// Alignment only drives the deity list; it does not gate any spell list.
 function ccwSetAlignment(a) {
-  const changed = (_ccw.alignment !== a);
+  // Alignment sets the deity list only — spell lists are independent of it.
   _ccw.alignment = a;
   _ccw.deity = '';
-  if(changed) {
-    const def = defaultSpellSources(_ccw.cls, a);
-    // Preserve lists the player ticked on manually that aren't alignment-gated
-    if(_ccw.spellSrc) ['Wizard','Priest','Witch'].forEach(k=>{ if(_ccw.spellSrc[k]) def[k] = true; });
-    _ccw.spellSrc = def;
-    _ccw.spells = (_ccw.spells||[]).filter(sp=>{
-      const src = _ccw.spellSrcOf[sp];
-      if(src && !_ccw.spellSrc[src]) { delete _ccw.spellSrcOf[sp]; return false; }
-      return true;
-    });
-  }
   ccwRender();
 }
 
@@ -3989,7 +4117,7 @@ function ancestryLine(c) {
 function ccwSpells() {
   const cls = _ccw.cls;
   const needed = cls==='Priest' ? 2 : 3;
-  if(!_ccw.spellSrc) _ccw.spellSrc = defaultSpellSources(cls, _ccw.alignment);
+  if(!_ccw.spellSrc) _ccw.spellSrc = defaultSpellSources(cls);
 
   // Build the tier-1 pool from every ticked list. If a name appears on two
   // lists (e.g. Charm Person is both wizard and witch), the character's own
@@ -4024,7 +4152,7 @@ function ccwSpells() {
   return h;
 }
 function ccwToggleSpellSrc(name, on) {
-  if(!_ccw.spellSrc) _ccw.spellSrc = defaultSpellSources(_ccw.cls, _ccw.alignment);
+  if(!_ccw.spellSrc) _ccw.spellSrc = defaultSpellSources(_ccw.cls);
   _ccw.spellSrc[name] = !!on;
   // Drop any picked spell that no longer belongs to a ticked list
   _ccw.spells = _ccw.spells.filter(sp=>{
@@ -4194,7 +4322,7 @@ function ccwApply() {
                 : c.cls==='Witch' ? findSpell(sp,'Witch')
                 : RC_DRUID_SPELLS_T1.includes(sp) ? findSpell(sp,'Druid')
                 : RC_MAGE_SPELLS_T1.includes(sp) ? findSpell(sp,'Mage')
-                : (RC_SORC_SPELLS_T1.includes(sp) && sheetAlignment()==='chaotic') ? findSpell(sp,'Sorcerer')
+                : RC_SORC_SPELLS_T1.includes(sp) ? findSpell(sp,'Sorcerer')
                 : (RC_SPELL_DATA[sp] || findSpell(sp, c.cls))) || {};
     const q = (cl)=>row.querySelector(cl);
     const inp=q('.spell-input'); if(inp) inp.value=sp;
@@ -4243,11 +4371,12 @@ function ccwApply() {
     gearRows.push({name:g.name, qty:g.qty});
     // one item of N slots takes N-1 extra rows; multiples multiply that
     const extras = (cost - 1) * qty;
-    for(let s = 0; s < extras; s++) gearRows.push({name:'↳ ' + g.name, qty:'1'});
+    // Continuation rows just reserve slots — they carry no quantity of their own
+    for(let s = 0; s < extras; s++) gearRows.push({name:'↳ ' + g.name, qty:''});
   });
   const gn=document.querySelectorAll('#gear-list .gear-name');
   const gq=document.querySelectorAll('#gear-list .gear-qty');
-  gearRows.forEach((g,i)=>{ if(gn[i])gn[i].value=g.name; if(gq[i])gq[i].value=g.qty!=='1'?g.qty:''; });
+  gearRows.forEach((g,i)=>{ if(gn[i])gn[i].value=g.name; if(gq[i])gq[i].value=(g.qty===''?'':(g.qty||'1')); });
   const fc=document.getElementById('free-carry'); if(fc) fc.value=c.buyKit?'Backpack':'';
 
   // Gear slots: max(10, STR) available; disable the rest from slot 20 downward
@@ -4306,11 +4435,11 @@ function ccwApply() {
     if(selects[0]) selects[0].value = useDex ? 'dex' : 'str';
     if(selects[1]) { const parts=w.range.split('/'); selects[1].value = parts[parts.length-1].trim(); }
   };
-  // Unarmed attack row: Beastfolk's Natural Selection upgrades the die to 1d6.
-  const _unarmed = SD_WEAPONS.find(x=>x.name==='Unarmed');
-  const hasUnarmed = (c.beastNatural==='attack' || masterySet.has('Unarmed'));
+  // Strikes (unarmed) attack row: Beastfolk's Natural Selection upgrades the die to 1d6.
+  const _unarmed = SD_WEAPONS.find(x=>x.name==='Strikes');
+  const hasUnarmed = (c.beastNatural==='attack' || masterySet.has('Strikes'));
   const unarmedDie = c.beastNatural==='attack' ? '1d6' : (_unarmed ? _unarmed.damage : '1d4');
-  if(hasUnarmed) _fillAtkRow('Unarmed', _unarmed, unarmedDie);
+  if(hasUnarmed) _fillAtkRow('Strikes', _unarmed, unarmedDie);
   const uniqueWeapons = [...new Set(c.buyWeapons)];
   uniqueWeapons.forEach(wname=>{
     const w = SD_WEAPONS.find(x=>x.name===wname);
@@ -4320,11 +4449,11 @@ function ccwApply() {
   // targets, +talent dice) — including natural/mastered unarmed strikes.
   if(c.cls==='Thief') {
     const bsDice = 1 + 1 + Math.floor(1/2) + backstabExtraDice;   // weapon die + extra die + half level
-    const bsList = [...(hasUnarmed ? ['Unarmed'] : []), ...uniqueWeapons];
+    const bsList = [...(hasUnarmed ? ['Strikes'] : []), ...uniqueWeapons];
     bsList.forEach(wname=>{
       const bw = SD_WEAPONS.find(x=>x.name===wname);
       if(!bw) return;
-      const baseDmg = (wname==='Unarmed') ? unarmedDie : bw.damage;
+      const baseDmg = (wname==='Strikes') ? unarmedDie : bw.damage;
       let bsDmg = d12Set.has(bw.name) ? baseDmg.replace(/d\d+/g,'d12') : baseDmg;
       bsDmg = bsDmg.replace(/1d/g, bsDice+'d');
       _fillAtkRow('Backstab ('+bw.name+')', bw, bsDmg);
@@ -4526,7 +4655,7 @@ function lvlRollTalent() {
 
 function lvlSpells() {
   const cls = _lvl.cls;
-  if(!_lvl.spellSrc) _lvl.spellSrc = defaultSpellSources(cls, sheetAlignment());
+  if(!_lvl.spellSrc) _lvl.spellSrc = defaultSpellSources(cls);
   const own = { Wizard:'Wizard', Priest:'Priest', Witch:'Witch' }[cls] || '';
   // Already-known spells (from the sheet)
   const known = [...document.querySelectorAll('#spells-list .spell-row .spell-input')].map(el=>el.value.trim()).filter(Boolean);
@@ -4560,7 +4689,7 @@ function lvlSpells() {
   return h;
 }
 function lvlToggleSpellSrc(name, on) {
-  if(!_lvl.spellSrc) _lvl.spellSrc = defaultSpellSources(_lvl.cls, sheetAlignment());
+  if(!_lvl.spellSrc) _lvl.spellSrc = defaultSpellSources(_lvl.cls);
   _lvl.spellSrc[name] = !!on;
   _lvl.newSpells = _lvl.newSpells.filter(sp=>{
     const src = _lvl.spellSrcOf[sp];
@@ -4866,6 +4995,15 @@ const SHOP_WEAPONS = [
   {name:'Spear',         sp:5,  note:'1d6, Thrown'},
   {name:'Staff',         sp:5,  note:'1d4, Two-handed'},
   {name:'Warhammer',     gp:10, note:'1d10, Two-handed, 2 slots'},
+  {name:'Blowgun',       gp:5,  note:'1 damage, Near. Firing from hiding does not reveal your position'},
+  {name:'Bolas',         gp:2,  note:'Near. Hit a legged creature horse-sized or smaller: speed drops to close until it frees itself (DC 15 STR/DEX)'},
+  {name:'Morningstar',   gp:5,  note:'1d6/1d8, Versatile'},
+  {name:'Pike',          gp:10, note:'1d10, Reach (double close), Two-handed, 2 slots'},
+  {name:'Razor Chain',   gp:12, note:'1d6, Close/Near, Finesse, Lash'},
+  {name:'Scimitar',      gp:8,  note:'1d6, Finesse'},
+  {name:'Shuriken',      gp:1,  note:'1d4, Near. Can be strewn on the ground: 1 damage and half speed for 10 rounds'},
+  {name:'Sling',         sp:5,  note:'1d4, Far'},
+  {name:'Whip',          gp:10, note:'1d4, Close/Near, Finesse, Lash'},
 ];
 const SHOP_ARMOR = [
   {name:'Leather armor', gp:10, note:'AC 11 + DEX'},
@@ -5259,7 +5397,7 @@ function shopAddToGear(it) {
       if(!row) break;
       row.querySelector('.gear-name').value = k.name;
       const q = row.querySelector('.gear-qty');
-      if(q) q.value = k.qty || '';
+      if(q) q.value = k.qty || '1';
       placed++;
     }
     if(placed < kit.length) alert('Not enough free gear slots for the whole kit — added what fits.');
@@ -5270,7 +5408,7 @@ function shopAddToGear(it) {
   if(!row) { alert('No free gear slots available.'); return false; }
   row.querySelector('.gear-name').value = it.name;
   const q = row.querySelector('.gear-qty');
-  if(q) q.value = it.qty || '';
+  if(q) q.value = it.qty || '1';
   // Bulky items (2-slot weapons, chainmail, plate mail) occupy extra slots
   for(let s = 1; s < slotCost; s++) {
     const extra = shopNextSlot();
@@ -5399,7 +5537,7 @@ function spellPickChoose(name, tier) {
       <button onclick="closeSpellShop()" style="background:transparent;border:none;color:#888;font-size:20px;cursor:pointer;padding:0 4px;">✕</button>
     </div>
     <div id="spellshop-tabs" style="display:flex;flex-shrink:0;"></div>
-    <div id="spellshop-filters" style="display:flex;gap:16px;padding:7px 14px;background:#0f0f0f;flex-shrink:0;border-bottom:1px solid #2a2a2a;"></div>
+    <div id="spellshop-filters" style="display:flex;flex-wrap:wrap;gap:6px 14px;padding:7px 14px;background:#0f0f0f;flex-shrink:0;border-bottom:1px solid #2a2a2a;"></div>
     <div id="spellshop-body" style="padding:6px 14px;overflow-y:auto;flex:1;"></div>
   </div>
 </div>
@@ -5414,17 +5552,22 @@ let _spellShopWit = true;
 let _spellShopDru = true;
 let _spellShopMag = true;
 let _spellShopSor = true;
+let _spellShopNec = true;
+let _spellShopSee = true;
 
 function openSpellShop() {
-  // Default the caster filters to the character's own class, if it's a caster
+  // Default the caster filters to the character's own class, if it's a caster.
+  // Alignment does not gate any list — the other boxes can just be ticked on.
   const cls = (document.getElementById('f-class')?.value || '').trim().toLowerCase();
   if(cls==='wizard' || cls==='priest' || cls==='witch') {
     _spellShopWiz = (cls==='wizard');
     _spellShopPri = (cls==='priest');
     _spellShopWit = (cls==='witch');
-    _spellShopDru = (cls==='wizard' && sheetAlignment()==='neutral');
-    _spellShopMag = (cls==='wizard' && sheetAlignment()==='lawful');
-    _spellShopSor = (cls==='wizard' && sheetAlignment()==='chaotic');
+    _spellShopDru = false;
+    _spellShopMag = false;
+    _spellShopSor = false;
+    _spellShopNec = false;
+    _spellShopSee = false;
   }
   document.getElementById('spellshop-overlay').style.display = 'flex';
   spellShopRender();
@@ -5441,12 +5584,14 @@ function spellShopRender() {
   // Caster filter checkboxes
   const filterBar = document.getElementById('spellshop-filters');
   filterBar.innerHTML =
-    '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopWiz?'checked':'')+' onchange="_spellShopWiz=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Wizard</label>'
-    + '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopPri?'checked':'')+' onchange="_spellShopPri=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Priest</label>'
-    + '<label style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopWit?'checked':'')+' onchange="_spellShopWit=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Witch</label>'
-    + '<label title="Druid spells: neutral wizards only" style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopDru?'checked':'')+' onchange="_spellShopDru=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Druid</label>'
-    + '<label title="Mage spells: lawful wizards only" style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopMag?'checked':'')+' onchange="_spellShopMag=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Mage</label>'
-    + '<label title="Sorcerer spells: chaotic wizards only" style="display:flex;align-items:center;gap:5px;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopSor?'checked':'')+' onchange="_spellShopSor=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Sorcerer</label>';
+    '<label style="display:flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopWiz?'checked':'')+' onchange="_spellShopWiz=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Wizard</label>'
+    + '<label style="display:flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopPri?'checked':'')+' onchange="_spellShopPri=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Priest</label>'
+    + '<label style="display:flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopWit?'checked':'')+' onchange="_spellShopWit=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Witch</label>'
+    + '<label title="Druid spells (Cursed Scroll 4)" style="display:flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopDru?'checked':'')+' onchange="_spellShopDru=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Druid</label>'
+    + '<label title="Mage spells (Cursed Scroll 6)" style="display:flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopMag?'checked':'')+' onchange="_spellShopMag=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Mage</label>'
+    + '<label title="Sorcerer spells (Cursed Scroll 5)" style="display:flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopSor?'checked':'')+' onchange="_spellShopSor=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Sorcerer</label>'
+    + '<label title="Necromancer spells (Necromancer playtest)" style="display:flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopNec?'checked':'')+' onchange="_spellShopNec=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Necromancer</label>'
+    + '<label title="Seer spells (Cursed Scroll 3)" style="display:flex;align-items:center;gap:5px;white-space:nowrap;flex:0 0 auto;font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b89ae0;cursor:pointer;"><input type="checkbox" '+(_spellShopSee?'checked':'')+' onchange="_spellShopSee=this.checked;spellShopRender()" style="accent-color:#5a3a8a;">Seer</label>';
 
   const known = new Set([...document.querySelectorAll('#spells-list .spell-row .spell-input')].map(el=>el.value.trim()).filter(Boolean));
   const body = document.getElementById('spellshop-body');
@@ -5458,6 +5603,8 @@ function spellShopRender() {
     : s.caster==='Druid' ? _spellShopDru
     : s.caster==='Mage' ? _spellShopMag
     : s.caster==='Sorcerer' ? _spellShopSor
+    : s.caster==='Necromancer' ? _spellShopNec
+    : s.caster==='Seer' ? _spellShopSee
     : true;
   const spells = (typeof SD_SPELLS!=='undefined' ? SD_SPELLS : []).filter(s=>s.tier===_spellShopTier && casterOk(s)).sort((a,b)=>a.name.localeCompare(b.name));
 
@@ -5553,10 +5700,12 @@ function campaignUpdateBtn() {
   const btn = document.getElementById('campaign-btn');
   if(!btn) return;
   if(_campaign) {
-    btn.textContent = '🔗 ' + _campaign.name;
+    btn.textContent = '🔗';
+    btn.title = 'Campaign: ' + _campaign.name + ' (' + _campaign.code + ')';
     btn.style.background = '#241f10'; btn.style.color = '#c8a020'; btn.style.borderColor = '#7a5a00';
   } else {
-    btn.textContent = '🔗 Campaign';
+    btn.textContent = '🔗';
+    btn.title = 'Link this sheet to a campaign';
     btn.style.background = 'transparent'; btn.style.color = 'var(--muted)'; btn.style.borderColor = 'var(--rule)';
   }
 }

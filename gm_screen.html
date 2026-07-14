@@ -845,6 +845,27 @@ input[type="number"] { -moz-appearance: textfield; }
 .dice-hide-btn { padding: 6px 9px; background: rgba(45,122,45,0.12); color: #6dbf6d; border: 1px solid #2d7a2d; border-radius: 4px; cursor: pointer; font-size: 12px; line-height: 1; white-space: nowrap; }
 .dice-hide-btn.on { background: rgba(122,45,45,0.15); color: #df8a8a; border-color: #7a2d2d; }
 .dice-camp-panel { padding: 6px 0 2px; }
+/* Campaign link — top bar button + popover */
+#camp-btn.on { background: rgba(200,160,32,0.12); color: var(--gold); border-color: var(--gold); }
+#camp-popover {
+  position: fixed; top: 46px; right: 12px; z-index: 400; width: 300px; max-width: calc(100vw - 24px);
+  background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px;
+  padding: 10px; box-shadow: 0 10px 30px rgba(0,0,0,.55);
+}
+#camp-popover .camp-row { display: flex; gap: 6px; align-items: center; margin-bottom: 6px; }
+#camp-popover .camp-row:last-child { margin-bottom: 0; }
+#camp-popover input {
+  flex: 1; min-width: 60px; padding: 6px 8px; background: var(--panel); border: 1px solid var(--border);
+  border-radius: 4px; color: var(--light); font-family: 'Montserrat', sans-serif; font-size: 11px; outline: none;
+}
+#camp-popover button {
+  padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; flex-shrink: 0;
+  font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 9px; letter-spacing: .08em; text-transform: uppercase;
+}
+#camp-popover .camp-hint { font-family: 'Montserrat', sans-serif; font-size: 9px; color: var(--muted); line-height: 1.5; }
+#camp-popover .camp-err { font-family: 'Montserrat', sans-serif; font-size: 10px; color: #df6a6a; min-height: 12px; }
+#camp-popover .camp-live { font-family: 'Montserrat', sans-serif; font-size: 11px; color: var(--gold); flex: 1; }
+@media (max-width: 760px) { #camp-popover { top: 54px; left: 12px; right: 12px; width: auto; } }
 .dice-camp-row { display: flex; gap: 6px; align-items: center; margin-bottom: 5px; }
 .dice-log-entry.remote { border-left: 3px solid #8a7ac8; background: #201d2a; }
 /* ══ ROUNDED BUTTONS ══════════════════════════════════════════════════════
@@ -1076,6 +1097,7 @@ input[type="number"] { -moz-appearance: textfield; }
   <div class="topbar-spacer"></div>
 
   <div class="session-controls">
+    <button class="btn small ghost" id="camp-btn" onclick="GMCamp.togglePanel()" title="Campaign link">🔗 Campaign</button>
     <button class="btn small ghost" id="save-btn" onclick="saveSession()" title="Save session to file">💾 Save</button>
     <label class="btn small ghost" title="Load a saved session" style="cursor:pointer;">
       📂 Load
@@ -1094,6 +1116,179 @@ input[type="number"] { -moz-appearance: textfield; }
   </div>
 </div>
 
+<!-- Campaign link popover — anchored under the top bar -->
+<div id="camp-popover" style="display:none;"></div>
+
+<script>
+// ══════════════════════════════════════════
+// CAMPAIGN LINK (top bar)
+// The campaign used to live inside the Dice Tray, which meant it vanished
+// whenever that tool wasn't on screen. It now lives here — one connection,
+// owned by the page, that the Dice Tray broadcasts to and the Party tool reads.
+// ══════════════════════════════════════════
+const GMCamp = (function() {
+  const clientKey = 'gm-' + Math.random().toString(36).slice(2, 12);
+  let campaign  = null;     // {id, code, name}
+  let hideRolls = false;    // GM can keep their own rolls off the shared log
+  let lastId    = 0;
+  let timer     = null;
+  let panelOpen = false;
+  const listeners = new Set();   // fn(roll) — the Dice Tray's log
+  const watchers  = new Set();   // fn() — told whenever the link or hide state changes
+  let pending = [];              // rolls that arrived before anyone was listening
+
+  const btn = () => document.getElementById('camp-btn');
+  const pop = () => document.getElementById('camp-popover');
+  const esc = t => String(t == null ? '' : t).replace(/</g, '&lt;');
+
+  // ── Roll traffic ──
+  function broadcast(entry) {
+    if(!campaign || hideRolls) return;
+    fetch('/api/campaigns/' + campaign.id + '/rolls', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        clientKey, source: 'GM',
+        label: entry.label, result: String(entry.total),
+        detail: entry.detail, type: entry.crit || 'normal'
+      })
+    }).catch(() => {});
+  }
+
+  async function poll() {
+    if(!campaign) return;
+    try {
+      const url = '/api/campaigns/' + campaign.id + '/rolls' + (lastId ? '?since=' + lastId : '');
+      const r = await fetch(url, { credentials: 'same-origin' });
+      if(!r.ok) return;
+      const data = await r.json();
+      (data.rolls || []).forEach(roll => {
+        if(roll.clientKey === clientKey) return;
+        if(listeners.size) listeners.forEach(fn => { try { fn(roll); } catch(e) {} });
+        else { pending.push(roll); if(pending.length > 100) pending.shift(); }
+      });
+      if(data.last) lastId = data.last;
+    } catch(e) {}
+  }
+
+  function start() { stop(); poll(); timer = setInterval(poll, 4000); }
+  function stop()  { if(timer) { clearInterval(timer); timer = null; } }
+
+  // The Dice Tray registers here when it is first created — anything that
+  // arrived while it didn't exist yet is handed over on the way in.
+  function onRoll(fn) {
+    listeners.add(fn);
+    const backlog = pending; pending = [];
+    backlog.forEach(roll => { try { fn(roll); } catch(e) {} });
+  }
+
+  // ── UI ──
+  function renderBtn() {
+    const b = btn();
+    if(!b) return;
+    b.classList.toggle('on', !!campaign);
+    b.textContent = campaign ? '🔗 ' + campaign.code : '🔗 Campaign';
+    b.title = campaign ? 'Campaign: ' + campaign.name + ' (' + campaign.code + ')' : 'Campaign link';
+  }
+
+  // The Dice Tray subscribes so its hide-rolls button appears, disappears, and
+  // restyles itself as the link comes and goes.
+  function onChange(fn) { watchers.add(fn); }
+  function notify() { watchers.forEach(fn => { try { fn(); } catch(e) {} }); }
+
+  function renderPanel() {
+    const el = pop();
+    if(!el) return;
+    el.style.display = panelOpen ? 'block' : 'none';
+    if(!panelOpen) return;
+
+    if(campaign) {
+      el.innerHTML =
+          '<div class="camp-row"><span class="camp-live">🔗 <b>' + esc(campaign.name) + '</b><br>code <b style="letter-spacing:.15em;">' + esc(campaign.code) + '</b></span>'
+        + '<button class="camp-leave" style="background:#3a1a1a;color:#df8a8a;border:1px solid #7a2d2d;">Leave</button></div>'
+        + '<div class="camp-hint">Rolls are shared both ways. Players who join with this code from their character sheet show up in the Party tool.</div>';
+      el.querySelector('.camp-leave').onclick = () => { set(null); panelOpen = false; renderPanel(); };
+      return;
+    }
+
+    el.innerHTML =
+        '<div class="camp-row"><input type="text" class="camp-name" placeholder="Campaign name..."><button class="camp-create" style="background:var(--gold);color:#1a1a1a;">Create</button></div>'
+      + '<div class="camp-row"><input type="text" class="camp-code" placeholder="Join code..." maxlength="6" style="text-transform:uppercase;letter-spacing:.12em;"><button class="camp-join" style="background:#1a5a7a;color:#fff;">Join</button></div>'
+      + '<div class="camp-err"></div>'
+      + '<div class="camp-hint">Create a campaign and give the code to your players, or join one they already made.</div>';
+
+    const err = m => { const e = el.querySelector('.camp-err'); if(e) e.textContent = m; };
+    el.querySelector('.camp-create').onclick = async () => {
+      const name = el.querySelector('.camp-name').value.trim() || 'New Campaign';
+      try {
+        const r = await fetch('/api/campaigns', { method:'POST', credentials:'same-origin',
+          headers:{'content-type':'application/json'}, body: JSON.stringify({ name }) });
+        if(!r.ok) throw 0;
+        set(await r.json());
+        panelOpen = false; renderPanel();
+      } catch(e) { err('Could not create — are you signed in?'); }
+    };
+    el.querySelector('.camp-join').onclick = async () => {
+      const code = el.querySelector('.camp-code').value.trim().toUpperCase();
+      if(!code) { err('Enter a join code.'); return; }
+      try {
+        const r = await fetch('/api/campaigns?code=' + encodeURIComponent(code), { credentials:'same-origin' });
+        if(r.status === 404) { err('No campaign with that code.'); return; }
+        if(!r.ok) throw 0;
+        set(await r.json());
+        panelOpen = false; renderPanel();
+      } catch(e) { err('Could not join — are you signed in?'); }
+    };
+  }
+
+  function set(c) {
+    campaign = (c && c.id) ? c : null;
+    lastId = 0;
+    pending = [];
+    if(campaign) start(); else stop();
+    renderBtn();
+    notify();
+    if(window.__ddScheduleSave) setTimeout(window.__ddScheduleSave, 300);   // persist the link
+  }
+
+  function togglePanel() { panelOpen = !panelOpen; renderPanel(); }
+  function toggleHide()  {
+    hideRolls = !hideRolls;
+    notify();
+    if(window.__ddScheduleSave) setTimeout(window.__ddScheduleSave, 300);
+  }
+
+  // Click outside closes the popover
+  document.addEventListener('click', e => {
+    if(!panelOpen) return;
+    if(e.target.closest('#camp-popover') || e.target.closest('#camp-btn')) return;
+    panelOpen = false; renderPanel();
+  });
+
+  return {
+    get: () => campaign,
+    set,
+    onRoll,
+    onChange,
+    broadcast,
+    toggleHide,
+    togglePanel,
+    isHidden: () => hideRolls,
+    setHidden: v => { hideRolls = !!v; renderBtn(); },
+    serialize: () => ({ campaign, hideRolls }),
+    restore: (s) => {
+      if(!s) return;
+      if(typeof s.hideRolls === 'boolean') hideRolls = s.hideRolls;
+      if(s.campaign && s.campaign.id) set(s.campaign); else { renderBtn(); notify(); }
+    },
+    render: renderBtn,
+  };
+})();
+window.GMCamp = GMCamp;
+window.__gmCampaign = () => GMCamp.get();   // Party tool reads the linked campaign from here
+GMCamp.render();
+</script>
+
 <!-- ═══ MAIN AREA ═══ -->
 <div class="main-area" id="main-area">
   <div class="pane" id="pane-1">
@@ -1105,6 +1300,8 @@ input[type="number"] { -moz-appearance: textfield; }
         <option value="notes">✎ Notes</option>
         <option value="audio">🌐 Browser</option>
         <option value="gen">🎲 Generators</option>
+        <option value="party">👥 Party</option>
+        <option value="rules">📖 Rulebooks</option>
         <option value="dice">🎲 Dice Tray</option>
       </select>
       <div class="pane-toolbar-slot" id="pane-1-toolbar"></div>
@@ -1122,6 +1319,8 @@ input[type="number"] { -moz-appearance: textfield; }
         <option value="notes">✎ Notes</option>
         <option value="audio">🌐 Browser</option>
         <option value="gen">🎲 Generators</option>
+        <option value="party">👥 Party</option>
+        <option value="rules">📖 Rulebooks</option>
         <option value="dice">🎲 Dice Tray</option>
       </select>
       <div class="pane-toolbar-slot" id="pane-2-toolbar"></div>
@@ -1138,6 +1337,8 @@ input[type="number"] { -moz-appearance: textfield; }
         <option value="notes" selected>✎ Notes</option>
         <option value="audio">🌐 Browser</option>
         <option value="gen">🎲 Generators</option>
+        <option value="party">👥 Party</option>
+        <option value="rules">📖 Rulebooks</option>
         <option value="dice">🎲 Dice Tray</option>
       </select>
       <div class="pane-toolbar-slot" id="pane-3-toolbar"></div>
@@ -1155,6 +1356,8 @@ input[type="number"] { -moz-appearance: textfield; }
         <option value="notes">✎ Notes</option>
         <option value="audio">🌐 Browser</option>
         <option value="gen">🎲 Generators</option>
+        <option value="party">👥 Party</option>
+        <option value="rules">📖 Rulebooks</option>
         <option value="dice" selected>🎲 Dice Tray</option>
       </select>
       <div class="pane-toolbar-slot" id="pane-4-toolbar"></div>
@@ -1163,6 +1366,55 @@ input[type="number"] { -moz-appearance: textfield; }
   </div>
 </div>
 
+
+<style>
+/* ═══ PARTY (player character sheets) ═══ */
+.pty-body { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.pty-bar { display:flex; gap:8px; align-items:center; padding:8px 12px; border-bottom:1px solid var(--border); background:var(--panel); flex-shrink:0; flex-wrap:wrap; }
+.pty-search { flex:1; min-width:120px; background:var(--panel-2); border:1px solid var(--border); color:var(--white); font-family:'Montserrat',sans-serif; font-size:12px; padding:5px 8px; outline:none; }
+.pty-note { font-family:'Montserrat',sans-serif; font-size:10px; color:var(--muted); }
+.pty-list { flex:1; overflow-y:auto; padding:12px; display:flex; flex-direction:column; gap:10px; }
+.pty-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:var(--muted); text-align:center; padding:20px; }
+.pty-empty-icon { font-size:34px; opacity:.6; }
+.pty-empty-title { font-family:'Montserrat',sans-serif; font-weight:900; text-transform:uppercase; letter-spacing:.12em; font-size:12px; color:var(--light); }
+.pty-empty-sub { font-family:'Montserrat',sans-serif; font-size:11px; max-width:340px; line-height:1.5; }
+.pty-card { border:1px solid var(--border); background:var(--panel-2); }
+.pty-card-hd { display:flex; align-items:center; gap:10px; padding:8px 10px; cursor:pointer; background:var(--panel); border-bottom:1px solid var(--border); }
+.pty-name { font-family:'Montserrat',sans-serif; font-weight:900; font-size:13px; color:var(--gold); flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.pty-sub { font-family:'Montserrat',sans-serif; font-size:10px; color:var(--muted); }
+.pty-chip { font-family:'Montserrat',sans-serif; font-size:10px; font-weight:700; color:var(--light); border:1px solid var(--border); padding:2px 6px; white-space:nowrap; }
+.pty-chip b { color:var(--white); }
+.pty-x { background:transparent; border:1px solid var(--border); color:var(--muted); cursor:pointer; font-size:11px; line-height:1; padding:2px 5px; }
+.pty-x:hover { color:#df6a6a; border-color:#7a2d2d; }
+.pty-card-bd { padding:10px; display:none; }
+.pty-card.open .pty-card-bd { display:block; }
+.pty-stats { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin-bottom:10px; }
+.pty-stat { border:1px solid var(--border); text-align:center; padding:4px 2px; }
+.pty-stat-lbl { font-family:'Montserrat',sans-serif; font-size:8px; font-weight:900; letter-spacing:.1em; color:var(--muted); }
+.pty-stat-mod { font-family:'Share Tech Mono',monospace; font-size:16px; color:var(--white); }
+.pty-stat-val { font-family:'Montserrat',sans-serif; font-size:9px; color:var(--muted); }
+.pty-sec { margin-top:8px; }
+.pty-sec-h { font-family:'Montserrat',sans-serif; font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:.12em; color:var(--gold); border-bottom:1px solid var(--border); padding-bottom:3px; margin-bottom:5px; }
+.pty-line { font-family:'Montserrat',sans-serif; font-size:11px; color:var(--light); line-height:1.6; }
+.pty-line .dim { color:var(--muted); }
+.pty-line .lost { color:#df6a6a; text-decoration:line-through; }
+/* ═══ RULEBOOKS ═══ */
+.rul-body { flex:1; display:flex; flex-direction:column; overflow:hidden; }
+.rul-bar { display:flex; gap:6px; align-items:center; padding:6px 10px; border-bottom:1px solid var(--border); background:var(--panel); flex-shrink:0; flex-wrap:wrap; }
+.rul-search { flex:1; min-width:120px; background:var(--panel-2); border:1px solid var(--border); color:var(--white); font-family:'Montserrat',sans-serif; font-size:12px; padding:5px 8px; outline:none; }
+.rul-booktabs { display:flex; gap:4px; overflow-x:auto; }
+.rul-booktab { font-family:'Montserrat',sans-serif; font-size:10px; font-weight:700; padding:4px 8px; background:var(--panel-2); border:1px solid var(--border); color:var(--muted); cursor:pointer; white-space:nowrap; }
+.rul-booktab.on { background:var(--gold); color:#1a1a1a; border-color:var(--gold); }
+.rul-view { flex:1; overflow:hidden; display:flex; flex-direction:column; }
+.rul-scroll { flex:1; overflow-y:auto; padding:12px; }
+.rul-frame-wrap { flex:1; display:flex; align-items:center; justify-content:center; overflow:auto; background:#111; }
+.rul-frame { width:100%; height:100%; border:none; }
+.rul-empty { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; color:var(--muted); text-align:center; padding:20px; }
+.rul-block { border:1px solid var(--border); background:var(--panel-2); padding:8px 10px; margin-bottom:8px; }
+.rul-block-h { font-family:'Montserrat',sans-serif; font-weight:900; font-size:12px; color:var(--gold); margin-bottom:3px; }
+.rul-block-s { font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--white); line-height:1.6; }
+.rul-block-n { font-family:'Montserrat',sans-serif; font-size:11px; color:var(--muted); line-height:1.5; margin-top:3px; }
+</style>
 
 <!-- ═══ TOOL TEMPLATES ═══ -->
 <template id="tpl-adventure">
@@ -1688,6 +1940,55 @@ input[type="number"] { -moz-appearance: textfield; }
   </div>
 </template>
 
+<template id="tpl-party">
+  <div class="tool-instance pty-tool" data-tool="party">
+    <div class="toolbar-tpl" style="display:none">
+      <label class="btn primary small" style="cursor:pointer;display:inline-flex;align-items:center;justify-content:center;">
+        + Add Sheet
+        <input type="file" class="pty-file-input" accept=".json,application/json" multiple style="display:none;">
+      </label>
+      <button class="btn small ghost pty-paste" title="Paste a character sheet JSON export">Paste</button>
+      <button class="btn small ghost pty-sync" title="Pull sheets shared with the linked campaign">&#8635; Sync</button>
+      <div class="toolbar-spacer"></div>
+      <button class="btn small ghost pty-clear">Clear</button>
+    </div>
+    <div class="pty-body">
+      <div class="pty-bar">
+        <input type="text" class="pty-search" placeholder="Filter party…">
+        <span class="pty-note"></span>
+      </div>
+      <div class="pty-empty">
+        <div class="pty-empty-icon">&#128101;</div>
+        <div class="pty-empty-title">No Character Sheets</div>
+        <div class="pty-empty-sub">Add the .json a player exported from their character sheet (Save), paste one in, or press Sync to pull sheets shared with your linked campaign.</div>
+      </div>
+      <div class="pty-list" style="display:none;"></div>
+    </div>
+  </div>
+</template>
+<template id="tpl-rules">
+  <div class="tool-instance rul-tool" data-tool="rules">
+    <div class="toolbar-tpl" style="display:none">
+      <button class="btn small ghost rul-refresh" title="Re-read the rulebooks on the server">&#8635; Refresh</button>
+      <a class="btn small ghost rul-newtab" href="#" target="_blank" rel="noreferrer" style="display:none;text-decoration:none;">Open &#8599;</a>
+      <div class="toolbar-spacer"></div>
+      <span class="rul-note"></span>
+    </div>
+    <div class="rul-body">
+      <div class="rul-bar">
+        <div class="rul-booktabs"></div>
+      </div>
+      <div class="rul-view">
+        <div class="rul-empty">
+          <div class="pty-empty-icon">&#128214;</div>
+          <div class="pty-empty-title">No Rulebooks Found</div>
+          <div class="pty-empty-sub">Rulebooks are read from the server &mdash; the same books listed on the Rulebooks page. Drop a PDF into public/rulebooks/ and press Refresh.</div>
+        </div>
+        <div class="rul-frame-wrap" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+</template>
 
 <script>
 // ══════════════════════════════════════════
@@ -1697,7 +1998,7 @@ input[type="number"] { -moz-appearance: textfield; }
 // This is what makes loaded files / typed content persist.
 // ══════════════════════════════════════════
 
-const TOOL_TYPES = ['adventure', 'maps', 'trackers', 'notes', 'audio', 'gen'];
+const TOOL_TYPES = ['adventure', 'maps', 'trackers', 'notes', 'audio', 'gen', 'party', 'rules'];
 const instancePool = document.createElement('div');
 instancePool.style.cssText = 'position:fixed; top:0; left:-9999px; width:1px; height:1px; overflow:hidden;';
 document.body.appendChild(instancePool);
@@ -1766,7 +2067,7 @@ GM_MOBILE_MQ.addEventListener('change', () => setSplit(splitPref));
 // Each tool has a single DOM instance, so it can only live in one pane.
 // If a duplicate is found, swap that pane to the first unused tool.
 function dedupePaneTools(count) {
-  const all = ['adventure','maps','trackers','notes','audio','gen','dice'];
+  const all = ['adventure','maps','trackers','notes','audio','gen','party','rules','dice'];
   const used = new Set();
   for(let p = 1; p <= (count || 4); p++) {
     let tool = paneTools[p];
@@ -1906,6 +2207,12 @@ function syncToolbar(slot, toolNode) {
     ['.aud-npc',       '.aud-npc'],
     ['.aud-wata',      '.aud-wata'],
     ['.aud-ds',        '.aud-ds'],
+    // party
+    ['.pty-paste',     '.pty-paste'],
+    ['.pty-sync',      '.pty-sync'],
+    ['.pty-clear',     '.pty-clear'],
+    // rulebooks
+    ['.rul-refresh',   '.rul-refresh'],
   ];
 
   pairs.forEach(([cloneSelector, liveSelector]) => {
@@ -1964,6 +2271,23 @@ function syncToolbar(slot, toolNode) {
         });
       });
     }
+  }
+
+  // Party file picker: the cloned label opens the live input
+  const clonePtyInput = slot.querySelector('.pty-file-input');
+  const livePtyInput  = toolNode.querySelector('.pty-file-input');
+  if(clonePtyInput && livePtyInput) {
+    const lbl = clonePtyInput.closest('label');
+    if(lbl) lbl.addEventListener('click', e => { e.preventDefault(); livePtyInput.click(); });
+  }
+
+  // Rulebooks: mirror the live "open in new tab" link onto the cloned one
+  const cloneOpen = slot.querySelector('.rul-newtab');
+  const liveOpen  = toolNode.querySelector('.rul-newtab');
+  if(cloneOpen && liveOpen) {
+    const mirror = () => { cloneOpen.href = liveOpen.href; cloneOpen.style.display = liveOpen.style.display; };
+    mirror();
+    toolNode.addEventListener('rul-book-change', mirror);
   }
 
   // Notes import: cloned label click triggers live file input
@@ -5531,7 +5855,7 @@ window.init_gen = function(root) {
         return d;
       };
 
-      // ── 5-Room Dungeon (rooms left, map right) ──────────────────────
+      // ── Dungeon: rooms full width, map underneath ───────────────────
       const nRooms = parseInt(root.querySelector('#gen-adv-rooms').value) || 5;
       const monSrc = root.querySelector('#gen-adv-monsrc').value;
       const nMon  = parseInt(root.querySelector('#gen-adv-nmon').value)  || 3;
@@ -5539,13 +5863,9 @@ window.init_gen = function(root) {
       const nTres = parseInt(root.querySelector('#gen-adv-ntres').value) || 5;
 
       const dungeonWrap = document.createElement('div');
-      dungeonWrap.style.cssText = 'padding:6px 8px;border-bottom:1px solid var(--border);';
+      dungeonWrap.style.cssText = 'padding:6px 8px;border-bottom:1px solid var(--border);display:flex;flex-direction:column;gap:8px;';
 
-      // Side-by-side: rooms left, map right
-      const dungSplit = document.createElement('div');
-      dungSplit.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:start;';
-
-      // Left: dungeon room cards stacked
+      // Rooms — full width, one card per row
       const dungRooms = document.createElement('div');
       dungRooms.style.cssText = 'display:flex;flex-direction:column;gap:5px;';
       const dungEl = genDungeon(level, motif, nRooms);
@@ -5554,23 +5874,19 @@ window.init_gen = function(root) {
         dungRooms.appendChild(c);
       });
       if(!dungRooms.children.length) dungRooms.appendChild(dungEl);
-      dungSplit.appendChild(dungRooms);
+      dungeonWrap.appendChild(dungRooms);
 
-      // Right: map
-      const mapCol = document.createElement('div');
-      mapCol.style.cssText = 'display:flex;align-items:flex-start;justify-content:center;';
+      // Map — below the rooms, centred, free to use the height it needs
       if(window._genDungeonMap) {
         const mapResult = window._genDungeonMap(nRooms, mapstyle);
         root._mapSvg = mapResult.svg;
         const mapWrap = document.createElement('div');
-        mapWrap.style.cssText = 'width:100%;';
+        mapWrap.style.cssText = 'display:flex;justify-content:center;width:100%;';
         mapWrap.innerHTML = mapResult.svg;
         const svgEl = mapWrap.querySelector('svg');
-        if(svgEl){ svgEl.style.width='100%'; svgEl.style.height='auto'; svgEl.style.maxHeight='380px'; }
-        mapCol.appendChild(mapWrap);
+        if(svgEl){ svgEl.style.width='100%'; svgEl.style.height='auto'; svgEl.style.maxHeight='none'; }
+        dungeonWrap.appendChild(mapWrap);
       }
-      dungSplit.appendChild(mapCol);
-      dungeonWrap.appendChild(dungSplit);
       res.appendChild(dungeonWrap);
 
       // ── 2-column section helper ──
@@ -6477,6 +6793,7 @@ function saveSession() {
     saved: new Date().toISOString(),
     paneTools,
     splitMode: splitPref,
+    campaign: GMCamp.serialize(),   // the link lives in the top bar, not in a tool
     tools: {}
   };
 
@@ -6505,6 +6822,9 @@ function loadSession(input) {
     try {
       const data = JSON.parse(e.target.result);
       if(!data.version) throw new Error('Unrecognised file');
+
+      // Restore the campaign link (older files kept it inside the dice tool)
+      if(data.campaign) GMCamp.restore(data.campaign);
 
       // Restore pane layout
       if(data.splitMode) setSplit(data.splitMode);
@@ -6539,7 +6859,7 @@ function loadSession(input) {
 // ── Server persistence hooks (used by the injected shim when running on Dungeon Desk) ──
 // __gmScreenGetState: returns the full session state as a plain object
 window.__gmScreenGetState = function() {
-  const data = { version: 1, paneTools, splitMode: splitPref, tools: {} };
+  const data = { version: 1, paneTools, splitMode: splitPref, campaign: GMCamp.serialize(), tools: {} };
   Object.entries(instances).forEach(([type, node]) => {
     if(node._getState) try { data.tools[type] = node._getState(); } catch(e) {}
   });
@@ -6549,6 +6869,7 @@ window.__gmScreenGetState = function() {
 // __gmScreenSetState: restores a previously saved state object
 window.__gmScreenSetState = function(data) {
   if(!data || !data.version) return;
+  if(data.campaign) GMCamp.restore(data.campaign);
   if(data.splitMode) setSplit(data.splitMode);
   if(data.paneTools) {
     setPaneTool(1, data.paneTools[1] || 'adventure');
@@ -6657,6 +6978,71 @@ const SD_MONSTERS = [
   {name:'Giant Eagle',     ac:'13', hp:'13',  atk:'2 talon +3 (1d6) and 1 beak +3 (1d4)',       mv:'double near (fly)', lv:'2', al:'N', s:'+3',d:'+3',c:'+1',i:'-2',w:'+2',ch:'+1', notes:'Keen Sight: ADV on perception involving sight.'},
   {name:'Crocodile',       ac:'13', hp:'16',  atk:'1 bite +4 (2d6)',                             mv:'near (swim)',   lv:'3',  al:'N', s:'+4',d:'+1',c:'+2',i:'-4',w:'+1',ch:'-3', notes:'Stealth in water. Grab: DC 12 STR on bite hit or grappled.'},
   {name:'Mummy',           ac:'13', hp:'38',  atk:'2 fist +4 (1d6+rot)',                         mv:'near',          lv:'6',  al:'C', s:'+3',d:'-1',c:'+2',i:'-2',w:'+0',ch:'-2', notes:'Rot: DC 15 CON or HP max reduced by damage until remove curse. Fire vulnerability. Undead immunities.'},
+  // ══ CURSED SCROLL COMPILATION ══
+  {name:'Anaconda, Giant',  ac:'12', hp:'33', atk:'2 bite +6 (1d10 + swallow)',                                  mv:'near (climb, swim)',    lv:'7',  al:'N', s:'+4',d:'+2',c:'+2',i:'-2',w:'+1',ch:'-2', notes:"Swallow: DC 12 STR or swallowed. Total darkness inside and 1d8 damage per round. Regurgitates all swallowed if dealt 15+ damage in one round inside its gullet."},
+  {name:'Ant, Giant',       ac:'12', hp:'5',  atk:'1 bite +3 (1d6 + grab)',                                      mv:'near (climb)',          lv:'1',  al:'N', s:'+3',d:'+1',c:'+1',i:'-3',w:'+0',ch:'-3', notes:"Grab: DC 12 STR or pinned in the ant's mandibles (DC 12 STR on turn to break free). It can carry grabbed targets. Mighty: ADV on STR checks to move objects."},
+  {name:'Basilisk Hatchling', ac:'13', hp:'6', atk:'1 bite +1 (1d4 + petrify)',                                  mv:'near',                  lv:'1',  al:'N', s:'+1',d:'+0',c:'+2',i:'-3',w:'+1',ch:'-2', notes:'Petrify: Any creature that touches it or meets its gaze, DC 9 CON or one random limb is petrified for a day.'},
+  {name:'Bezelak',          ac:'15', hp:'75', atk:'3 rend +9 (2d10) and 1 fire belch',                           mv:'double near (climb)',   lv:'16', al:'C', s:'+5',d:'+2',c:'+3',i:'-2',w:'+3',ch:'-3', notes:'Fire Belch: Near-sized cube extending from bezelak. DC 15 DEX or 4d10 damage. Bezoar: 1d4 orange-sized stones in its gut worth 500 gp each (random Utility magic items).'},
+  {name:'Bittermold',       ac:'12', hp:'5',  atk:'1 shortsword +1 (1d6) or 1 sling (far) +2 (1d4)',             mv:'near',                  lv:'1',  al:'C', s:'+1',d:'+2',c:'+1',i:'+0',w:'+0',ch:'+0', notes:'Rubbery: Half damage from stabbing weapons.'},
+  {name:'Blue Dart Frog',   ac:'12', hp:'1',  atk:'1 touch +2 (toxin)',                                          mv:'near (climb)',          lv:'0',  al:'N', s:'-3',d:'+2',c:'+0',i:'-3',w:'+1',ch:'-3', notes:'Toxin: DC 15 CON or go to 0 HP with a death timer of 1. Cannot be magically healed during this time. Survivors end all diseases afflicting them.'},
+  {name:'Bogthorn',         ac:'13', hp:'11', atk:'1 stab +0 (1d4) or 1 thorn hail (near) +2 (1d4 + poison)',    mv:'near (climb)',          lv:'2',  al:'C', s:'+0',d:'+2',c:'+2',i:'-3',w:'+1',ch:'-3', notes:'Poison: DC 12 CON or paralyzed for 1d4 rounds.'},
+  {name:'Camel, Silver',    ac:'10', hp:'13', atk:'1 hoof +3 (1d6) or 1 spit (near) +0 (1d4)',                   mv:'double near',           lv:'2',  al:'N', s:'+3',d:'+0',c:'+4',i:'-2',w:'+1',ch:'+0', notes:'Rare camels with soft, silvery hair and affable dispositions. Does not spook.'},
+  {name:'Canyon Ape',       ac:'13', hp:'29', atk:'3 rend +6 (2d6)',                                             mv:'near (climb)',          lv:'6',  al:'N', s:'+4',d:'+3',c:'+2',i:'-1',w:'+1',ch:'-1', notes:'Ambush: Double damage against surprised foes. Stalk: ADV on DEX checks while in mountains and canyons.'},
+  {name:'Catfish, Giant',   ac:'13', hp:'56', atk:'2 bite +9 (2d10 + swallow)',                                  mv:'double near (swim)',    lv:'12', al:'N', s:'+4',d:'+0',c:'+2',i:'-3',w:'+1',ch:'-3', notes:'Swallow: On a natural attack roll of 18-20, the target is swallowed. Total darkness and 2d8 damage per round. Regurgitates all if dealt 15+ damage in one round inside its gullet.'},
+  {name:'Cobra Statue',     ac:'14', hp:'30', atk:'1 bite +4 (1d8 + poison) or 1 hypnotize',                     mv:'near',                  lv:'6',  al:'C', s:'+4',d:'+1',c:'+3',i:'-3',w:'+0',ch:'-3', notes:'Impervious: Only damaged by magical sources. Hypnotize: One creature in near who can see it, DC 12 CHA or helplessly stupefied for 1 round. Poison: DC 18 CON or go to 0 HP with a death timer of 1.'},
+  {name:'Condor, Dire',     ac:'11', hp:'16', atk:'2 beak +3 (1d8 + grab)',                                      mv:'double near (fly)',     lv:'3',  al:'N', s:'+2',d:'+1',c:'+3',i:'-2',w:'+1',ch:'-3', notes:"Grab: Steal 1 random piece of the target's carried gear."},
+  {name:'Death Slug',       ac:'12', hp:'1',  atk:'1 bite +0 (1 + burrow)',                                      mv:'close (climb)',         lv:'0',  al:'N', s:'-3',d:'+2',c:'+0',i:'-3',w:'-2',ch:'-3', notes:"Burrow: Plunges under the target's skin; its AC becomes 18 and it tunnels toward the heart. A living humanoid dies in 1d4 rounds unless the slug is killed first."},
+  {name:'Donkey',           ac:'10', hp:'6',  atk:'1 hoof +3 (1d4)',                                             mv:'near',                  lv:'1',  al:'N', s:'+3',d:'+0',c:'+2',i:'-2',w:'+1',ch:'-2', notes:'Stocky, long-eared cousins of horses that are capable haulers.'},
+  {name:'Drake, Greater',   ac:'15', hp:'38', atk:'2 claw +7 (1d12) or 1 fire gout',                             mv:'double near (fly)',     lv:'8',  al:'N', s:'+4',d:'+3',c:'+2',i:'-2',w:'+2',ch:'+0', notes:'Fireblood: Fire immune. Fire Gout: Fills a near-sized cube extending from the drake. DC 12 DEX or 4d6 damage.'},
+  {name:'Drake, Lesser',    ac:'13', hp:'28', atk:'2 claw +5 (1d10) or 1 fire spit',                             mv:'double near (fly)',     lv:'6',  al:'N', s:'+3',d:'+2',c:'+1',i:'-2',w:'+1',ch:'+0', notes:'Fireblood: Fire immune. Fire Spit: One target in double near, DC 12 DEX or 3d6 damage.'},
+  {name:'Dralech',          ac:'13', hp:'29', atk:'3 bone axe +5 (2d6)',                                         mv:'near',                  lv:'6',  al:'C', s:'+4',d:'+1',c:'+2',i:'+0',w:'+0',ch:'+1', notes:'Shatter: Destroy one non-magic piece of gear instead of dealing damage.'},
+  {name:'Draugr',           ac:'16', hp:'25', atk:'2 bastard sword +4 (1d8)',                                    mv:'near',                  lv:'5',  al:'C', s:'+3',d:'+1',c:'+3',i:'+0',w:'+0',ch:'+3', notes:'Greater Undead: Immune to morale checks. Only damaged by silver or magical sources. Death Chill: Checks to stabilize dying creatures within near are DC 18. Stone Swim: Passes through stone as if it were water.'},
+  {name:'Dremir',           ac:'11', hp:'14', atk:'1 rend +3 (1d6) or 1 spell +3',                               mv:'near',                  lv:'3',  al:'C', s:'+0',d:'+2',c:'+1',i:'+2',w:'+1',ch:'+1', notes:'Impale (INT DC 12): Far range, 1d6 damage. Slow (INT DC 12): One target in near moves at half speed for 1d4 rounds.'},
+  {name:'Dunefiend',        ac:'14', hp:'20', atk:'2 tear +4 (1d8) or 1 howl',                                   mv:'near',                  lv:'4',  al:'C', s:'+3',d:'+4',c:'+2',i:'+0',w:'+1',ch:'+0', notes:'Howl: Resting creatures who hear it within far, DC 12 CHA or gain no benefit from the rest (immune for 1 day if passed).'},
+  {name:'Dust Devil',       ac:'16', hp:'36', atk:'2 lacerate +5 (2d8)',                                         mv:'double near',           lv:'8',  al:'C', s:'+4',d:'+4',c:'+0',i:'-2',w:'+0',ch:'-2', notes:'Impervious: Only damaged by magical sources. Fling: In place of attacks, all within close DC 15 DEX or flung 1d100 feet in a random direction.'},
+  {name:'Dverg',            ac:'13', hp:'14', atk:'1 greataxe +2 (1d10)',                                        mv:'near',                  lv:'3',  al:'L', s:'+2',d:'+0',c:'+1',i:'+1',w:'+1',ch:'+0', notes:'Shapeshift: In place of attacks, turn into a small animal, or back into original form.'},
+  {name:'Gordock Breeg',    ac:'15', hp:'19', atk:'1 bastard sword +3 (1d10) or 1 sling (far) +2 (1d4)',         mv:'near',                  lv:'4',  al:'N', s:'+3',d:'+2',c:'+1',i:'+1',w:'+2',ch:'+2', notes:'Algae-Eater: Lose 1d4 HP to gain advantage on the next check or attack.'},
+  {name:'Hero',             ac:'16', hp:'25', atk:'3 bastard sword +5 (1d8) or 1 spear (close/near) +5 (1d6)',   mv:'near',                  lv:'5',  al:'N', s:'+3',d:'+1',c:'+3',i:'+0',w:'+1',ch:'+1', notes:'High-ranked gladiators who have attained widespread fame.'},
+  {name:'Hexling',          ac:'12', hp:'11', atk:'1 chill touch +2 (1d6 + energy drain)',                       mv:'near',                  lv:'2',  al:'C', s:'+0',d:'+2',c:'+2',i:'+0',w:'+1',ch:'+0', notes:'Energy Drain: 1d4 CON damage. A creature reduced to 0 CON becomes a hexling.'},
+  {name:'Horse, War',       ac:'11', hp:'15', atk:'1 hooves +4 (1d6)',                                           mv:'double near',           lv:'3',  al:'N', s:'+3',d:'+1',c:'+2',i:'-3',w:'+1',ch:'-1', notes:'Muscular destriers trained to carry warriors into combat. Can wear armor; does not spook.'},
+  {name:'Howler',           ac:'15', hp:'5',  atk:'1 club +2 (1d4) or 1 sling (far) +2 (1d4)',                   mv:'near',                  lv:'1',  al:'N', s:'+2',d:'+2',c:'+1',i:'+0',w:'+0',ch:'+0', notes:'Mob: Deals +1 damage in melee when beside an ally.'},
+  {name:'Ichor Ooze',       ac:'12', hp:'15', atk:'2 tendril +3 (1d6)',                                          mv:'near (climb)',          lv:'3',  al:'N', s:'+3',d:'+2',c:'+2',i:'-3',w:'+1',ch:'-3', notes:'Rubbery: Half damage from stabbing weapons. Corrosive: Metal or wood that touches the ooze is destroyed on a d6 roll of 1.'},
+  {name:'Jaguar King',      ac:'16', hp:'56', atk:'2 obsidian spear (close/near) +7 (1d8) and 1 pounce',         mv:'near (climb)',          lv:'12', al:'N', s:'+3',d:'+4',c:'+2',i:'+0',w:'+3',ch:'+3', notes:'Pounce: Jump up to a near distance. If landing within close range of an enemy, make one melee attack with ADV.'},
+  {name:'Javelina',         ac:'10', hp:'5',  atk:'1 tusk +1 (1d6)',                                             mv:'near',                  lv:'1',  al:'C', s:'+0',d:'+0',c:'+1',i:'-3',w:'+0',ch:'-2', notes:'Rage: If injured, tusk attacks deal d8 damage instead of d6.'},
+  {name:'Javelina, Diseased', ac:'10', hp:'10', atk:'1 tusk +2 (1d6)',                                           mv:'near',                  lv:'2',  al:'C', s:'+1',d:'+0',c:'+1',i:'-3',w:'+0',ch:'-3', notes:'Undead: Immune to morale checks. Rage: If injured, tusk attacks deal d8 damage instead of d6.'},
+  {name:'Kawitzek',         ac:'13', hp:'44', atk:'3 bite +8 (2d12) or 1 spell',                                 mv:'double near',           lv:'9',  al:'N', s:'+5',d:'+1',c:'+4',i:'-3',w:'+3',ch:'-3', notes:'Whirlpool (WIS DC 12, focus): A near-sized cube of water within near changes shape, defies gravity, or flows in a different direction.'},
+  {name:'Librarian of Leng', ac:'14', hp:'28', atk:'1 bite +3 (1d6) or 2 spells +6',                             mv:'near',                  lv:'6',  al:'C', s:'+1',d:'+2',c:'+1',i:'+4',w:'+3',ch:'+2', notes:'Impervious: Only damaged by silver or magical sources. Overwhelm: DISADV on checks if its eyes or ears are uncovered. Absorb (INT DC 13): One target in far loses a random spell; librarian regains a lost spell. Eye of the Master (INT DC 15): One target in far — confuse, disintegrate (3d6), or telekinesis (hover to double near). Invoke Fear (INT DC 12): One creature in near cannot move into close range for 1d4 rounds. Mind Pierce (INT DC 13): One creature in far, 2d6 damage and blinded for 1 round.'},
+  {name:'Marrow Fiend',     ac:'15', hp:'39', atk:'2 claws +7 (1d10) and 1 sap gout (near line) +5 (2d6 + sap)', mv:'near (climb)',          lv:'8',  al:'C', s:'+4',d:'+4',c:'+3',i:'+2',w:'+3',ch:'+3', notes:'Devour: Use its turn to devour a humanoid body and regain 3d8 HP. Sap: DC 15 DEX or stuck in place; repeat the check on its turn to escape.'},
+  {name:'Mirage',           ac:'6',  hp:'32', atk:'1 leech',                                                     mv:'near',                  lv:'8',  al:'C', s:'-4',d:'-4',c:'-4',i:'+2',w:'+1',ch:'+4', notes:"Delude: Has the illusory look and feel of what its viewers expect or want it to be. DC 18 INT to notice it's an illusion. Leech: One target in near, DC 18 CHA or 3d6 damage; the mirage creates a plausible illusion to explain the injury."},
+  {name:'Morzo Moth',       ac:'16', hp:'37', atk:'2 bite +6 (2d6 + grab) and 1 wing dust',                      mv:'double near (fly)',     lv:'8',  al:'N', s:'+4',d:'+3',c:'+1',i:'-3',w:'+1',ch:'-3', notes:"Grab: DC 15 STR or held (DC 15 STR on turn to break free). Bite attacks automatically hit grabbed targets. Wing Dust: All creatures in near DC 12 CON or lose half their current HP (round down). Can't take creatures below 1 HP."},
+  {name:'Mugdulblub',       ac:'16', hp:'58', atk:'3 tendril (near) +8 (2d8) and 1 dissolve',                    mv:'near (climb, swim)',    lv:'12', al:'C', s:'+5',d:'+3',c:'+4',i:'+2',w:'+3',ch:'+4', notes:"Rubbery: Half damage from stabbing weapons. Mutagenic: Creatures within near have a 1:6 chance on their turn of a mutation (1d4: 1. extra eye, 2-3. lost bone, 4. extra finger). Dissolve: One creature in far, DC 15 CON or 1d4 CON damage. Reduced to 0, it becomes an ichor ooze under Mugdulblub's control."},
+  {name:'Mutant Catfish',   ac:'11', hp:'11', atk:'1 claw +2 (1d6) or 1 barb (near) +2 (1d4 + poison)',          mv:'near (swim)',           lv:'2',  al:'N', s:'+2',d:'+1',c:'+2',i:'-2',w:'+0',ch:'-2', notes:'Poison: DC 12 CON or paralyzed 1d4 rounds.'},
+  {name:'Nord',             ac:'15', hp:'10', atk:'1 greataxe +2 (1d8) or 1 shield wall',                        mv:'near',                  lv:'2',  al:'N', s:'+2',d:'+0',c:'+1',i:'+0',w:'+0',ch:'+0', notes:'Shield Wall: AC becomes 20 for 1 round.'},
+  {name:'Nuln',             ac:'12', hp:'13', atk:'2 spear (close/near) +3 (1d6)',                               mv:'near',                  lv:'3',  al:'C', s:'+1',d:'+1',c:'+0',i:'+0',w:'+0',ch:'-4', notes:'Rage 1/day: Immune to morale checks, +1d4 damage for 3 rounds. Contagious Madness: DC 12 CHA when first speaking with the nuln or take 1 point of CHA damage.'},
+  {name:'Oracle',           ac:'10', hp:'19', atk:'1 stave +2 (1d4) or 1 spell +3',                              mv:'near',                  lv:'4',  al:'N', s:'+1',d:'+0',c:'+1',i:'+0',w:'+2',ch:'+1', notes:'Berserk (WIS DC 13, focus): All allies within near deal +1d4 damage on each attack. Fate (WIS DC 12): One target in near gains or loses a luck token. Mjolnir (WIS DC 13): 2d6 damage to one target in near. Strike Blind (WIS DC 11): One target in near blinded for 1d4 rounds.'},
+  {name:'Orca',             ac:'12', hp:'39', atk:'2 bite +5 (1d10)',                                            mv:'double near (swim)',    lv:'8',  al:'N', s:'+4',d:'+0',c:'+3',i:'-2',w:'+1',ch:'-2', notes:'Pod Hunter: Deals +2 damage when an ally is within near.'},
+  {name:'Plogrina B.',      ac:'14', hp:'25', atk:'2 tendril (near) +4 (1d6)',                                   mv:'near',                  lv:'5',  al:'C', s:'+0',d:'+4',c:'+3',i:'+1',w:'+1',ch:'+3', notes:'Rubbery: Half damage from stabbing weapons. Slime Form: Turn into a puddle of slime that can climb walls for 1d4 rounds (does not use an action).'},
+  {name:'Ras-Godai',        ac:'13', hp:'13', atk:'1 razor chain (near) +4 (1d6)',                               mv:'near (teleport)',       lv:'3',  al:'C', s:'+1',d:'+2',c:'+0',i:'+0',w:'+1',ch:'+0', notes:'Assassinate: Deals double damage against unaware foes.'},
+  {name:'Rookie',           ac:'14', hp:'5',  atk:'1 shortsword +1 (1d6) or 1 javelin (close/far) +1 (1d4)',     mv:'near',                  lv:'1',  al:'N', s:'+1',d:'+1',c:'+1',i:'+0',w:'+0',ch:'+0', notes:'Inexperienced pit fighters.'},
+  {name:'Scourge, The',     ac:'17', hp:'84', atk:'3 rend +10 (2d10) or 1 lightning breath',                     mv:'double near (fly)',     lv:'18', al:'C', s:'+6',d:'+3',c:'+3',i:'+4',w:'+4',ch:'+5', notes:"Stormblood: Electricity immune. Lightning Breath: A 5' wide line extending double near. DC 15 DEX or 5d8 damage (DISADV if wearing metal armor). Mirage 1/day, in place of attacks: Create 3 illusory duplicates that disappear when hit; determine randomly what an attack hits. Corruption: Swallowed the Shield of the Witch-King; the spirit inside tortures and corrupts it."},
+  {name:'Scrag',            ac:'12', hp:'11', atk:'1 claw +2 (1d6)',                                             mv:'near (climb)',          lv:'2',  al:'N', s:'+2',d:'+2',c:'+2',i:'-2',w:'+1',ch:'-3', notes:'Tan monitor lizards as large as cows. They scamper low on wall-clinging feet.'},
+  {name:'Scrag, War',       ac:'12', hp:'15', atk:'1 claw +3 (1d6)',                                             mv:'near (climb)',          lv:'3',  al:'N', s:'+3',d:'+2',c:'+2',i:'-2',w:'+1',ch:'-3', notes:'Oversized scrag lizards trained to be unflinching in combat. Can wear armor; does not spook.'},
+  {name:'Sea Nymph',        ac:'13', hp:'13', atk:'1 slash +2 (1d6) or 1 sing',                                  mv:'near (swim)',           lv:'3',  al:'N', s:'+0',d:'+3',c:'+0',i:'+1',w:'+1',ch:'+2', notes:'Sing: All creatures who hear within double near, DC 12 CHA or transfixed in place for 1d4 rounds.'},
+  {name:'Sea Serpent',      ac:'14', hp:'58', atk:'3 bite +8 (2d12)',                                            mv:'double near (swim)',    lv:'12', al:'N', s:'+5',d:'+0',c:'+4',i:'-3',w:'+1',ch:'-3', notes:'Massive sea snakes with gauzy fins, scales, and serrated fangs.'},
+  {name:'Siruul',           ac:'14', hp:'9',  atk:'1 scimitar +3 (1d6) or 1 longbow (far) +3 (1d8)',             mv:'double near (mount)',   lv:'2',  al:'N', s:'+0',d:'+3',c:'+0',i:'+1',w:'+1',ch:'+1', notes:'Desert Born: ADV on DEX checks while in the wild desert. Mount: A loyal silver camel that refuses any other rider.'},
+  {name:'Skandrill',        ac:'13', hp:'14', atk:'2 bite +3 (1d8 + greedy)',                                    mv:'double near',           lv:'3',  al:'N', s:'+2',d:'+1',c:'+1',i:'-3',w:'+1',ch:'-3', notes:'Fireblood: Fire immune. Greedy: In place of dealing damage, steal one metallic object the target carries.'},
+  {name:'Skandrill, Rex',   ac:'13', hp:'19', atk:'2 bite +4 (1d8 + greedy) or 1 scream',                        mv:'double near',           lv:'4',  al:'N', s:'+3',d:'+1',c:'+1',i:'-3',w:'+1',ch:'-3', notes:'Fireblood: Fire immune. Greedy: In place of dealing damage, steal one metallic object. Scream 1/day: A hideous caw-scream summons 1d4 loyal skandrill, arriving in 2 rounds.'},
+  {name:'Skrell',           ac:'13', hp:'5',  atk:'1 claw +2 (1d6)',                                             mv:'double near',           lv:'1',  al:'C', s:'+2',d:'+3',c:'+1',i:'-3',w:'+1',ch:'-3', notes:'Clever: Advantage on checks to do the same action on a consecutive turn.'},
+  {name:'Stone Shaman',     ac:'11', hp:'19', atk:'1 obsidian dagger (near) +2 (1d6) and 1 spell +4',            mv:'near',                  lv:'4',  al:'C', s:'+2',d:'+1',c:'+1',i:'+0',w:'+3',ch:'+1', notes:'Daze (WIS DC 12, focus): One target in near is helplessly stunned. Death Touch (WIS DC 13): Close, one target takes 2d8 damage.'},
+  {name:'Stone Warrior',    ac:'12', hp:'5',  atk:'1 obsidian spear-thrower (far) +2 (1d8)',                     mv:'near',                  lv:'1',  al:'C', s:'+2',d:'+1',c:'+1',i:'+0',w:'+1',ch:'-1', notes:'Camouflage: ADV on checks to sneak and hide in a natural environment. Basilisk Hatchling: 1:6 chance of having a loyal basilisk hatchling.'},
+  {name:'Tar Bat',          ac:'13', hp:'4',  atk:'1 bite +3 (1d4)',                                             mv:'near (fly)',            lv:'1',  al:'N', s:'-3',d:'+3',c:'+0',i:'-3',w:'+1',ch:'-3', notes:'Pyro: Seeks open flames and ignites on contact with them to deal +1d4 damage. Immune to fire.'},
+  {name:'Troll, Deep',      ac:'13', hp:'39', atk:'2 claw +7 (1d10)',                                            mv:'near',                  lv:'8',  al:'C', s:'+4',d:'+2',c:'+3',i:'-1',w:'+1',ch:'+1', notes:'Regenerate: Regains 2d6 HP on its turn unless injured by a cold iron weapon the prior round.'},
+  {name:'Valkyrie',         ac:'17', hp:'66', atk:'3 blessed spear (near) +9 (3d6)',                             mv:'double near (fly)',     lv:'14', al:'L', s:'+4',d:'+3',c:'+3',i:'+3',w:'+4',ch:'+5', notes:'Impervious: Can only be injured by magical sources. Divine Courage: Immune to morale checks. Hostile spells targeting the valkyrie are DC 18 to cast.'},
+  {name:'Void Bat',         ac:'13', hp:'19', atk:'2 scream +4 (1d10)',                                          mv:'double near (fly)',     lv:'4',  al:'N', s:'-1',d:'+3',c:'+1',i:'-3',w:'+1',ch:'-3', notes:'Impervious: Immune to cold. Absorb Ambient Light: Faint light within double near dims to a faint ember (light only within close); the void bat regains 1d4 HP on its turn while this is in effect. Sunlight Sensitivity: DISADV on attacks in sunlight and 1d4 damage per round of exposure.'},
+  {name:'Void Being',       ac:'11', hp:'41', atk:'3 arm stab +8 (2d8) or 1 brain meld',                         mv:'near (climb)',          lv:'9',  al:'C', s:'+1',d:'+1',c:'+1',i:'+4',w:'+2',ch:'+4', notes:'Greater Undead: Immune to morale checks. Only damaged by silver or magical sources. Brain Meld: One undead creature within near, DC 15 CHA or falls under the void being\u2019s control for 1d4 days. Sunlight Sensitivity: DISADV on attacks in sunlight and 1d4 damage per round of exposure.'},
+  {name:'Wendel',           ac:'9',  hp:'11', atk:'1 slam +2 (1d6)',                                             mv:'near (climb)',          lv:'2',  al:'N', s:'+2',d:'-1',c:'+2',i:'-3',w:'+0',ch:'-3', notes:'Sticky: Climbs and clings to sheer surfaces effortlessly. Type (d8): 1. Pearly — docile, can be trained as a mount. 2. Ocher — toxic, DC 12 CON on touch or ill 1d4 rounds. 3. Silky — AC 12. 4. Puce — acid spit +4 (near), 1d6 damage. 5. Red — immune to morale checks. 6. Woolly — immune to cold. 7. Sea — swims and breathes underwater. 8. Spiny — slam deals 1d10 damage.'},
+  {name:'Werebear',         ac:'11', hp:'34', atk:'2 claw +6 (1d8)',                                             mv:'near',                  lv:'7',  al:'L', s:'+4',d:'+1',c:'+3',i:'+0',w:'+2',ch:'-1', notes:'Impervious: Only damaged by silver or magic sources. Crush: Extra die of damage if it hits the same target with both claws. Lycanthropy: 15+ damage from the same werebear and you contract lycanthropy.'},
+  {name:'Willowman, The',   ac:'17', hp:'61', atk:'3 finger needle +9 (2d10) and 1 terrify',                     mv:'near (teleport)',       lv:'13', al:'C', s:'+5',d:'+7',c:'+3',i:'+4',w:'+4',ch:'+5', notes:'Fearless: Immune to morale checks. Terrify: One target in near, DC 15 CHA or paralyzed 1d4 rounds. Waking Nightmare: In place of attacks, all creatures within near DC 15 CHA or flee in a random direction for 1d4 rounds.'},
 ];
 
 
@@ -6678,51 +7064,16 @@ function init_dice(root) {
   let log = [];         // [{label, detail, total, crit, adv, remote?, source?}]
 
   // ── Campaign link ──
-  let campaign = null; // {id, code, name}
-  const clientKey = 'gm-' + Math.random().toString(36).slice(2, 12);
-  let campLastId = 0;
-  let campTimer = null;
-  let hideRolls = false; // GM can hide their rolls from the campaign
-  let campPanelOpen = false;
-
-  function campBroadcast(entry) {
-    if(!campaign || hideRolls) return;
-    fetch('/api/campaigns/' + campaign.id + '/rolls', {
-      method: 'POST', credentials: 'same-origin',
-      headers: {'content-type':'application/json'},
-      body: JSON.stringify({
-        clientKey, source: 'GM',
-        label: entry.label, result: String(entry.total),
-        detail: entry.detail, type: entry.crit || 'normal'
-      })
-    }).catch(()=>{});
-  }
-  async function campPoll() {
-    if(!campaign) return;
-    try {
-      const url = '/api/campaigns/' + campaign.id + '/rolls' + (campLastId ? '?since='+campLastId : '');
-      const r = await fetch(url, { credentials: 'same-origin' });
-      if(!r.ok) return;
-      const data = await r.json();
-      let added = false;
-      (data.rolls||[]).forEach(roll=>{
-        if(roll.clientKey === clientKey) return;
-        log.unshift({ label: roll.label, detail: roll.detail, total: roll.result,
-                      crit: roll.type==='normal' ? '' : roll.type, adv: 'none',
-                      remote: true, source: roll.source });
-        added = true;
-      });
-      if(log.length > 100) log.length = 100;
-      if(data.last) campLastId = data.last;
-      if(added) renderLog();
-    } catch(e) {}
-  }
-  function campStart() {
-    if(campTimer) clearInterval(campTimer);
-    campPoll();
-    campTimer = setInterval(campPoll, 4000);
-  }
-  function campStop() { if(campTimer) { clearInterval(campTimer); campTimer = null; } }
+  // The connection itself lives in GMCamp (top bar). The tray only sends its
+  // rolls out and folds incoming ones into the log.
+  GMCamp.onChange(() => renderPool());   // link connected/left → show or hide the eye
+  GMCamp.onRoll(roll => {
+    log.unshift({ label: roll.label, detail: roll.detail, total: roll.result,
+                  crit: roll.type === 'normal' ? '' : roll.type, adv: 'none',
+                  remote: true, source: roll.source });
+    if(log.length > 100) log.length = 100;
+    renderLog();
+  });
 
   const DICE = [2, 4, 6, 8, 10, 12, 20, 100];
 
@@ -6751,18 +7102,16 @@ function init_dice(root) {
 
   function renderPool() {
     let h = '<div class="dice-pool-row">';
-    // Order: Link · Bonus · ADV · DIS · ✕ · Roll
-    h += '<button class="dice-camp-btn'+(campaign?' on':'')+'" title="'+(campaign?'Campaign: '+campaign.name:'Campaign link')+'">🔗</button>';
-    if(campaign) h += '<button class="dice-hide-btn'+(hideRolls?' on':'')+'" title="'+(hideRolls?'Rolls hidden from campaign — click to share':'Rolls shared with campaign — click to hide')+'">'+(hideRolls?'🙈':'👁')+'</button>';
+    // Order: Hide · Bonus · ADV · DIS · ✕ · Roll  (the campaign link itself is in the top bar)
+    const camp = GMCamp.get(), hidden = GMCamp.isHidden();
+    if(camp) h += '<button class="dice-hide-btn'+(hidden?' on':'')+'" title="'+(hidden?'Rolls hidden from campaign — click to share':'Rolls shared with campaign — click to hide')+'">'+(hidden?'🙈':'👁')+'</button>';
     h += '<input type="number" class="dice-mod" value="'+(modifier||'')+'" placeholder="+0" title="Bonus">';
     h += '<button class="dice-advbtn'+(advMode==='adv'?' on-adv':'')+'" data-m="adv" title="Advantage (d20)">ADV</button>';
     h += '<button class="dice-advbtn'+(advMode==='dis'?' on-dis':'')+'" data-m="dis" title="Disadvantage (d20)">DIS</button>';
     h += '<button class="dice-pool-clear" title="Clear pool">✕</button>';
     h += '<button class="dice-roll-go" title="Roll">🎲 Roll</button>';
     h += '</div>';
-    h += '<div class="dice-camp-panel" style="display:'+(campPanelOpen?'block':'none')+';"></div>';
     poolEl.innerHTML = h;
-    if(campPanelOpen) renderCampPanel(poolEl.querySelector('.dice-camp-panel'));
     poolEl.querySelector('.dice-mod').onchange = (e)=>{ modifier = parseInt(e.target.value)||0; renderTray(); };
     poolEl.querySelectorAll('.dice-advbtn').forEach(b=>{
       b.onclick = ()=>{ advMode = advMode===b.dataset.m ? 'none' : b.dataset.m; renderPool(); };
@@ -6770,54 +7119,7 @@ function init_dice(root) {
     poolEl.querySelector('.dice-roll-go').onclick = doRoll;
     poolEl.querySelector('.dice-pool-clear').onclick = ()=>{ pool={}; modifier=0; advMode='none'; renderTray(); renderPool(); };
     const hideBtn = poolEl.querySelector('.dice-hide-btn');
-    if(hideBtn) hideBtn.onclick = ()=>{ hideRolls = !hideRolls; renderPool(); };
-    poolEl.querySelector('.dice-camp-btn').onclick = ()=>{
-      campPanelOpen = !campPanelOpen;
-      renderPool();
-    };
-  }
-
-  function renderCampPanel(panel) {
-    const inputStyle = 'flex:1;min-width:80px;padding:6px 8px;background:var(--panel);border:1px solid var(--border);border-radius:4px;color:var(--light);font-family:Montserrat,sans-serif;font-size:10px;outline:none;';
-    const btnStyle = 'padding:6px 12px;border:none;border-radius:4px;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:900;font-size:9px;letter-spacing:.08em;text-transform:uppercase;flex-shrink:0;';
-    if(campaign) {
-      panel.innerHTML = '<div class="dice-camp-row">'
-        + '<span style="font-family:Montserrat,sans-serif;font-size:10px;color:var(--gold);flex:1;">🔗 <b>'+campaign.name+'</b> · code <b style="letter-spacing:.15em;">'+campaign.code+'</b></span>'
-        + '<button class="camp-leave" style="'+btnStyle+'background:#3a1a1a;color:#df8a8a;border:1px solid #7a2d2d;">Leave</button>'
-        + '</div>';
-      panel.querySelector('.camp-leave').onclick = ()=>{
-        campStop(); campaign = null; campLastId = 0;
-        campPanelOpen = false; renderPool();
-      };
-    } else {
-      panel.innerHTML = '<div class="dice-camp-row">'
-        + '<input type="text" class="camp-name" placeholder="Campaign name..." style="'+inputStyle+'">'
-        + '<button class="camp-create" style="'+btnStyle+'background:var(--gold);color:#1a1a1a;">Create</button>'
-        + '</div><div class="dice-camp-row">'
-        + '<input type="text" class="camp-code" placeholder="Join code..." maxlength="6" style="'+inputStyle+'text-transform:uppercase;letter-spacing:.12em;">'
-        + '<button class="camp-join" style="'+btnStyle+'background:#1a5a7a;color:#fff;">Join</button>'
-        + '</div><div class="camp-err" style="font-family:Montserrat,sans-serif;font-size:9px;color:#df6a6a;padding:2px 0;"></div>';
-      const err = (m)=>{ panel.querySelector('.camp-err').textContent = m; };
-      panel.querySelector('.camp-create').onclick = async ()=>{
-        const name = panel.querySelector('.camp-name').value.trim() || 'New Campaign';
-        try {
-          const r = await fetch('/api/campaigns', { method:'POST', credentials:'same-origin',
-            headers:{'content-type':'application/json'}, body: JSON.stringify({name}) });
-          if(!r.ok) throw 0;
-          campaign = await r.json(); campLastId = 0; campStart(); campPanelOpen = false; renderPool();
-        } catch(e) { err('Could not create — are you signed in?'); }
-      };
-      panel.querySelector('.camp-join').onclick = async ()=>{
-        const code = panel.querySelector('.camp-code').value.trim().toUpperCase();
-        if(!code) { err('Enter a join code.'); return; }
-        try {
-          const r = await fetch('/api/campaigns?code=' + encodeURIComponent(code), { credentials:'same-origin' });
-          if(r.status === 404) { err('No campaign with that code.'); return; }
-          if(!r.ok) throw 0;
-          campaign = await r.json(); campLastId = 0; campStart(); campPanelOpen = false; renderPool();
-        } catch(e) { err('Could not join — are you signed in?'); }
-      };
-    }
+    if(hideBtn) hideBtn.onclick = ()=>{ GMCamp.toggleHide(); renderPool(); };
   }
 
   function doRoll() {
@@ -6852,7 +7154,7 @@ function init_dice(root) {
     log.unshift(entry);
     if(log.length > 100) log.length = 100;
     renderLog();
-    campBroadcast(entry);
+    GMCamp.broadcast(entry);
   }
 
   function renderLog() {
@@ -6876,12 +7178,12 @@ function init_dice(root) {
 
   clearBtn.addEventListener('click', ()=>{ log = []; renderLog(); });
 
-  root._getState = () => ({ log, campaign, hideRolls });
+  root._getState = () => ({ log });
   root._setState = (s) => {
     if(!s) return;
     if(Array.isArray(s.log)) log = s.log;
-    if(s.campaign && s.campaign.id) { campaign = s.campaign; campStart(); }
-    if(typeof s.hideRolls === 'boolean') hideRolls = s.hideRolls;
+    // Sessions saved before the link moved to the top bar kept it in here
+    if(s.campaign || typeof s.hideRolls === 'boolean') GMCamp.restore(s);
     renderLog();
     renderPool();
   };
@@ -6893,5 +7195,376 @@ function init_dice(root) {
 window.init_dice = init_dice;
 
 </script>
+
+<script>
+// ══════════════════════════════════════════
+// PARTY TOOL — view the players' character sheets
+// Sheets arrive three ways:
+//   1. Sync — GET /api/campaigns/{id}/characters for the linked campaign
+//   2. Add Sheet — the .json a player exports from the character sheet
+//   3. Paste — the same JSON pasted in
+// ══════════════════════════════════════════
+function init_party(root) {
+  const fileInput = root.querySelector('.pty-file-input');
+  const pasteBtn  = root.querySelector('.pty-paste');
+  const syncBtn   = root.querySelector('.pty-sync');
+  const clearBtn  = root.querySelector('.pty-clear');
+  const searchEl  = root.querySelector('.pty-search');
+  const noteEl    = root.querySelector('.pty-note');
+  const listEl    = root.querySelector('.pty-list');
+  const emptyEl   = root.querySelector('.pty-empty');
+
+  let chars = [];          // [{id, source, sheet}]
+  let lastSync = null;
+  let filter = '';
+  let openIds = new Set();
+  let nextId = 1;
+
+  const esc = t => String(t == null ? '' : t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  const mod = v => { const m = Math.floor(((parseInt(v)||10) - 10) / 2); return (m >= 0 ? '+' : '') + m; };
+
+  // Sheets come from a few exporters (our sheet, Shadowdarklings). Read defensively.
+  function normalize(raw) {
+    if(!raw || typeof raw !== 'object') return null;
+    const d = raw.sheet && typeof raw.sheet === 'object' ? raw.sheet : raw;
+    if(!d.name && !d.class && !d.stats) return null;
+    const st = d.stats || d.rolledStats || {};
+    const pick = k => st[k] ?? st[k.toLowerCase()] ?? st[k[0] + k.slice(1).toLowerCase()] ?? 10;
+    const sheetExtra = d._sheet || {};
+    const spellRows = Array.isArray(sheetExtra.spellData) && sheetExtra.spellData.length
+      ? sheetExtra.spellData.filter(x => x.name)
+      : String(d.spellsKnown || '').split(',').map(x => x.trim()).filter(Boolean).map(n => ({ name:n, level:'', lost:false }));
+    const talents = (d.bonuses || [])
+      .filter(b => b && b.bonusName && !String(b.name || '').startsWith('Spell:'))
+      .map(b => b.bonusName);
+    return {
+      name:      d.name || 'Unnamed',
+      ancestry:  d.ancestry || '',
+      cls:       d.class || '',
+      title:     d.title || '',
+      level:     d.level || 1,
+      alignment: d.alignment || '',
+      deity:     d.deity || '',
+      background:d.background || '',
+      languages: d.languages || '',
+      ac:        d.armorClass || 0,
+      hpMax:     d.maxHitPoints || 0,
+      hpCur:     sheetExtra.hpCurrent || '',
+      luck:      sheetExtra.luckPts || '',
+      xp:        d.XP || 0,
+      stats:     { STR:pick('STR'), DEX:pick('DEX'), CON:pick('CON'), INT:pick('INT'), WIS:pick('WIS'), CHA:pick('CHA') },
+      attacks:   Array.isArray(d.attacks) ? d.attacks.filter(Boolean) : [],
+      spells:    spellRows,
+      talents,
+      gear:      (d.gear || []).map(g => ({ name:g.name, qty:g.quantity || 1, free:(g.slots ?? 1) === 0 })),
+      coins:     { gp:d.gold || 0, sp:d.silver || 0, cp:d.copper || 0 },
+    };
+  }
+
+  function addSheet(raw, source) {
+    const c = normalize(raw);
+    if(!c) return false;
+    // Re-syncing or re-importing the same character replaces the old copy
+    const i = chars.findIndex(x => x.sheet.name.toLowerCase() === c.name.toLowerCase());
+    if(i >= 0) chars[i] = { ...chars[i], source, sheet:c };
+    else chars.push({ id: nextId++, source, sheet: c });
+    return true;
+  }
+
+  function status(msg, isErr) {
+    noteEl.textContent = msg || '';
+    noteEl.style.color = isErr ? '#df6a6a' : '';
+  }
+
+  function cardHTML(entry) {
+    const c = entry.sheet;
+    const open = openIds.has(entry.id);
+    const hp = c.hpCur !== '' ? esc(c.hpCur) + '/' + c.hpMax : String(c.hpMax);
+    const line = [c.ancestry, c.cls].filter(Boolean).join(' ');
+    const sub = [line ? 'LV ' + c.level + ' ' + line : 'LV ' + c.level, c.title, c.alignment].filter(Boolean).join(' · ');
+
+    let h = '<div class="pty-card' + (open ? ' open' : '') + '" data-id="' + entry.id + '">';
+    h += '<div class="pty-card-hd">'
+       + '<div style="min-width:0;flex:1;"><div class="pty-name">' + esc(c.name) + '</div>'
+       + '<div class="pty-sub">' + esc(sub) + '</div></div>'
+       + '<span class="pty-chip">AC <b>' + esc(c.ac) + '</b></span>'
+       + '<span class="pty-chip">HP <b>' + hp + '</b></span>'
+       + (c.luck ? '<span class="pty-chip">Luck <b>' + esc(c.luck) + '</b></span>' : '')
+       + '<button class="pty-x" data-remove="' + entry.id + '" title="Remove">✕</button>'
+       + '</div>';
+
+    h += '<div class="pty-card-bd">';
+    h += '<div class="pty-stats">' + ['STR','DEX','CON','INT','WIS','CHA'].map(k =>
+        '<div class="pty-stat"><div class="pty-stat-lbl">' + k + '</div>'
+      + '<div class="pty-stat-mod">' + mod(c.stats[k]) + '</div>'
+      + '<div class="pty-stat-val">' + esc(c.stats[k]) + '</div></div>').join('') + '</div>';
+
+    if(c.attacks.length) h += '<div class="pty-sec"><div class="pty-sec-h">Attacks</div>'
+      + c.attacks.map(a => '<div class="pty-line">' + esc(a) + '</div>').join('') + '</div>';
+
+    if(c.spells.length) h += '<div class="pty-sec"><div class="pty-sec-h">Spells</div>'
+      + c.spells.map(sp => '<div class="pty-line' + (sp.lost ? ' lost' : '') + '">' + esc(sp.name)
+        + (sp.level ? ' <span class="dim">(T' + esc(sp.level) + ', DC ' + (10 + (parseInt(sp.level) || 1)) + ')</span>' : '')
+        + (sp.lost ? ' <span class="dim">— lost</span>' : '') + '</div>').join('') + '</div>';
+
+    if(c.talents.length) h += '<div class="pty-sec"><div class="pty-sec-h">Talents &amp; Features</div>'
+      + c.talents.map(t => '<div class="pty-line">' + esc(t) + '</div>').join('') + '</div>';
+
+    const carried = c.gear.filter(g => !g.free), free = c.gear.filter(g => g.free);
+    if(c.gear.length || c.coins.gp || c.coins.sp || c.coins.cp) {
+      h += '<div class="pty-sec"><div class="pty-sec-h">Gear</div>';
+      h += '<div class="pty-line">' + (carried.length
+        ? carried.map(g => esc(g.name) + (g.qty > 1 ? ' <span class="dim">×' + g.qty + '</span>' : '')).join(', ')
+        : '<span class="dim">—</span>') + '</div>';
+      if(free.length) h += '<div class="pty-line dim">Free to carry: ' + free.map(g => esc(g.name)).join(', ') + '</div>';
+      h += '<div class="pty-line dim">' + c.coins.gp + ' gp · ' + c.coins.sp + ' sp · ' + c.coins.cp + ' cp'
+         + (c.xp ? ' · ' + c.xp + ' XP' : '') + '</div></div>';
+    }
+    if(c.languages) h += '<div class="pty-sec"><div class="pty-sec-h">Languages</div><div class="pty-line">' + esc(c.languages) + '</div></div>';
+    h += '<div class="pty-line dim" style="margin-top:8px;font-size:10px;">Source: ' + esc(entry.source) + '</div>';
+    h += '</div></div>';
+    return h;
+  }
+
+  function render() {
+    const q = filter.trim().toLowerCase();
+    const shown = chars.filter(e => !q
+      || e.sheet.name.toLowerCase().includes(q)
+      || e.sheet.cls.toLowerCase().includes(q)
+      || e.sheet.ancestry.toLowerCase().includes(q));
+    const any = chars.length > 0;
+    emptyEl.style.display = any ? 'none' : 'flex';
+    listEl.style.display  = any ? 'flex' : 'none';
+    listEl.innerHTML = shown.length
+      ? shown.map(cardHTML).join('')
+      : '<div class="pty-line dim" style="padding:10px;">No party member matches that filter.</div>';
+    if(any && !noteEl.textContent) status(chars.length + ' character' + (chars.length === 1 ? '' : 's'));
+  }
+
+  listEl.addEventListener('click', e => {
+    const rm = e.target.closest('[data-remove]');
+    if(rm) {
+      const id = parseInt(rm.dataset.remove);
+      chars = chars.filter(x => x.id !== id);
+      openIds.delete(id);
+      status('');
+      render();
+      return;
+    }
+    const hd = e.target.closest('.pty-card-hd');
+    if(!hd) return;
+    const id = parseInt(hd.closest('.pty-card').dataset.id);
+    if(openIds.has(id)) openIds.delete(id); else openIds.add(id);
+    render();
+  });
+
+  searchEl.addEventListener('input', () => { filter = searchEl.value; render(); });
+
+  fileInput.addEventListener('change', () => {
+    const files = [...fileInput.files];
+    if(!files.length) return;
+    let ok = 0, bad = 0, pending = files.length;
+    files.forEach(f => {
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          const list = Array.isArray(data) ? data : [data];
+          list.forEach(d => { if(addSheet(d, f.name)) ok++; else bad++; });
+        } catch(err) { bad++; }
+        if(--pending === 0) {
+          status(ok + ' sheet' + (ok === 1 ? '' : 's') + ' added' + (bad ? ' · ' + bad + ' not readable' : ''), !ok);
+          render();
+        }
+      };
+      reader.readAsText(f);
+    });
+    fileInput.value = '';
+  });
+
+  pasteBtn.addEventListener('click', () => {
+    const txt = prompt('Paste the character sheet JSON:');
+    if(!txt) return;
+    try {
+      const data = JSON.parse(txt);
+      const list = Array.isArray(data) ? data : [data];
+      const ok = list.filter(d => addSheet(d, 'pasted')).length;
+      status(ok ? ok + ' sheet' + (ok === 1 ? '' : 's') + ' added' : "That JSON doesn't look like a character sheet.", !ok);
+      render();
+    } catch(err) {
+      status('That is not valid JSON.', true);
+    }
+  });
+
+  // Pull the party from the linked campaign. The server returns every saved
+  // SD character sheet whose _sheet.campaign.id matches — i.e. the players who
+  // typed this campaign's join code into their own sheet.
+  async function sync(quiet) {
+    const camp = (typeof window.__gmCampaign === 'function') ? window.__gmCampaign() : null;
+    if(!camp || !camp.id) {
+      if(!quiet) status('Link a campaign first — Dice Tray → 🔗 Campaign link.', true);
+      return;
+    }
+    if(!quiet) status('Syncing "' + camp.name + '"…');
+    try {
+      const r = await fetch('/api/campaigns/' + camp.id + '/characters', { credentials: 'same-origin' });
+      if(r.status === 401) { status('Signed out — reload the page and sign in again.', true); return; }
+      if(r.status === 404) { status('That campaign no longer exists on the server.', true); return; }
+      if(!r.ok) throw new Error(r.status);
+      const data = await r.json();
+      const list = Array.isArray(data) ? data : (data.characters || []);
+      // A sync is the source of truth for campaign sheets: drop the ones that
+      // are no longer linked, keep anything added by hand.
+      chars = chars.filter(x => !String(x.source).startsWith('campaign'));
+      let ok = 0;
+      list.forEach(d => { if(addSheet(d, 'campaign · ' + camp.code)) ok++; });
+      lastSync = new Date();
+      status(ok
+        ? ok + ' character' + (ok === 1 ? '' : 's') + ' from ' + camp.code + ' · ' + lastSync.toLocaleTimeString()
+        : 'No one has linked a character sheet to ' + camp.code + ' yet.');
+      render();
+    } catch(err) {
+      status('Could not reach the campaign (' + err.message + ').', true);
+    }
+  }
+
+  syncBtn.addEventListener('click', () => sync(false));
+
+  // While a campaign is linked, keep the party fresh on its own.
+  setInterval(() => {
+    const camp = (typeof window.__gmCampaign === 'function') ? window.__gmCampaign() : null;
+    if(camp && camp.id) sync(true);
+  }, 30000);
+  setTimeout(() => {
+    const camp = (typeof window.__gmCampaign === 'function') ? window.__gmCampaign() : null;
+    if(camp && camp.id) sync(true);
+  }, 1200);
+
+  clearBtn.addEventListener('click', () => {
+    if(chars.length && !confirm('Remove all character sheets from the party view?')) return;
+    chars = []; openIds = new Set(); status(''); render();
+  });
+
+  root._getState = () => ({ chars, openIds: [...openIds], nextId });
+  root._setState = (st) => {
+    if(!st) return;
+    chars  = Array.isArray(st.chars) ? st.chars.filter(x => x && x.sheet) : [];
+    nextId = st.nextId || (chars.reduce((m, x) => Math.max(m, x.id || 0), 0) + 1);
+    openIds = new Set(st.openIds || []);
+    status('');
+    render();
+  };
+
+  render();
+}
+
+// ══════════════════════════════════════════
+// RULEBOOKS TOOL — PDFs/images of your books, plus the searchable
+// bestiary and magic item tables already built into this screen.
+// ══════════════════════════════════════════
+function init_rules(root) {
+  const refreshBtn = root.querySelector('.rul-refresh');
+  const newTabLink = root.querySelector('.rul-newtab');
+  const tabsEl     = root.querySelector('.rul-booktabs');
+  const noteEl     = root.querySelector('.rul-note');
+  const emptyEl    = root.querySelector('.rul-empty');
+  const frameWrap  = root.querySelector('.rul-frame-wrap');
+
+  let books = [];        // [{file, title, url}] — from /api/rulebooks
+  let activeFile = '';   // which book is open (remembered across sessions)
+  let loaded = false;
+
+  const esc = t => String(t == null ? '' : t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+  function showBook() {
+    const b = books.find(x => x.file === activeFile) || books[0];
+    frameWrap.innerHTML = '';
+    if(!b) {
+      frameWrap.style.display = 'none';
+      newTabLink.style.display = 'none';
+      root.dispatchEvent(new Event('rul-book-change'));
+      return;
+    }
+    activeFile = b.file;
+    emptyEl.style.display = 'none';
+    frameWrap.style.display = 'flex';
+
+    // <object> lets the browser's own PDF viewer handle scrolling and search,
+    // with an iframe (then a plain link) behind it for the browsers that can't.
+    const obj = document.createElement('object');
+    obj.type = 'application/pdf';
+    obj.data = b.url;
+    obj.className = 'rul-frame';
+    const frame = document.createElement('iframe');
+    frame.className = 'rul-frame';
+    frame.src = b.url;
+    frame.title = b.title;
+    obj.appendChild(frame);
+    frameWrap.appendChild(obj);
+
+    newTabLink.href = b.url;
+    newTabLink.style.display = '';
+    root.dispatchEvent(new Event('rul-book-change'));
+  }
+
+  function render() {
+    tabsEl.innerHTML = books.map(b =>
+      '<button class="rul-booktab' + (b.file === activeFile ? ' on' : '') + '" data-file="' + esc(b.file) + '">'
+      + esc(b.title) + '</button>').join('');
+    if(!books.length) {
+      frameWrap.style.display = 'none';
+      frameWrap.innerHTML = '';
+      newTabLink.style.display = 'none';
+      emptyEl.style.display = 'flex';
+      return;
+    }
+    showBook();
+  }
+
+  async function load(quiet) {
+    if(!quiet) noteEl.textContent = 'Loading…';
+    try {
+      const r = await fetch('/api/rulebooks', { credentials: 'same-origin' });
+      if(!r.ok) throw new Error(r.status);
+      const data = await r.json();
+      books = (data.books || []).filter(b => b && b.url && b.file);
+      if(!books.some(b => b.file === activeFile)) activeFile = books.length ? books[0].file : '';
+      loaded = true;
+      noteEl.textContent = books.length ? books.length + ' book' + (books.length === 1 ? '' : 's') : '';
+      render();
+    } catch(err) {
+      noteEl.textContent = '';
+      emptyEl.style.display = 'flex';
+      emptyEl.querySelector('.pty-empty-title').textContent = 'Rulebooks Unavailable';
+      emptyEl.querySelector('.pty-empty-sub').textContent =
+        'Could not read the rulebook list from the server. Open the GM Screen from Dungeon Desk while signed in.';
+    }
+  }
+
+  tabsEl.addEventListener('click', e => {
+    const t = e.target.closest('.rul-booktab');
+    if(!t) return;
+    activeFile = t.dataset.file;
+    render();
+  });
+
+  refreshBtn.addEventListener('click', () => load(false));
+
+  // Only the chosen book is worth saving — the PDFs live on the server.
+  root._getState = () => ({ activeFile });
+  root._setState = (st) => {
+    if(st && st.activeFile) activeFile = st.activeFile;
+    if(loaded) render();
+  };
+
+  load(true);
+}
+
+window.init_party = init_party;
+window.init_rules = init_rules;
+</script>
+
 </body>
 </html>
