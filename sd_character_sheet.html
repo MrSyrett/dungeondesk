@@ -982,6 +982,29 @@ function buildAttacks() {
   // Start empty — use + Add or weapon picker to add rows
 }
 
+// Every character can always punch/kick. This guarantees a "Strikes" attack row
+// exists (1d4, Finesse, Close), adding one at the top if it's missing.
+function ensureStrikesAttack() {
+  const tbody = document.getElementById('attacks-body');
+  if(!tbody) return;
+  const already = [...tbody.querySelectorAll('tr')].some(tr => {
+    const nm = tr.querySelector('input[type="text"]');
+    return nm && nm.value.trim().toLowerCase() === 'strikes';
+  });
+  if(already) return;
+  addAttackRow();
+  const tr = tbody.lastElementChild;
+  if(!tr) return;
+  tbody.insertBefore(tr, tbody.firstChild);   // keep the baseline attack on top
+  const inputs = tr.querySelectorAll('input[type="text"]');
+  const sels   = tr.querySelectorAll('select');
+  const strikes = (typeof SD_WEAPONS !== 'undefined') ? SD_WEAPONS.find(x=>x.name==='Strikes') : null;
+  if(inputs[0]) inputs[0].value = 'Strikes';
+  if(inputs[2]) inputs[2].value = (strikes && strikes.damage) || '1d4';
+  if(sels[0]) sels[0].value = 'str';   // Finesse — swap to DEX on the sheet if higher
+  if(sels[1]) sels[1].value = 'Close';
+}
+
 function addAttackRow() {
   const tbody = document.getElementById('attacks-body');
   const tr = document.createElement('tr');
@@ -1179,6 +1202,10 @@ function rollStat(id, name) {
   addLog(`${name} Check`+(roll===20?' ★ NAT 20':roll===1?' ✗ NAT 1':''), total,
     `${base} + Mod(${fmtMod(mod)}) = ${total}`, type);
 }
+
+// Extra spell lists a caster opted into (beyond their class's own list). Saved
+// with the sheet so level-up starts with the same lists already ticked.
+let _charSpellSources = [];
 
 // ── AMMO: auto-consume arrows / crossbow bolts on ranged attacks ──────────
 let _autoConsume = true;
@@ -1561,6 +1588,7 @@ function collectSheet(){
       mastery: Array.isArray(_charMastery) ? _charMastery : [],
       acBonusOn: _acBonusOn,
       autoConsume: _autoConsume,
+      spellSources: Array.isArray(_charSpellSources) ? _charSpellSources : [],
     }
   };
 }
@@ -1646,12 +1674,14 @@ function _applySDData(d){
     const spellGBEl = document.getElementById('spell-gbonus');
     if(spellGBEl) spellGBEl.value = d._sheet?.spellGBonus || '';
     _charMastery = Array.isArray(d._sheet?.mastery) ? d._sheet.mastery.slice() : [];
+    _charSpellSources = Array.isArray(d._sheet?.spellSources) ? d._sheet.spellSources.slice() : [];
     if(typeof campaignRestore === 'function') campaignRestore(d._sheet?.campaign);
     if(typeof refreshGearSlots === 'function') refreshGearSlots();
     _acBonusOn = !!(d._sheet?.acBonusOn);
     if(typeof _acToggleVisual==='function') _acToggleVisual(_acBonusOn);
     _autoConsume = (d._sheet?.autoConsume === undefined) ? true : !!d._sheet.autoConsume;
     if(typeof _autoConsumeVisual==='function') _autoConsumeVisual(_autoConsume);
+    _charSpellSources = Array.isArray(d._sheet?.spellSources) ? d._sheet.spellSources.slice() : [];
 
   // Spells
   let spells = [];
@@ -1735,7 +1765,7 @@ function _applySDData(d){
       }
     });
   }  // end if(d.attacks)
-  // New character: start with no attack rows
+  ensureStrikesAttack();   // baseline unarmed attack for every character
 
   // Portrait
   if(d.portrait || d._sheet?.portrait) {
@@ -2339,6 +2369,7 @@ buildAttacks();
 buildSpells();
 buildGear();
 autoLoad();
+ensureStrikesAttack();   // blank sheets get the baseline unarmed attack too
 
 // Gear slots follow STR, CON (Fighter's Hauler), and class
 (function wireGearSlots(){
@@ -2724,21 +2755,20 @@ function spellInSources(s, src) {
 // so a caster can't accidentally cut themselves off from their own spells).
 function spellSourceBar(src, cls, onToggle) {
   const own = { Wizard:'Wizard', Priest:'Priest', Witch:'Witch' }[cls] || '';
-  let h = '<div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 10px;padding:8px 10px;background:#141414;border:1px solid #2a2a2a;border-radius:5px;">';
-  h += '<span style="font-family:Montserrat,sans-serif;font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.1em;color:#c8a020;">Spell lists</span>';
+  // One row, no wrap: every list has to fit on a single line.
+  let h = '<div style="display:flex;flex-wrap:nowrap;gap:6px;align-items:center;justify-content:space-between;margin:0 0 10px;padding:7px 8px;background:#141414;border:1px solid #2a2a2a;border-radius:5px;overflow:hidden;">';
   SPELL_SOURCES.forEach(name=>{
     const isOwn = (name===own);
     const on = !!src[name];
     const dis = isOwn ? ' disabled' : '';
     const col = isOwn ? '#c8a020' : (on ? '#eee' : '#777');
-    h += '<label style="display:flex;align-items:center;gap:4px;cursor:'+(isOwn?'default':'pointer')+';'
-       + 'font-family:Montserrat,sans-serif;font-size:10px;font-weight:700;color:'+col+';">'
+    h += '<label title="'+name+'" style="display:flex;align-items:center;gap:3px;min-width:0;cursor:'+(isOwn?'default':'pointer')+';'
+       + 'font-family:Montserrat,sans-serif;font-size:9px;font-weight:700;letter-spacing:.01em;color:'+col+';white-space:nowrap;">'
        + '<input type="checkbox"'+(on?' checked':'')+dis
-       + ' onchange="'+onToggle+'(\''+name+'\', this.checked)" style="accent-color:#c8a020;cursor:'+(isOwn?'default':'pointer')+';">'
+       + ' onchange="'+onToggle+'(\''+name+'\', this.checked)" style="flex:0 0 auto;margin:0;accent-color:#c8a020;cursor:'+(isOwn?'default':'pointer')+';">'
        + name
        + '</label>';
   });
-  h += '<span style="font-family:Montserrat,sans-serif;font-size:9px;color:#666;flex-basis:100%;">Any list can be ticked on — no list is restricted by alignment. Which ones are legal at your table is a GM call.</span>';
   h += '</div>';
   return h;
 }
@@ -4435,11 +4465,15 @@ function ccwApply() {
     if(selects[0]) selects[0].value = useDex ? 'dex' : 'str';
     if(selects[1]) { const parts=w.range.split('/'); selects[1].value = parts[parts.length-1].trim(); }
   };
-  // Strikes (unarmed) attack row: Beastfolk's Natural Selection upgrades the die to 1d6.
+  // Strikes (unarmed) attack row — every character gets one. Beastfolk's
+  // Natural Selection upgrades the die to 1d6.
   const _unarmed = SD_WEAPONS.find(x=>x.name==='Strikes');
-  const hasUnarmed = (c.beastNatural==='attack' || masterySet.has('Strikes'));
+  const hasUnarmed = true;
   const unarmedDie = c.beastNatural==='attack' ? '1d6' : (_unarmed ? _unarmed.damage : '1d4');
-  if(hasUnarmed) _fillAtkRow('Strikes', _unarmed, unarmedDie);
+  _fillAtkRow('Strikes', _unarmed, unarmedDie);
+  // keep Strikes as the first attack row
+  const _atkBody = document.getElementById('attacks-body');
+  if(_atkBody && _atkBody.lastElementChild) _atkBody.insertBefore(_atkBody.lastElementChild, _atkBody.firstChild);
   const uniqueWeapons = [...new Set(c.buyWeapons)];
   uniqueWeapons.forEach(wname=>{
     const w = SD_WEAPONS.find(x=>x.name===wname);
@@ -4461,6 +4495,10 @@ function ccwApply() {
   }
 
   _charMastery = [...masterySet];
+  // Remember every list the player ticked on (their own list is always implied)
+  _charSpellSources = c.spellSrc
+    ? Object.keys(c.spellSrc).filter(k => c.spellSrc[k])
+    : [];
 
   saveSheet(false);
   addLog('Character Created','⚒',c.name+' the '+c.ancestry+' '+c.cls,'normal');
@@ -4497,6 +4535,16 @@ const CCW_WIZARD_SPELLS_KNOWN = {1:[3,0,0,0,0],2:[4,0,0,0,0],3:[4,1,0,0,0],4:[4,
 const CCW_WITCH_SPELLS_KNOWN  = {1:[3,0,0,0,0],2:[4,0,0,0,0],3:[4,1,0,0,0],4:[4,2,0,0,0],5:[4,2,1,0,0],6:[4,3,2,0,0],7:[4,3,2,1,0],8:[4,4,2,2,0],9:[4,4,3,2,1],10:[4,4,4,2,2]};
 
 let _lvl = null;
+
+// Level-up spell lists start from the class default, then re-tick anything the
+// character opted into during creation (saved as _charSpellSources).
+function lvlDefaultSpellSources(cls) {
+  const src = defaultSpellSources(cls);
+  (Array.isArray(_charSpellSources) ? _charSpellSources : []).forEach(name => {
+    if(name in src) src[name] = true;
+  });
+  return src;
+}
 
 function startLevelUp() {
   const curLevel = parseInt(document.getElementById('f-level')?.value) || parseInt(document.getElementById('xp-level')?.value) || 1;
@@ -4655,7 +4703,7 @@ function lvlRollTalent() {
 
 function lvlSpells() {
   const cls = _lvl.cls;
-  if(!_lvl.spellSrc) _lvl.spellSrc = defaultSpellSources(cls);
+  if(!_lvl.spellSrc) _lvl.spellSrc = lvlDefaultSpellSources(cls);
   const own = { Wizard:'Wizard', Priest:'Priest', Witch:'Witch' }[cls] || '';
   // Already-known spells (from the sheet)
   const known = [...document.querySelectorAll('#spells-list .spell-row .spell-input')].map(el=>el.value.trim()).filter(Boolean);
@@ -4689,7 +4737,7 @@ function lvlSpells() {
   return h;
 }
 function lvlToggleSpellSrc(name, on) {
-  if(!_lvl.spellSrc) _lvl.spellSrc = defaultSpellSources(_lvl.cls);
+  if(!_lvl.spellSrc) _lvl.spellSrc = lvlDefaultSpellSources(_lvl.cls);
   _lvl.spellSrc[name] = !!on;
   _lvl.newSpells = _lvl.newSpells.filter(sp=>{
     const src = _lvl.spellSrcOf[sp];

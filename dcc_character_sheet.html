@@ -575,7 +575,7 @@ body.dark select.skill-stat-sel{background:var(--input-bg);}
     <button class="log-action-btn save" onclick="saveSheet()">💾 Save</button>
     <button class="log-action-btn export" onclick="exportSheet()">↓ Export</button>
     <label class="log-action-btn import" style="display:flex;align-items:center;justify-content:center;cursor:pointer;">↑ Import<input type="file" accept=".json" style="display:none" onchange="importSheet(this)"></label>
-    <button class="log-action-btn pdf" onclick="exportPDF()" title="Printer-friendly PDF">🖨 PDF</button>
+    <button class="log-action-btn pdf" onclick="exportPDF()" title="Official DCC sheet PDF">🖨 PDF</button>
   </div>
   <div class="log-entries" id="log-entries">
     <div class="log-hint">Click any stat or button to roll</div>
@@ -1423,7 +1423,197 @@ function syncDocTitle() {
 // Rebuilds the sheet as clean black-on-white letter-sized pages and hands it
 // to the browser's print dialog ("Save as PDF"). Real selectable text, a few
 // KB — not a screenshot of the dark UI.
-function exportPDF() {
+// ═══════════════════════════════════════════════════════════════════════════
+// OFFICIAL PDF EXPORT
+// Draws the character's data onto Renegade's printable DCC sheet
+// (public/dcc-sheet-printable.pdf) at measured coordinates, then downloads it.
+// The template is a flat (non-fillable) PDF, so we overlay text with pdf-lib
+// rather than filling form fields. Falls back to the print view on any error.
+// ═══════════════════════════════════════════════════════════════════════════
+let _dccPdfLibPromise = null;
+function loadPdfLib() {
+  if(window.PDFLib) return Promise.resolve(window.PDFLib);
+  if(_dccPdfLibPromise) return _dccPdfLibPromise;
+  _dccPdfLibPromise = new Promise((resolve, reject) => {
+    const sc = document.createElement('script');
+    sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js';
+    sc.onload  = () => resolve(window.PDFLib);
+    sc.onerror = () => reject(new Error('pdf-lib failed to load'));
+    document.head.appendChild(sc);
+  });
+  return _dccPdfLibPromise;
+}
+
+async function exportPDF() {
+  try {
+    const [PDFLib, bytes] = await Promise.all([
+      loadPdfLib(),
+      fetch('/dcc-sheet-printable.pdf').then(r => {
+        if(!r.ok) throw new Error('sheet template ' + r.status);
+        return r.arrayBuffer();
+      })
+    ]);
+
+    const d    = collectSheet();
+    const V    = id => (document.getElementById(id)?.value || '').trim();
+    const T    = id => (document.getElementById(id)?.textContent || '').trim();
+
+    const pdf   = await PDFLib.PDFDocument.load(bytes);
+    const font  = await pdf.embedFont(PDFLib.StandardFonts.Helvetica);
+    const pages = pdf.getPages();
+    const p0 = pages[0], p1 = pages[1];
+    const H = p0.getSize().height;                 // 792
+    const INK = PDFLib.rgb(0.05, 0.05, 0.5);
+
+    // Coordinates were measured from the top of the page (like the artwork), so
+    // convert to pdf-lib's bottom-left origin. `topY` is the text baseline.
+    const widthOf = (t, size) => font.widthOfTextAtSize(String(t), size);
+    function draw(page, x, topY, text, size, opts) {
+      opts = opts || {};
+      if(text === undefined || text === null || text === '') return;
+      let str = String(text);
+      if(opts.maxW) {                              // ellipsis-free hard truncate
+        while(str && widthOf(str, size) > opts.maxW) str = str.slice(0, -1);
+      }
+      let dx = x;
+      if(opts.center && opts.boxW) dx = x + Math.max(0, (opts.boxW - widthOf(str, size)) / 2);
+      page.drawText(str, { x: dx, y: H - topY, size, font, color: INK });
+    }
+    // Wrap text inside a box (word-wrap, clipped to a max number of lines).
+    function drawBox(page, x, topY, boxW, text, size, maxLines) {
+      if(!text) return;
+      const words = String(text).replace(/\s+/g, ' ').trim().split(' ');
+      const lines = [];
+      let line = '';
+      for(const w of words) {
+        const trial = line ? line + ' ' + w : w;
+        if(widthOf(trial, size) > boxW && line) { lines.push(line); line = w; }
+        else line = trial;
+      }
+      if(line) lines.push(line);
+      const lh = size * 1.25;
+      lines.slice(0, maxLines || 99).forEach((ln, i) => {
+        page.drawText(ln, { x, y: H - (topY + i * lh), size, font, color: INK });
+      });
+    }
+
+    // ── PAGE 0 · header ────────────────────────────────────────────────────
+    draw(p0, 439, 52, d.header['f-level'],   13, { center:true, boxW:44 });
+    draw(p0, 489, 52, d.header['f-crawler'], 11, { center:true, boxW:44 });
+    // The printable has a FLOOR box; the sheet has no floor field, so leave it blank.
+    draw(p0, 30,  96, d.header['f-name'],   13, { maxW:168 });
+    draw(p0, 204, 96, d.header['f-race'],   13, { maxW:112 });
+    draw(p0, 323, 96, d.header['f-class'],  13, { maxW:112 });
+    draw(p0, 442, 96, d.header['f-gender'], 11, { maxW:138 });
+
+    // ── PAGE 0 · stats (big modifier + ENH / UNENH scores) ─────────────────
+    const STATX = { str:28.9, int:141.4, con:253.1, dex:364.9, cha:476.6 };
+    STATS.forEach(st => {
+      const x0 = STATX[st.id]; if(x0 === undefined) return;
+      const mod = T(st.id + '-mod');
+      const enh = d.stats[st.id]?.enh || '';
+      const un  = d.stats[st.id]?.unenh || '';
+      draw(p0, x0, 232, mod, 26, { center:true, boxW:106 });
+      draw(p0, x0 + 12, 262, enh, 13, { center:true, boxW:44, maxW:44 });
+      draw(p0, x0 + 62, 262, un,  13, { center:true, boxW:44, maxW:44 });
+    });
+
+    // ── PAGE 0 · Evade / DR / Mana ─────────────────────────────────────────
+    draw(p0, 82,  303, V('evade-dex'),   12, { center:true, boxW:127 });
+    draw(p0, 222, 303, V('evade-buffs'), 12, { center:true, boxW:127 });
+    draw(p0, 362, 303, V('evade-total'), 13, { center:true, boxW:127 });
+    draw(p0, 508, 303, V('evade-move'),  11, { center:true, boxW:35 });
+    draw(p0, 548, 303, V('evade-step'),  11, { center:true, boxW:35 });
+
+    draw(p0, 46,  340, V('dr-armor'),  12, { center:true, boxW:139 });
+    draw(p0, 198, 340, V('dr-buffs'),  12, { center:true, boxW:139 });
+    draw(p0, 350, 340, V('dr-total'),  13, { center:true, boxW:139 });
+    draw(p0, 508, 340, V('dr-aifavor'),11, { center:true, boxW:35 });
+    draw(p0, 548, 340, V('dr-size'),   11, { center:true, boxW:35 });
+
+    draw(p0, 49,  402, V('mana-max'),     12, { center:true, boxW:119 });
+    draw(p0, 182, 402, V('mana-current'), 12, { center:true, boxW:118 });
+    drawBox(p0, 31, 446, 268, V('debuffs'), 9, 2);
+
+    // ── PAGE 0 · External buffs (max 3) ────────────────────────────────────
+    (d.extBuffs || []).slice(0, 3).forEach((b, i) => {
+      draw(p0, 323, 390 + i * 18.7, b, 10, { maxW:102 });
+    });
+
+    // ── PAGE 0 · Attacks (5 rows) ──────────────────────────────────────────
+    const ATK_ROW = [488.6, 512.6, 536.6, 559.9, 583.9];
+    (d.attacks || []).filter(a => a.name).slice(0, 5).forEach((a, i) => {
+      const y = ATK_ROW[i] + 16;
+      const su = s => (s || '').toUpperCase();
+      draw(p0, 33,  y, a.name, 10, { maxW:160 });
+      draw(p0, 197, y, a.rank, 10, { center:true, boxW:48 });
+      draw(p0, 250, y, su(a.toHitStat), 9, { center:true, boxW:32 });
+      draw(p0, 320, y, a.dice, 10, { center:true, boxW:48 });
+      draw(p0, 373, y, su(a.dmgStat), 9, { center:true, boxW:32 });
+      draw(p0, 420, y, a.effects, 9, { maxW:160 });
+    });
+
+    // ── PAGE 0 · Hotlist (10 cards: 5 top, 5 bottom) ───────────────────────
+    const HLX = [28.9, 140.6, 252.4, 364.9, 476.6];
+    (d.hotlist || []).forEach((h, i) => {
+      if(i > 9 || !h) return;
+      const col = i % 5, top = i < 5;
+      drawBox(p0, HLX[col] + 4, top ? 646 : 714, 99, h, 9, 5);
+    });
+
+    // ── PAGE 1 · Skills + Inventory (24 rows each) ─────────────────────────
+    const ROW_Y0 = 56.6, ROW_PITCH = (439.9 - 56.6) / 24;
+    (d.skills || []).filter(s => s.name).slice(0, 24).forEach((s, i) => {
+      const y = ROW_Y0 + i * ROW_PITCH + 10.5;
+      if(s.checked) draw(p1, 36.5, y, 'X', 9);
+      draw(p1, 51,  y, s.name, 9, { maxW:104 });
+      draw(p1, 158, y, s.rank, 9, { center:true, boxW:24 });
+      draw(p1, 182, y, (s.stat || '').toUpperCase(), 9, { center:true, boxW:28 });
+      draw(p1, 244, y, s.checkType, 9, { maxW:56 });
+      draw(p1, 303, y, s.notes, 8, { maxW:95 });
+    });
+    (d.inventory || []).filter(i => i.item).slice(0, 24).forEach((it, i) => {
+      const y = ROW_Y0 + i * ROW_PITCH + 10.5;
+      draw(p1, 340, y, it.item, 9, { maxW:115 });
+      draw(p1, 486, y, it.qty,  9, { center:true, boxW:26 });
+      draw(p1, 516, y, it.notes, 8, { maxW:64 });
+    });
+
+    // ── PAGE 1 · Gear slots + Accessories ──────────────────────────────────
+    const GEAR_Y = [477, 493, 509, 525, 541, 557];   // Head→Feet, in sheet order
+    (d.gear || []).slice(0, 6).forEach((val, i) => {
+      draw(p1, 90, GEAR_Y[i], val, 10, { maxW:75 });
+    });
+    (d.accessories || []).slice(0, 10).forEach((a, i) => {
+      draw(p1, 34, 586 + i * 17.3, a, 9, { maxW:140 });
+    });
+
+    // ── PAGE 1 · Character notes ───────────────────────────────────────────
+    // Background textareas in DOM order: Popularity, Past Trauma, Loose Ends, Regrets, Notes
+    const bg = d.background || [];
+    drawBox(p1, 340, 484, 240, bg[0], 8.5, 5);  // Popularity
+    drawBox(p1, 340, 545, 240, bg[1], 8.5, 5);  // Past Trauma
+    drawBox(p1, 340, 606, 240, bg[2], 8.5, 5);  // Loose Ends
+    drawBox(p1, 340, 666, 240, bg[3], 8.5, 5);  // Regrets
+    drawBox(p1, 340, 728, 240, bg[4], 8.5, 4);  // Notes
+
+    const out  = await pdf.save();
+    const blob = new Blob([out], { type: 'application/pdf' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = ((d.header['f-name'] || 'dcc-crawler').replace(/[^a-z0-9]+/gi, '_').toLowerCase() || 'dcc-crawler') + '.pdf';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+
+    addLog('Sheet Exported', '🖨', 'Official DCC sheet PDF', 'normal');
+  } catch(err) {
+    console.warn('Official-PDF export failed, falling back to print view:', err);
+    exportPrintablePDF();
+  }
+}
+
+function exportPrintablePDF() {
   const d   = collectSheet();
   const V   = id => (document.getElementById(id)?.value || '').trim();
   const T   = id => (document.getElementById(id)?.textContent || '').trim();
