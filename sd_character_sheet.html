@@ -171,6 +171,12 @@ body{font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--ink);m
 .spell-row{display:grid;grid-template-columns:16px 1fr 26px 30px 48px 60px 60px 20px 20px 24px;align-items:center;gap:2px;padding:1px 6px;border-bottom:1px solid var(--rule);}
 .spell-row.lost{opacity:.4;}
 .spell-row.lost .spell-input{text-decoration:line-through;color:var(--muted);}
+.spell-src-badge{display:inline-block;font-family:'Montserrat',sans-serif;font-size:7px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;padding:1px 4px;margin:0 0 2px;border-radius:2px;}
+.spell-src-badge.scroll{background:#2a1f10;color:#c8a020;border:1px solid #7a5a00;}
+.spell-src-badge.wand{background:#1a2a3a;color:#7ab8e0;border:1px solid #2d5a7a;}
+.spell-row[data-src] .spell-input{font-style:italic;}
+.spell-row[data-src='scroll']{border-left:3px solid #7a5a00;}
+.spell-row[data-src='wand']{border-left:3px solid #2d5a7a;}
 .spell-input{border:none;background:transparent;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:500;outline:none;color:var(--ink);padding:3px 2px;min-width:0;}
 .spell-level{width:100%;border:1px solid var(--rule);background:var(--input-bg);font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;text-align:center;color:var(--ink);outline:none;padding:1px 0;}
 .spell-cast-btn{padding:1px 3px;background:transparent;border:1px solid var(--rule);cursor:pointer;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;color:var(--muted);width:100%;}
@@ -367,7 +373,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
           <option value="cha">CHA</option>
         </select>
         <input type="text" id="spell-gbonus" placeholder="+0" title="Global bonus to all casting checks" style="width:26px;background:rgba(255,255,255,0.08);border:1px solid #555;border-radius:2px;color:#f8f8f6;font-family:'Montserrat',sans-serif;font-size:9px;font-weight:700;padding:1px 2px;outline:none;text-align:center;" onchange="saveSheet(false)">
-      </label><button onclick="openSpellShop()" style="padding:2px 10px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.08em;text-transform:uppercase;" onmouseover="this.style.background='#7a5a00';this.style.color='white'" onmouseout="this.style.background='#241f10';this.style.color='#c8a020'">📖 Spellbook</button></div>
+      </label><button onclick="_spellShopMode=null;openSpellShop()" style="padding:2px 10px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.08em;text-transform:uppercase;" onmouseover="this.style.background='#7a5a00';this.style.color='white'" onmouseout="this.style.background='#241f10';this.style.color='#c8a020'">📖 Spellbook</button></div>
       <div id="spells-list"></div>
     </div>
 
@@ -380,7 +386,7 @@ body.dark .stat-val, body.dark .hpac-input, body.dark .hpac-max, body.dark .xp-i
       </div>
       <div class="sl" style="display:flex;align-items:center;justify-content:space-between;gap:6px;"><span>Gear</span>
         <div style="display:flex;align-items:center;gap:10px;">
-          <span class="ammo-toggle-lbl" onclick="toggleAutoConsume()" title="Auto-consume ammo: rolling an attack with a bow spends 1 arrow; a crossbow spends 1 bolt."><span style="text-align:right;">Auto</span><span class="sw-toggle on" id="ammo-switch"><span class="sw-knob"></span></span></span>
+          <span class="ammo-toggle-lbl" onclick="toggleAutoConsume()" title="Auto-consume: bows spend an arrow and crossbows a bolt; casting a scroll uses it up, and a wand breaks on a natural 1. Turn off to track these by hand."><span style="text-align:right;">Auto</span><span class="sw-toggle on" id="ammo-switch"><span class="sw-knob"></span></span></span>
           <button onclick="openShop()" style="padding:2px 10px;background:#241f10;color:#c8a020;border:1px solid #7a5a00;cursor:pointer;font-family:'Montserrat',sans-serif;font-weight:700;font-size:9px;letter-spacing:.08em;text-transform:uppercase;" onmouseover="this.style.background='#7a5a00';this.style.color='white'" onmouseout="this.style.background='#241f10';this.style.color='#c8a020'">+ Item</button>
         </div></div>
       <div id="gear-list"></div>
@@ -1051,6 +1057,28 @@ function addSpellRow(num) {
   return row;
 }
 
+// Mark a spell row as coming from a scroll or wand (or clear it). The badge
+// sits next to the row number; the data-src attribute drives cast-time behavior.
+function setSpellRowSource(row, src) {
+  if(!row) return;
+  // Clear any prior badge wherever it lives
+  row.querySelectorAll('.spell-src-badge').forEach(b => b.remove());
+  if(src === 'scroll' || src === 'wand') {
+    row.dataset.src = src;
+    // The description sub-row spans the full width — put the badge at its start.
+    const descCell = row.querySelector('.spell-desc')?.parentElement;
+    if(descCell) {
+      const b = document.createElement('span');
+      b.className = 'spell-src-badge ' + src;
+      b.textContent = (src === 'scroll' ? 'Scroll' : 'Wand') + ' — one item, cast to use';
+      if(src === 'wand') b.textContent = 'Wand — reusable, breaks on a natural 1';
+      descCell.insertBefore(b, descCell.firstChild);
+    }
+  } else {
+    delete row.dataset.src;
+  }
+}
+
 function buildSpells() {
   const list = document.getElementById('spells-list');
   const hdr = document.createElement('div');
@@ -1314,6 +1342,7 @@ function rollSpell(btn) {
   const dc         = 10 + spellLevel;
   const isAdvSpell = row.querySelector('.spell-adv-btn')?.classList.contains('on');
   const isLost     = row.querySelector('.spell-lost-btn')?.classList.contains('on');
+  const source     = row.dataset.src || '';   // 'scroll' | 'wand' | ''
 
   if(isLost) {
     addLog(`${name}`, '✗ LOST', 'This spell is lost until you rest', 'fumble');
@@ -1341,8 +1370,9 @@ function rollSpell(btn) {
   const verdict = success ? `✓ HIT (DC ${dc})` : `✗ MISS (DC ${dc}) — spell lost!`;
   const bonusPart = [bonus !== 0 ? `${bonus>=0?'+':''}${bonus}` : '', castMod !== 0 ? `${castMod>=0?'+':''}${castMod} (${castStat.toUpperCase()})` : '', gBonus !== 0 ? `${gBonus>=0?'+':''}${gBonus}` : ''].filter(Boolean).join(' ');
 
-  // Mark as lost if failed
-  if(!success) {
+  // Mark as lost if failed — but only for spells you know. A scroll is consumed
+  // whether it hits or misses; a wand persists (and breaks only on a natural 1).
+  if(!success && !source) {
     row.querySelector('.spell-lost-btn')?.classList.add('on');
     row.classList.add('lost');
   }
@@ -1375,6 +1405,45 @@ function rollSpell(btn) {
     + (dmgBreakdown ? `  |  ${dmgBreakdown}` : '');
 
   addLog(`${name} (Tier ${spellLevel})${isAdvSpell?' ▲':''}`, resultStr, detailStr, type);
+
+  // ── Scroll / Wand consumption ── (only when Auto is on; off = track by hand)
+  if(source && _autoConsume) {
+   if(source === 'scroll') {
+    // A spell scroll is expended on use: remove its gear item and this spell row.
+    consumeSpellItem('Scroll', name);
+    row.remove();
+    _spellCount = Math.max(0, _spellCount - 1);
+    addLog('Scroll Consumed', '📜', name + ' — scroll used up', 'normal');
+    saveSheet(false);
+   } else if(source === 'wand' && roll === 1) {
+    // Shadowdark: on a natural 1, the wand crumbles to ash.
+    consumeSpellItem('Wand', name);
+    row.remove();
+    _spellCount = Math.max(0, _spellCount - 1);
+    addLog('Wand Destroyed', '💥', name + ' — wand crumbles to ash (natural 1)', 'fumble');
+    saveSheet(false);
+   }
+  }
+}
+
+// Remove the first gear item matching "Scroll: <spell>" or "Wand: <spell>".
+// Handles the ↳ continuation rows bulky items leave behind (scrolls/wands are
+// single-slot, so there won't be any, but this stays safe if that changes).
+function consumeSpellItem(label, spellName) {
+  const target = (label + ': ' + spellName).toLowerCase();
+  const rows = [...document.querySelectorAll('#gear-list .gear-slot')];
+  for(const gr of rows) {
+    const nameEl = gr.querySelector('.gear-name');
+    if(!nameEl) continue;
+    if((nameEl.value || '').trim().toLowerCase() === target) {
+      nameEl.value = '';
+      const qtyEl = gr.querySelector('.gear-qty');
+      if(qtyEl) qtyEl.value = '';
+      gr.classList.remove('gear-slot-disabled');
+      return true;
+    }
+  }
+  return false;
 }
 
 // ── DICE TRAY ──
@@ -1482,6 +1551,7 @@ function collectSheet(){
     damage:   row.querySelector('.spell-damage')?.value.trim() || '',
     range:    row.querySelector('.spell-range')?.value || '',
     duration: row.querySelector('.spell-duration')?.value.trim() || '',
+    source:   row.dataset.src || '',
   }));
   const spellsList = spellData.filter(s => s.name).map(s => s.name);
   const spellsKnown = spellsList.join(', ');
@@ -1711,6 +1781,7 @@ function _applySDData(d){
       if(damageEl && sd.damage) damageEl.value = sd.damage;
       if(rangeEl && sd.range)   rangeEl.value  = sd.range;
       if(durEl && sd.duration)  durEl.value    = sd.duration;
+      if(sd.source) setSpellRowSource(row, sd.source);
     }
   });
 
@@ -5542,46 +5613,21 @@ function shopAddAttack(name) {
   }
 }
 
-// ── Spell pick for generic Scroll / Wand ──
-let _spellPickKind = 'Scroll';
+// ── Spell pick for a Scroll / Wand (reuses the Spellbook UI in "pick" mode) ──
+// _spellShopMode is null for normal Learn/Unlearn, or 'scroll' / 'wand' when the
+// Spellbook is being used to choose the spell to inscribe on a new item.
+let _spellShopMode = null;
 function openSpellPick(kind) {
-  _spellPickKind = kind;
-  document.getElementById('spellpick-title').textContent = 'Choose Spell for ' + (kind==='Scroll' ? 'Spell Scroll' : 'Magic Wand');
-  const body = document.getElementById('spellpick-body');
-  const spells = (typeof SD_SPELLS!=='undefined' ? SD_SPELLS : []).slice().sort((a,b)=> a.tier===b.tier ? a.name.localeCompare(b.name) : a.tier.localeCompare(b.tier));
-  body.innerHTML = spells.map(s=>{
-    const meta = ['T'+s.tier, s.caster, s.range?'Range: '+s.range:'', s.duration?'Dur: '+s.duration:'', s.damage?'Dmg: '+s.damage:''].filter(Boolean).join(' · ');
-    const pFull = (typeof SD_SPELL_FULL!=='undefined' && SD_SPELL_FULL[s.name]) || '';
-    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid #1e1e1e;">'
-      + '<div style="flex:1;min-width:0;'+(pFull?'cursor:pointer;':'')+'" '+(pFull?'onclick="toggleFullDesc(this)"':'')+'>'
-      +   '<div style="font-family:Montserrat,sans-serif;font-size:11px;font-weight:700;color:#eee;">'+s.name+'</div>'
-      +   '<div style="font-family:Montserrat,sans-serif;font-size:8px;color:#9a7ac8;line-height:1.3;">'+meta+'</div>'
-      +   (s.desc?'<div class="desc-short" style="font-family:Montserrat,sans-serif;font-size:9px;color:#888;line-height:1.3;">'+s.desc+(pFull?' <span style="color:#b89ae0;">▸ more</span>':'')+'</div>':'')
-      +   (pFull?'<div class="desc-full" style="display:none;font-family:Montserrat,sans-serif;font-size:9px;color:#bbb;line-height:1.45;">'+pFull+' <span style="color:#b89ae0;">▾ less</span></div>':'')
-      + '</div>'
-      + '<button onclick="spellPickChoose(\''+s.name.replace(/'/g,"\\'")+'\',\''+s.tier+'\')" style="padding:5px 10px;background:#2a1a3a;color:#b89ae0;border:1px solid #5a3a8a;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;">Choose</button>'
-      + '</div>';
-  }).join('');
-  document.getElementById('spellpick-overlay').style.display = 'flex';
+  _spellShopMode = (kind === 'Wand') ? 'wand' : 'scroll';
+  openSpellShop();                       // same tiered, list-filtered Spellbook
 }
-function closeSpellPick() { document.getElementById('spellpick-overlay').style.display = 'none'; }
-function spellPickChoose(name, tier) {
-  const it = { name: _spellPickKind + ': ' + name };
-  if(shopAddToGear(it)) {
-    addLog('Item Added','🛒',it.name+' (T'+tier+')','normal');
-    saveSheet(false);
-  }
-  closeSpellPick();
-  closeShop();
-}
-
 </script>
 
 <!-- ═══ SPELL LEARN SHOP ═══ -->
 <div id="spellshop-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:1000;align-items:center;justify-content:center;padding:16px;">
   <div style="background:#1a1a1a;border:2px solid #5a3a8a;max-width:520px;width:100%;height:85vh;display:flex;flex-direction:column;">
     <div style="background:#0a0a0a;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
-      <div style="font-family:'UnifrakturMaguntia',cursive;font-size:20px;color:#b89ae0;line-height:1;">Spellbook</div>
+      <div id="spellshop-title" style="font-family:'UnifrakturMaguntia',cursive;font-size:20px;color:#b89ae0;line-height:1;">Spellbook</div>
       <button onclick="closeSpellShop()" style="background:transparent;border:none;color:#888;font-size:20px;cursor:pointer;padding:0 4px;">✕</button>
     </div>
     <div id="spellshop-tabs" style="display:flex;flex-shrink:0;"></div>
@@ -5617,10 +5663,17 @@ function openSpellShop() {
     _spellShopNec = false;
     _spellShopSee = false;
   }
+  const titleEl = document.getElementById('spellshop-title');
+  if(titleEl) titleEl.textContent = _spellShopMode
+    ? (_spellShopMode === 'wand' ? 'Choose Spell · Magic Wand' : 'Choose Spell · Spell Scroll')
+    : 'Spellbook';
   document.getElementById('spellshop-overlay').style.display = 'flex';
   spellShopRender();
 }
-function closeSpellShop() { document.getElementById('spellshop-overlay').style.display = 'none'; }
+function closeSpellShop() {
+  document.getElementById('spellshop-overlay').style.display = 'none';
+  _spellShopMode = null;   // always drop back to normal Learn/Unlearn mode
+}
 function spellShopSetTier(t) { _spellShopTier = t; spellShopRender(); }
 
 function spellShopRender() {
@@ -5667,9 +5720,11 @@ function spellShopRender() {
       +   (s.desc?'<div class="desc-short" style="font-family:Montserrat,sans-serif;font-size:9px;color:#888;line-height:1.3;">'+s.desc+(sFull?' <span style="color:#b89ae0;">▸ more</span>':'')+'</div>':'')
       +   (sFull?'<div class="desc-full" style="display:none;font-family:Montserrat,sans-serif;font-size:9px;color:#bbb;line-height:1.45;">'+sFull+' <span style="color:#b89ae0;">▾ less</span></div>':'')
       + '</div>'
-      + (isKnown
-          ? '<button onclick="unlearnSpell(\''+s.name.replace(/'/g,"\\'")+'\')" style="padding:5px 10px;background:#3a1a1a;color:#df8a8a;border:1px solid #7a2d2d;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;">Unlearn</button>'
-          : '<button onclick="learnSpell(\''+s.name.replace(/'/g,"\\'")+'\',\''+s.caster+'\')" style="padding:5px 10px;background:#2a1a3a;color:#b89ae0;border:1px solid #5a3a8a;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;">Learn</button>')
+      + (_spellShopMode
+          ? '<button onclick="inscribeSpell(\''+s.name.replace(/'/g,"\\'")+'\',\''+s.caster+'\')" style="padding:5px 10px;background:'+(_spellShopMode==='wand'?'#12283a':'#2a1f10')+';color:'+(_spellShopMode==='wand'?'#7ab8e0':'#c8a020')+';border:1px solid '+(_spellShopMode==='wand'?'#2d5a7a':'#7a5a00')+';cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;">'+(_spellShopMode==='wand'?'Wand':'Scroll')+' ▸</button>'
+          : (isKnown
+              ? '<button onclick="unlearnSpell(\''+s.name.replace(/'/g,"\\'")+'\')" style="padding:5px 10px;background:#3a1a1a;color:#df8a8a;border:1px solid #7a2d2d;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;">Unlearn</button>'
+              : '<button onclick="learnSpell(\''+s.name.replace(/'/g,"\\'")+'\',\''+s.caster+'\')" style="padding:5px 10px;background:#2a1a3a;color:#b89ae0;border:1px solid #5a3a8a;cursor:pointer;font-family:Montserrat,sans-serif;font-weight:700;font-size:9px;letter-spacing:.06em;text-transform:uppercase;flex-shrink:0;">Learn</button>'))
       + '</div>';
   }).join('') || '<p style="font-family:Montserrat,sans-serif;font-size:10px;color:#888;padding:10px;">No spells at this tier.</p>';
 }
@@ -5706,6 +5761,39 @@ function unlearnSpell(name) {
   addLog('Spell Unlearned','📖',name,'normal');
   saveSheet(false);
   spellShopRender();
+}
+
+// Inscribe the chosen spell onto a new Scroll or Wand: add a matching gear item
+// AND a spell-list row tagged with its source. Casting rules differ (a scroll is
+// one-shot and consumed; a wand persists), handled in rollSpell().
+function inscribeSpell(name, caster) {
+  const kind = _spellShopMode;                 // 'scroll' | 'wand'
+  if(!kind) return;
+  const s = findSpell(name, caster);
+  if(!s) return;
+  const label = kind === 'wand' ? 'Wand' : 'Scroll';
+
+  // 1) Gear item — carries a marker so the cast can find and remove it
+  if(!shopAddToGear({ name: label + ': ' + s.name })) return;   // aborts if no slot
+
+  // 2) Spell-list row, tagged with its source
+  _spellCount++;
+  const row = addSpellRow(_spellCount);
+  if(row) {
+    const q = cl => row.querySelector(cl);
+    const inp=q('.spell-input'); if(inp) inp.value=s.name;
+    const lvl=q('.spell-level'); if(lvl) lvl.value=s.tier;
+    const rng=q('.spell-range'); if(rng) rng.value=s.range;
+    const dur=q('.spell-duration'); if(dur) dur.value=s.duration;
+    const dmg=q('.spell-damage'); if(dmg) dmg.value=s.damage||'';
+    const dsc=q('.spell-desc'); if(dsc){dsc.value=s.desc;autoResizeDesc(dsc);}
+    setSpellRowSource(row, kind);
+  }
+
+  addLog(label + ' Added','🛒',s.name+' (Tier '+s.tier+')','normal');
+  saveSheet(false);
+  closeSpellShop();
+  closeShop();
 }
 
 </script>

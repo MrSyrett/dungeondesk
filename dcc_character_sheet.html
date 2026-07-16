@@ -1574,9 +1574,9 @@ async function exportPDF() {
     });
     (d.inventory || []).filter(i => i.item).slice(0, 24).forEach((it, i) => {
       const y = ROW_Y0 + i * ROW_PITCH + 10.5;
-      draw(p1, 340, y, it.item, 9, { maxW:115 });
-      draw(p1, 486, y, it.qty,  9, { center:true, boxW:26 });
-      draw(p1, 516, y, it.notes, 8, { maxW:64 });
+      draw(p1, 372, y, it.item, 9, { maxW:112 });
+      draw(p1, 491, y, it.qty,  9, { center:true, boxW:24 });
+      draw(p1, 519, y, it.notes, 8, { maxW:62 });
     });
 
     // ── PAGE 1 · Gear slots + Accessories ──────────────────────────────────
